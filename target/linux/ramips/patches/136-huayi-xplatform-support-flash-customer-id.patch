@@ -1,0 +1,143 @@
+diff -uNr a/drivers/mtd/ralink/ralink_bbu_spi.c b/drivers/mtd/ralink/ralink_bbu_spi.c
+--- a/drivers/mtd/ralink/ralink_bbu_spi.c	2020-09-02 18:06:55.675754738 +0800
++++ b/drivers/mtd/ralink/ralink_bbu_spi.c	2020-09-02 18:06:11.357625696 +0800
+@@ -198,6 +198,7 @@
+ #define OPCODE_SE		0xD8	/* Sector erase */
+ #define OPCODE_RES		0xAB	/* Read Electronic Signature */
+ #define OPCODE_RDID		0x9F	/* Read JEDEC ID */
++#define OPCODE_RD_UID		0x4B	/* Read  Unique ID */
+ #define OPCODE_DOR			0x3B	/* Dual Output Read */
+ #define OPCODE_QOR			0x6B	/* Quad Output Read */
+ #define OPCODE_DIOR                     0xBB    /* Dual IO High Performance Read */
+@@ -630,6 +631,82 @@
+ 	return 0;
+ 
+ }
++
++#if defined (CONFIG_HUAYI_FLASH_CUSTOMER_ID)
++int huayi_bbu_spic_trans(const u8 code, const u32 addr, u8 *buf, const size_t n_tx, const size_t  n_rx)
++{
++	u32 reg = 0;
++	int i, q, r;
++	int rc = -1;
++	
++	if (buf == NULL) 
++	{
++		return -1;
++	}
++	
++#if defined (CONFIG_RALINK_MT7621) && (defined (CONFIG_FB_MEDIATEK_TRULY) || defined(CONFIG_FB_MEDIATEK_ILITEK))			
++	spin_lock(&flash_lock);
++#endif	
++	
++#if defined (CONFIG_RALINK_MT7621) && (defined (CONFIG_FB_MEDIATEK_TRULY) || defined(CONFIG_FB_MEDIATEK_ILITEK))
++	bbu_spic_busy_wait();
++  	sysRegWrite(SPI_REG_MASTER, 0x58880);
++#endif	  
++	
++	/* step 0. enable more byte mode */
++	ra_and(SPI_REG_MASTER, ~(1 << 10));
++	ra_or(SPI_REG_MASTER, (1 << 2));
++	
++	bbu_spic_busy_wait();
++
++	/* step 1. set opcode & address, and fix cmd bit count to 32 (or 40) */
++	if (flash && flash->chip->addr4b) {
++		ra_and(SPI_REG_CTL, ~SPI_CTL_ADDREXT_MASK);
++		ra_or(SPI_REG_CTL, (code << 24) & SPI_CTL_ADDREXT_MASK);
++		ra_outl(SPI_REG_OPCODE, addr);
++	}
++	else
++	{
++		ra_outl(SPI_REG_OPCODE, (code << 24) & 0xff000000);
++		ra_or(SPI_REG_OPCODE, (addr & 0xffffff));
++	}
++	ra_and(SPI_REG_MOREBUF, ~SPI_MBCTL_CMD_MASK);
++	if (flash && flash->chip->addr4b)
++		ra_or(SPI_REG_MOREBUF, (40 << 24));
++	else
++		ra_or(SPI_REG_MOREBUF, (32 << 24));
++	
++	/* step 3. set rx (miso_bit_cnt) and tx (mosi_bit_cnt) bit count */
++	ra_and(SPI_REG_MOREBUF, ~SPI_MBCTL_TX_RX_CNT_MASK);
++	ra_or(SPI_REG_MOREBUF, (n_rx << 3 << 12));
++	ra_or(SPI_REG_MOREBUF, n_tx << 3);
++
++	/* step 4. kick */
++	ra_or(SPI_REG_CTL, SPI_CTL_START);
++
++	/* step 5. wait spi_master_busy */
++	bbu_spic_busy_wait();
++
++	/* step 6. read DI/DO data #0 */
++	for (i = 0; i < n_rx; i++) 
++	{
++		q = i / 4;
++		r = i % 4;
++		reg = ra_inl(SPI_REG_DATA(q));
++		*(buf + i) = (u8)(reg >> (r * 8));
++	}
++
++	rc = 0;
++	
++	/* step #. disable more byte mode */
++	ra_and(SPI_REG_MASTER, ~(1 << 2));
++#if defined (CONFIG_RALINK_MT7621) && (defined (CONFIG_FB_MEDIATEK_TRULY) || defined(CONFIG_FB_MEDIATEK_ILITEK))
++	spin_unlock(&flash_lock);
++#endif
++	
++	return rc;
++}
++#endif
+ #endif // MORE_BUF_MODE //
+ 
+ int bbu_spic_trans(const u8 code, const u32 addr, u8 *buf, const size_t n_tx, const size_t n_rx, int flag, int lcd)
+@@ -838,6 +915,38 @@
+ 	return retval;
+ }
+ 
++#ifdef BBU_MODE
++#if defined (CONFIG_HUAYI_FLASH_CUSTOMER_ID)
++static int raspi_read_unique_id(void)
++{
++	u8 code = OPCODE_RD_UID;
++	int retval = 0;
++	u8  rxbuf[32] = {0};
++	
++#ifdef MORE_BUF_MODE
++	retval = huayi_bbu_spic_trans(code, 0, rxbuf, 1, 24);
++	
++	if ((rxbuf[16] == 0xc8) && (rxbuf[17] == 0x01) &&
++		(rxbuf[18] == 0x35) && (rxbuf[19] == 0xb5))
++	{
++			printk("flash is true,the customer id=0x%x,0x%x,0x%x,0x%x\n", rxbuf[16],
++        	rxbuf[17], rxbuf[18], rxbuf[19]);
++	}
++	else
++	{
++		while(1)
++		{
++			msleep(3000);
++			printk("flash is error,the customer id not find\n");
++		}
++	}
++#endif
++	
++	return retval;
++}
++#endif
++#endif
++
+ 
+ 
+ static int raspi_read_sr(u8 *val)
+@@ -1189,6 +1298,9 @@
+ 	jedec = (u32)((u32)(buf[1] << 24) | ((u32)buf[2] << 16) | ((u32)buf[3] <<8) | (u32)buf[4]);
+ 
+ #ifdef BBU_MODE
++#if defined (CONFIG_HUAYI_FLASH_CUSTOMER_ID)
++	raspi_read_unique_id();
++#endif
+ 	printk("flash manufacture id: %x, device id %x %x\n", buf[0], buf[1], buf[2]);
+ #else
+ 	printk("deice id : %x %x %x %x %x (%x)\n", buf[0], buf[1], buf[2], buf[3], buf[4], jedec);

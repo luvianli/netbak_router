@@ -1,0 +1,12 @@
+diff -uNr a/drivers/mtd/ralink/ralink_bbu_spi.c b/drivers/mtd/ralink/ralink_bbu_spi.c
+--- a/drivers/mtd/ralink/ralink_bbu_spi.c	2020-09-02 19:44:56.743692231 +0800
++++ b/drivers/mtd/ralink/ralink_bbu_spi.c	2020-09-02 19:44:44.563254555 +0800
+@@ -465,6 +465,8 @@
+ 	{ "MT25QL512AB",    	0x20, 0xba201044, 64 * 1024, 1024, 1 },
+ 	{ "GD25Q32B",           0xC8, 0x40160000, 64 * 1024, 64,  0 },
+ 	{ "GD25Q64B",           0xC8, 0x40170000, 64 * 1024, 128, 0 },
++	{ "ZB25VQ32B",       	0x5E, 0x40160000, 64 * 1024, 64,  0 },
++	{ "ZB25VQ64A",       	0x5E, 0x40170000, 64 * 1024, 128, 0 },
+ 	{ "GD25Q128C",          0xC8, 0x40180000, 64 * 1024, 256, 0 },
+ 	{ "MX25L12805D",        0x68, 0x4018c220, 64 * 1024, 256, 0 },// add by huayi 20191216
+ 	

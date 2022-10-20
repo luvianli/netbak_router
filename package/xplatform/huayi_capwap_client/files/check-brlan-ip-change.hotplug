@@ -1,0 +1,10 @@
+#!/bin/sh
+
+[ lan = "$INTERFACE" ] && {
+	[ br-lan = "$DEVICE" ] && {
+		([ ifupdate = "$ACTION" ] || [ ifup = "$ACTION" ])&&{
+			#echo 31-check-brlan-ip-change,$ACTION,$INTERFACE,$DEVICE > /dev/console
+			/etc/action.d/alarm check_ip_change
+		}
+	}
+}

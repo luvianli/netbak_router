@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=96
+
+USE_PROCD=1
+PROG=/usr/bin/huayi_capwap_client
+ENABLE=`uci -c /etc/config get thinap.global.enable`
+
+
+start_service() {
+	if [ "$ENABLE" = "1" ]; then
+		#FIT
+		echo "Start huayi_capwap_client" > /dev/console
+		procd_open_instance
+		procd_set_param command "$PROG" 
+		procd_set_param respawn 0
+		procd_close_instance
+	else
+		#FAT
+		echo "Huayi_capwap_client not start by config!" > /dev/console
+	fi
+}
+
+stop_service(){
+	service_stop "$PROG"
+	/usr/bin/huayi_cmd set system capwap_client_status 0
+	/usr/bin/huayi_cmd set system ac_assoc_time 0
+}

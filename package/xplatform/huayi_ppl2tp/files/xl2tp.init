@@ -1,0 +1,61 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=99
+
+BIN=/usr/sbin/xl2tp
+
+OPTIONS=/var/etc/options.xl2tp
+MAIN_CONFIG=/var/etc/xl2tp.conf
+
+setup_config() {
+	
+	enable=`uci -q get ppl2tp.xl2tp.enable`
+	
+	[ "$enable" -eq 0 ] && return 1
+	
+	username=`uci -q get ppl2tp.xl2tp.username`
+	password=`uci -q get ppl2tp.xl2tp.password`
+	server_ip=`uci -q get ppl2tp.xl2tp.server_ip`
+	route_type=`uci -q get ppl2tp.xl2tp.route_type`
+	
+	mkdir -p /var/run/xl2tpd
+	
+	mkdir -p /var/etc
+	cp /etc/ppp/options.xl2tp $OPTIONS
+	
+	
+	echo "user ${username}" >> $OPTIONS
+	echo "password ${password}" >> $OPTIONS
+
+	if [ "$route_type" = "1" ] ;then
+		echo "defaultroute" >> $OPTIONS
+		echo "replacedefaultroute" >> $OPTIONS
+	else
+		echo "nodefaultroute" >> $OPTIONS
+	fi
+
+	mkdir -p /var/etc
+	cp /etc/xl2tp/xl2tp.conf $MAIN_CONFIG
+	
+	echo "name = ${username}" >> $MAIN_CONFIG
+	echo "lns = ${server_ip}" >> $MAIN_CONFIG
+	echo "pppoptfile = ${OPTIONS}" >> $MAIN_CONFIG
+	return 0
+}
+
+start() {
+	setup_config
+	service_start $BIN -c $MAIN_CONFIG
+	sleep 2
+	echo 'c xl2tp' > /var/run/xl2tpd/l2tp-control 
+}
+
+stop() { 
+	echo 'd xl2tp' > /var/run/xl2tpd/l2tp-control
+	service_stop $BIN
+	rm -rf $MAIN_CONFIG
+	rm -rf $OPTIONS
+	rm -rf /var/log/xl2tp.log
+}
+

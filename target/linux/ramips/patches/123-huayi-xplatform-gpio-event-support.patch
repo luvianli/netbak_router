@@ -1,0 +1,302 @@
+--- a/drivers/char/ralink_gpio.c	2019-04-30 18:13:27.000000000 +0800
++++ b/drivers/char/ralink_gpio.c	2020-04-23 16:45:16.514044181 +0800
+@@ -38,6 +38,11 @@
+ #include <linux/interrupt.h>
+ #include <linux/fs.h>
+ #include <linux/sched.h>
++#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++#include <linux/types.h>
++#include <net/sock.h>
++#include <linux/netlink.h>
++#endif
+ #ifdef CONFIG_RALINK_GPIO_LED
+ #include <linux/timer.h>
+ #endif
+@@ -51,6 +56,25 @@
+ static  devfs_handle_t devfs_handle;
+ #endif
+ 
++#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++#define HUAYI_GPIO_NETLINK_MSG_TYPE			29
++#define HUAYI_GPIO_NETLINK_PORT_ID			49
++
++typedef struct huayi_gpio_event
++{ 
++	u_int8_t gpio_id;          
++	u_int8_t status; 			
++} gpio_change_event;
++
++static int __init huayi_gpio_event_init(void);
++static void __exit huayi_gpio_event_exit(void);
++int huayi_gpio_event_send_msg(int8_t *pbuf, uint16_t len);
++int huayi_gpio_event_send(struct huayi_gpio_event* e);
++static void huayi_gpio_notification(int gpio_no,int status);
++static void huayi_netlink_recv_gpio(struct sk_buff *skb);
++static void netlink_cfg_init(struct netlink_kernel_cfg *cfg);
++#endif
++
+ #define NAME			"ralink_gpio"
+ #define RALINK_GPIO_DEVNAME	"gpio"
+ int ralink_gpio_major = 252;
+@@ -142,6 +166,10 @@
+ static struct work_struct gpio_event_hold;
+ static struct work_struct gpio_event_click;
+ 
++#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++static struct work_struct gpio_event_press;
++static struct work_struct gpio_event_release;
++#endif
+ 
+ MODULE_DESCRIPTION("Ralink SoC GPIO Driver");
+ MODULE_AUTHOR("Winfred Lu <winfred_lu@ralinktech.com.tw>");
+@@ -161,6 +189,18 @@
+     ralink_gpio_notify_user(2);
+ }
+ 
++#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++void gpio_press_notify(struct work_struct *work)
++{ 
++	huayi_gpio_notification(ralink_gpio_irqnum, 1);
++}
++
++
++void gpio_release_notify(struct work_struct *work)
++{
++	huayi_gpio_notification(ralink_gpio_irqnum, 0);
++}
++#endif
+ 
+ int ralink_gpio_led_set(ralink_gpio_led_info led)
+ {
+@@ -824,6 +864,10 @@
+ #endif
+     INIT_WORK(&gpio_event_hold, gpio_hold_notify);
+     INIT_WORK(&gpio_event_click, gpio_click_notify);
++#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++	INIT_WORK(&gpio_event_press, gpio_press_notify);
++    INIT_WORK(&gpio_event_release, gpio_release_notify);
++#endif
+ 	return 0;
+ }
+ 
+@@ -2527,6 +2571,9 @@
+ #ifdef CONFIG_RALINK_GPIO_LED
+ 	ralink_gpio_led_init_timer();
+ #endif
++#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++	huayi_gpio_event_init();
++#endif
+ 	printk("Ralink gpio driver initialized\n");
+ 	return 0;
+ }
+@@ -2547,6 +2594,9 @@
+ #ifdef CONFIG_RALINK_GPIO_LED
+ 	del_timer(&ralink_gpio_led_timer);
+ #endif
++#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++	huayi_gpio_event_exit();
++#endif
+ 	printk("Ralink gpio driver exited\n");
+ }
+ 
+@@ -2673,6 +2723,119 @@
+ #if defined (CONFIG_FB_MEDIATEK_ILITEK) || defined (CONFIG_FB_MEDIATEK_TRULY)&& defined (CONFIG_RALINK_MT7621)
+ int lcdtimes=0;
+ #endif
++
++#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++static struct sock *gpio_netlinkfd = NULL;
++
++struct netlink_kernel_cfg netlink_cfg;
++
++int huayi_gpio_event_send_msg(int8_t *pbuf, uint16_t len)
++{
++    struct sk_buff *nl_skb;
++    struct nlmsghdr *nlh;
++    int ret;
++
++    nl_skb = nlmsg_new(len, GFP_ATOMIC);
++
++	if(!nl_skb)
++    {
++        printk("netlink_alloc_skb error\n");
++		
++        return -1;
++    }
++
++    nlh = nlmsg_put(nl_skb, 0, 0, 28, len, 0);
++
++	if(nlh == NULL)
++    {
++        printk("nlmsg_put() error\n");
++
++		nlmsg_free(nl_skb);
++
++		return -1;
++    }
++	
++    memcpy(nlmsg_data(nlh), pbuf, len);
++
++    ret = netlink_unicast(gpio_netlinkfd, nl_skb, HUAYI_GPIO_NETLINK_PORT_ID, MSG_DONTWAIT);
++
++    return ret;
++}
++
++
++int huayi_gpio_event_send(struct huayi_gpio_event* e)
++{
++	return	huayi_gpio_event_send_msg((char*)e,sizeof(struct huayi_gpio_event));
++}
++
++static void huayi_gpio_notification(int gpio_no,int status)
++{
++	struct huayi_gpio_event e;
++
++	memset(&e,0,sizeof(struct huayi_gpio_event));
++	
++	e.gpio_id = gpio_no;	
++
++	e.status = status;	
++
++	huayi_gpio_event_send(&e);
++	
++	return;
++}
++
++static void huayi_netlink_recv_gpio(struct sk_buff *skb)
++{
++    struct nlmsghdr *nlh = NULL;
++
++	struct huayi_notification *e;
++	
++    if(skb->len >= nlmsg_total_size(0))
++    {
++        nlh = nlmsg_hdr(skb);
++
++		e = NLMSG_DATA(nlh);
++    }
++} 
++
++static void netlink_cfg_init(struct netlink_kernel_cfg *cfg)
++{
++	memset(cfg,0,sizeof(cfg));
++
++	cfg->groups = 0;   /*unicast*/
++
++	cfg->input = huayi_netlink_recv_gpio;
++
++	return;
++}
++
++static int __init huayi_gpio_event_init(void)
++{
++	netlink_cfg_init(&netlink_cfg);
++	
++    gpio_netlinkfd = netlink_kernel_create(&init_net, HUAYI_GPIO_NETLINK_MSG_TYPE, &netlink_cfg);
++
++	if(!gpio_netlinkfd)
++    {
++        printk("can not create a netlink socket!\n");
++
++		return -1;
++    }
++
++	//printk("huayi_gpio_event_init!\n");
++
++	return 0;
++}
++
++static void __exit huayi_gpio_event_exit(void)
++{
++	sock_release(gpio_netlinkfd->sk_socket);
++
++	//printk("huayi_gpio_event exit\n!");
++
++	return;
++}
++#endif
++
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+ void ralink_gpio_irq_handler(unsigned int irq, struct irqaction *irqaction)
+ #else
+@@ -2754,6 +2917,12 @@
+ 				 * it might be floating. We ignore it.
+ 				 */
+ 			}
++		#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++			else {
++				record[i].rising = now;
++				schedule_work(&gpio_event_release);
++			}
++		#else
+ 			else {
+ 				record[i].rising = now;
+ 				if (time_before(now, record[i].falling + 200L)) {
+@@ -2767,9 +2936,13 @@
+ 					schedule_work(&gpio_event_hold);
+ 				}
+ 			}
++		#endif
+ 		}
+ 		else { //falling edge
+ 			 record[i].falling = now;
++		#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++			schedule_work(&gpio_event_press);
++		#endif
+ 			#if defined (CONFIG_FB_MEDIATEK_ILITEK) || defined (CONFIG_FB_MEDIATEK_TRULY)&& defined (CONFIG_RALINK_MT7621)
+ 			
+ 			  lcdtimes++;
+@@ -2792,6 +2965,12 @@
+ 			if (record[i].rising != 0 && time_before_eq(now,
+ 						record[i].rising + 40L)) {
+ 			}
++		#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++			else {
++				record[i].rising = now;
++				schedule_work(&gpio_event_release);
++			}
++		#else
+ 			else {
+ 				record[i].rising = now;
+ 				if (time_before(now, record[i].falling + 200L)) {
+@@ -2801,9 +2980,13 @@
+ 					schedule_work(&gpio_event_hold);
+ 				}
+ 			}
++		#endif
+ 		}
+ 		else {
+ 			record[i].falling = now;
++		#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++			schedule_work(&gpio_event_press);
++		#endif
+ 		}
+ 		break;
+ 	}
+@@ -2843,6 +3026,12 @@
+ 				 * it might be floating. We ignore it.
+ 				 */
+ 			}
++		#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++			else {
++				record[i].rising = now;
++				schedule_work(&gpio_event_release);
++			}
++		#else
+ 			else {
+ 				record[i].rising = now;
+ 				if (time_before(now, record[i].falling + 200L)) {
+@@ -2856,9 +3045,13 @@
+ 					schedule_work(&gpio_event_hold);
+ 				}
+ 			}
++		#endif
+ 		}
+ 		else { //falling edge
+ 			record[i].falling = now;
++		#if defined (CONFIG_HUAYI_SUPPORT_GPIO_EVENT)
++			schedule_work(&gpio_event_press);
++		#endif
+ 		}
+ 		break;
+ 	}

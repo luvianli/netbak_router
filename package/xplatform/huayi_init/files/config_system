@@ -1,0 +1,110 @@
+#!/bin/sh /etc/rc.common
+
+# run 
+START=11
+
+. /lib/functions/system.sh
+
+# only update about and interface
+config_status_about(){
+	system_type=`cat /proc/cpuinfo | grep 'system type' | cut -d":" -f2-10 | cut -d" " -f2-10`
+	cpu_model=`cat /proc/cpuinfo | grep "cpu model" | sort -u | cut -d":" -f2-10 | cut -d" " -f2-10`
+	buildtime=`cat /etc/buildtime`
+	product_desc=`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.product_desc`
+	company_copyright=`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.company_copyright`
+	product_name=`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.product_name`
+	
+	huayi_cmd set about system_type 		"$system_type"
+	huayi_cmd set about cpu_model			"$cpu_model"
+	huayi_cmd set about cpu_cores			`cat /proc/cpuinfo | grep 'core' | sort -u | wc -l`
+	huayi_cmd set about cpu_processors		`cat /proc/cpuinfo | grep 'processor' | sort -u | wc -l`
+	huayi_cmd set about flash_size			`printf %d 0x$(cat /proc/mtd | grep "firmware" | awk '{print $2}')`
+	huayi_cmd set about fw_version			`cat /etc/openwrt_version`
+	huayi_cmd set about buildtime			"$buildtime"
+	huayi_cmd set about uboot_version 		`strings /dev/mtd1 | grep -E "U-Boot|built" | head -1 | awk '{print $2}'`
+	huayi_cmd set about webui_version 		`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.webui_version`
+	huayi_cmd set about product_name 		"$product_name"
+	huayi_cmd set about product_model 		`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.product_model`
+	huayi_cmd set about product_sn			12345678
+	huayi_cmd set about product_desc		"$product_desc"
+	huayi_cmd set about company_name 		"`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.company_name`"
+	huayi_cmd set about enterprise_oid		`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.enterprise_oid`
+	huayi_cmd set about company_website		`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.company_website`
+	huayi_cmd set about company_contacts 	`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.company_contacts`
+	huayi_cmd set about company_address		`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.company_address`
+	huayi_cmd set about company_copyright	"$company_copyright"
+	huayi_cmd set about domain_name			`uci get -c /etc/huayi/brand_info enterprise_info.about_soft.domain_name`
+	return
+}
+
+config_status_system(){	
+	
+	huayi_cmd set system internet_type 		`uci get -c /etc/huayi/brand_info capability.cap.internet_type`
+	
+	return
+}
+
+huayi_mac_check(){
+	local base_addr=$(echo $(mtd_get_mac_binary Factory 4 | tr '[A-Z]' '[a-z]'))
+	local config_lan_addr=$(echo $(uci -q get network.lan.macaddr) | tr '[A-Z]' '[a-z]')
+	local config_wan_addr=$(echo $(uci -q get network.wan.def_macaddr) | tr '[A-Z]' '[a-z]')
+	local eth0_addr=`cat /sys/class/net/eth0/address`
+	local sys_mode=$(uci -q get system.mode.opmode)
+	
+	lan_hwaddr=$(macaddr_add "$base_addr" 2)
+	
+	[ "$lan_hwaddr" != "$eth0_addr" ] && {
+		ifconfig eth0 hw ether $lan_hwaddr
+	}
+	
+	wan_hwaddr=$(macaddr_add "$base_addr" 3)
+
+	if [ "$lan_hwaddr" == "00:00:00:00:00:00" ] || [ "$lan_hwaddr" == "ff:ff:ff:ff:ff:ff" ]
+	then
+		`uci set network.lan.macaddr=00:0A:12:88:88:88`                                    
+                                                                                             
+                `uci set network.wan.macaddr=00:0A:12:88:88:89`                                    
+                `uci set network.wan.def_macaddr=00:0A:12:88:88:89` 
+				
+				[ -f /etc/config/huayi_modem ] && {
+					`uci set network.wan4g.macaddr=00:0A:12:88:88:89`                                    
+					`uci set network.wan4g.def_macaddr=00:0A:12:88:88:89` 
+				}
+                                                                                                
+                `uci commit network`
+		return
+	fi
+		
+	if [ "$lan_hwaddr" != "$config_lan_addr" ] || [ "$wan_hwaddr" != "$config_wan_addr" ]
+	then
+		wan_hwaddr=$(echo $wan_hwaddr | tr '[a-z]' '[A-Z]')		
+		lan_hwaddr=$(echo $lan_hwaddr | tr '[a-z]' '[A-Z]')				
+
+		`uci set network.lan.def_macaddr=$lan_hwaddr`		
+		`uci set network.wan.def_macaddr=$wan_hwaddr`				
+		if [ $sys_mode -eq 0 ] || [ $sys_mode -eq 1 ]		
+		then			
+			`uci set network.lan.macaddr=$lan_hwaddr`			
+			`uci set network.wan.macaddr=$wan_hwaddr`		
+		elif [ $sys_mode -eq 2 ]		
+		then			
+			`uci set network.wan.macaddr=$wan_hwaddr`		
+		else			
+			`uci set network.lan.macaddr=$lan_hwaddr`		
+		fi				
+		[ -f /etc/config/huayi_modem ] && {
+			`uci set network.wan.macaddr=$wan_hwaddr`
+			`uci set network.wan4g.macaddr=$wan_hwaddr`
+			`uci set network.wan4g.def_macaddr=$wan_hwaddr`
+		}
+		`uci commit network`
+	fi
+}
+
+start() {
+	touch /var/run/huayi_cmd.lock
+	huayi_mac_check
+	config_status_about
+	config_status_system
+}
+

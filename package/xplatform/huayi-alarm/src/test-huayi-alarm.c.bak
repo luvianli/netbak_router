@@ -1,0 +1,461 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <cms-universal/cms_types.h>
+#include <cms-universal/cms_events.h>
+#include <cms-universal/cms_alarm.h>
+
+int main(int argc, char* argv[])
+{
+    int sk, i, ret;
+    char buf[ALT_MAX_PAYLOAD];
+    struct cms_notification *e;
+    CMS_EVENTS_TYPE eid[1] = {CMS_EVENTS_NOTE};
+
+    char strmac[18];
+
+    printf("test-cms-kalarm started %s\n", argv[1]);
+    sk = cms_events_create();
+    ret = cms_events_add(eid, 1, sk);
+    if (ret != EVENTS_SUCC) {
+        printf("cms_events_add failed!\n");
+    }
+
+    while(1) {
+        printf("waiting for notification...\n");
+        ret = cms_events_recv(sk, -1, buf, ALT_MAX_PAYLOAD);
+        if (ret == 0) {
+            printf("cms_msgq_recvandwait timeout\n");
+        } else if (ret == -1) {
+            printf("cms_msgq_recvandwait error\n");
+        } else {
+            printf("notification received:");
+            e = (struct cms_notification*)buf;
+            if (e->time > 0) {
+                printf("alarm : %d - %s\n", e->notification_id,
+                       CMS_NOTE_ID_TOSTR(e->notification_id));
+                printf("type  : %s(%d)\n",
+                       CMS_NOTE_TYPE_TOSTR(e->type), e->type);
+                printf("reason: %s\n", e->reason);
+                printf("status: %lu\n", e->status);
+                printf("time  : %lu\n", e->time);
+
+                switch (e->notification_id) {
+                case CNOTE_STA_ASSOCIATION:
+                    printf("device_id %s\n", e->info.sta_association.device_id);
+                    printf("vap_id %d\n", e->info.sta_association.vap_id);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.sta_association.bssid,
+                        strmac, sizeof(strmac));
+                    printf("bssid %s\n", strmac);
+                    printf("ssid %s\n", e->info.sta_association.ssid);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.sta_association.client_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("client %s\n", strmac);
+                    printf("status %s(%d)\n",
+                           CMS_NOTE_ASSOSTAT_TOSTR(e->info.sta_association.status),
+                           e->info.sta_association.status);
+                    printf("auth_mode %d\n", e->info.sta_association.auth_mode);
+                    printf("channel %d\n", e->info.sta_association.channel);
+                    printf("rssi %d\n", e->info.sta_association.rssi);
+                    printf("qos %d\n", e->info.sta_association.qos);
+                    printf("reason_code %d\n", e->info.sta_association.reason_code);
+                    printf("reason %s\n", e->info.sta_association.reason);
+                    break;
+                case CNOTE_AP_MT_WORK_MODE_CHG:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_mt_work_mode_chg.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.ap_mt_work_mode_chg.device_id);
+                    printf("pre_monitor_mode %d\n", e->info.ap_mt_work_mode_chg.pre_monitor_mode);
+                    printf("cur_monitor_mode %d\n", e->info.ap_mt_work_mode_chg.cur_monitor_mode);
+                    break;
+                case CNOTE_AP_OFFLINE:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_offline.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    break;
+                case CNOTE_AP_ONLINE:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_online.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    break;
+                case CNOTE_AP_SW_UPDATE_FAIL:
+                    printf("fail_reason %s\n", e->info.ap_sw_update_fail.fail_reason);
+                    printf("current_fw_ver %s\n", e->info.ap_sw_update_fail.current_fw_ver);
+                    printf("update_fw_ver %s\n", e->info.ap_sw_update_fail.update_fw_ver);
+                    printf("filename %s\n", e->info.ap_sw_update_fail.filename);
+                    break;
+                case CNOTE_CONFIGURATION_UPDATE:
+                    printf("config %s\n", e->info.configuration_update.config);
+                    break;
+                case CNOTE_CONFIGURATION_ERROR:
+                    printf("config %s\n", e->info.configuration_error.config);
+                    break;
+                case CNOTE_HEARTBEAT:
+                    printf("ip %u.%u.%u.%u\n",
+                           (e->info.heartbeat.ip_addr >> 24),
+                           ((e->info.heartbeat.ip_addr >> 16) & 0xff),
+                           ((e->info.heartbeat.ip_addr >> 8) & 0xff),
+                           (e->info.heartbeat.ip_addr & 0xff));
+                    break;
+                case CNOTE_IP_ADDR_CHG:
+                    printf("cur %u.%u.%u.%u\n",
+                           (e->info.ip_addr_chg.cur_ip_addr >> 24),
+                           ((e->info.ip_addr_chg.cur_ip_addr >> 16) & 0xff),
+                           ((e->info.ip_addr_chg.cur_ip_addr >> 8) & 0xff),
+                           (e->info.ip_addr_chg.cur_ip_addr & 0xff));
+                    printf("pre %u.%u.%u.%u\n",
+                           (e->info.ip_addr_chg.pre_ip_addr >> 24),
+                           ((e->info.ip_addr_chg.pre_ip_addr >> 16) & 0xff),
+                           ((e->info.ip_addr_chg.pre_ip_addr >> 8) & 0xff),
+                           (e->info.ip_addr_chg.pre_ip_addr & 0xff));
+                    break;
+                case CNOTE_SSID_KEY_CONFLICT:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ssid_key_conflict.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.ssid_key_conflict.device_id);
+                    printf("vap_id1 %d\n", e->info.ssid_key_conflict.vap_id1);
+                    printf("vap_id2 %d\n", e->info.ssid_key_conflict.vap_id2);
+                    A_MACADDR_TOSTR_18((A_MACADDR*)e->info.ssid_key_conflict.bssid1, strmac, sizeof(strmac));
+                    printf("bssid1 %s\n", strmac);
+                    A_MACADDR_TOSTR_18((A_MACADDR*)e->info.ssid_key_conflict.bssid2, strmac, sizeof(strmac));
+                    printf("bssid2 %s\n", strmac);
+                    break;
+                case CNOTE_CPU_USAGE_TOO_HIGH_RECOV:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.cpu_usage_too_high.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("usage %d\n",
+                           e->info.cpu_usage_too_high.cpu_usage);
+                    break;
+                case CNOTE_CPU_USAGE_TOO_HIGH:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.cpu_usage_too_high.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("usage %d\n",
+                           e->info.cpu_usage_too_high.cpu_usage);
+                    break;
+                case CNOTE_MEM_USAGE_TOO_HIGH_RECOV:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.mem_usage_too_high_recov.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("usage %d\n",
+                           e->info.mem_usage_too_high_recov.mem_usage);
+                    break;
+                case CNOTE_MEM_USAGE_TOO_HIGH:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.mem_usage_too_high.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("usage %d\n",
+                           e->info.mem_usage_too_high.mem_usage);
+                    break;
+                case CNOTE_NTP_TIMESYNC_FAIL:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ntp_timesync_fail.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    break;
+                case CNOTE_SAFE_MODE_ON:
+                case CNOTE_SAFE_MODE_OFF:
+                    printf("reason %s\n", e->info.safe_mode.reason);
+                    break;
+                case CNOTE_SYS_OVERHEAT:
+                case CNOTE_SYS_OVERHEAT_RECOV:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.sys_overheat.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("temperature %d\n",
+                           e->info.sys_overheat.temperature);
+                    printf("threshold %d\n",
+                           e->info.sys_overheat.threshold);
+                    break;
+                case CNOTE_BRIDGE_HEARTBEAT:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.bridge_heartbeat.bssid_master, strmac, sizeof(strmac));
+                    printf("bssid_master %s\n", strmac);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.bridge_heartbeat.bssid_slave, strmac, sizeof(strmac));
+                    printf("bssid_slave %s\n", strmac);
+                    break;
+                case CNOTE_BRIDGE_LOW_SS:
+                case CNOTE_BRIDGE_LOW_SS_RECOV:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.bridge_low_ss.bssid_master, strmac, sizeof(strmac));
+                    printf("bssid_master %s\n", strmac);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.bridge_low_ss.bssid_slave, strmac, sizeof(strmac));
+                    printf("bssid_slave %s\n", strmac);
+                    printf("rssi %d\n", e->info.bridge_low_ss.rssi);
+                    break;
+                case CNOTE_BRIDGE_CONNECTED:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.bridge_heartbeat.bssid_master, strmac, sizeof(strmac));
+                    printf("bssid_master %s\n", strmac);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.bridge_heartbeat.bssid_slave, strmac, sizeof(strmac));
+                    printf("bssid_slave %s\n", strmac);
+                    break;
+                case CNOTE_BRIDGE_DISCONNECTED:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.bridge_heartbeat.bssid_master, strmac, sizeof(strmac));
+                    printf("bssid_master %s\n", strmac);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.bridge_heartbeat.bssid_slave, strmac, sizeof(strmac));
+                    printf("bssid_slave %s\n", strmac);
+                    break;
+                case CNOTE_AP_CHANNEL_CHG:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_channel_chg.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.ap_channel_chg.device_id);
+                    printf("wireless_mode %s\n", e->info.ap_channel_chg.wireless_mode);
+                    printf("curr_channel %d\n", e->info.ap_channel_chg.curr_channel);
+                    printf("prev_channel %d\n", e->info.ap_channel_chg.prev_channel);
+                    printf("change_mode %d\n", e->info.ap_channel_chg.change_mode);
+                    break;
+                case CNOTE_RADIO_DOWN:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.radio_down.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.radio_down.device_id);
+                    printf("reason %s\n", e->info.radio_down.reason);
+                    break;
+                case CNOTE_RADIO_DOWN_RECOV:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.radio_down_recov.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.radio_down_recov.device_id);
+                    printf("reason %s\n", e->info.radio_down_recov.reason);
+                    break;
+                case CNOTE_AP_STA_FULL:
+                    printf("max_asso_client %d\n", e->info.ap_sta_full.max_asso_client);
+                    printf("reason %s\n", e->info.ap_sta_full.reason);
+                    break;
+                case CNOTE_AP_STA_FULL_RECOVER:
+                    printf("max_asso_client %d\n", e->info.ap_sta_full_recover.max_asso_client);
+                    printf("reason %s\n", e->info.ap_sta_full_recover.reason);
+                    break;
+                case CNOTE_AP_CO_INTERF_DETECTED:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_co_interf_detected.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("device_id %s\n",
+                           e->info.ap_co_interf_detected.device_id);
+                    printf("channel %d\n", e->info.ap_co_interf_detected.channel);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_co_interf_detected.bssid,
+                        strmac, sizeof(strmac));
+                    printf("bssid %s\n", strmac);
+                    break;
+                case CNOTE_AP_CO_INTERF_CLEAR:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_co_interf_clear.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("device_id %s\n",
+                           e->info.ap_co_interf_clear.device_id);
+                    printf("channel %d\n", e->info.ap_co_interf_clear.channel);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_co_interf_clear.bssid,
+                        strmac, sizeof(strmac));
+                    printf("bssid %s\n", strmac);
+                    break;
+                case CNOTE_AP_NEIGHBOR_INTERF_DETECTED:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_neighbor_interf_detected.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("device_id %s\n",
+                           e->info.ap_neighbor_interf_detected.device_id);
+                    printf("self %d\n",
+                           e->info.ap_neighbor_interf_detected.self_channel);
+                    printf("other %d\n",
+                           e->info.ap_neighbor_interf_detected.other_channel);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_neighbor_interf_detected.bssid,
+                        strmac, sizeof(strmac));
+                    printf("bssid %s\n", strmac);
+                    break;
+                case CNOTE_AP_NEIGHBOR_INTERF_CLEAR:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_neighbor_interf_clear.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("device_id %s\n",
+                           e->info.ap_neighbor_interf_clear.device_id);
+                    printf("self %d\n",
+                           e->info.ap_neighbor_interf_clear.self_channel);
+                    printf("other %d\n",
+                           e->info.ap_neighbor_interf_clear.other_channel);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_neighbor_interf_clear.bssid,
+                        strmac, sizeof(strmac));
+                    printf("bssid %s\n", strmac);
+                    break;
+                case CNOTE_OTHER_DEV_INTERF_DETECTED:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.other_dev_interf_detected.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("device_id %s\n",
+                           e->info.other_dev_interf_detected.device_id);
+                    printf("channel %d\n",
+                           e->info.other_dev_interf_detected.channel);
+                    break;
+                case CNOTE_OTHER_DEV_INTERF_CLEAR:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.other_dev_interf_clear.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("device_id %s\n",
+                           e->info.other_dev_interf_clear.device_id);
+                    printf("channel %d\n",
+                           e->info.other_dev_interf_clear.channel);
+                    break;
+                case CNOTE_STA_INTERF_DETECTED:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.sta_interf_detected.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("device_id %s\n",
+                           e->info.sta_interf_detected.device_id);
+                    printf("channel %d\n",
+                           e->info.sta_interf_detected.channel);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.sta_interf_detected.client_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("client %s\n", strmac);
+                    break;
+                case CNOTE_STA_INTERF_CLEAR:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.sta_interf_clear.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("mac %s\n", strmac);
+                    printf("device_id %s\n",
+                           e->info.sta_interf_clear.device_id);
+                    printf("channel %d\n",
+                           e->info.sta_interf_clear.channel);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.sta_interf_clear.client_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("client %s\n", strmac);
+                    break;
+                case CNOTE_CHANNEL_SCAN_COMPLETED:
+                    printf("device_id %s\n",
+                           e->info.channel_scan_completed.device_id);
+                    break;
+                case CNOTE_WIRELESS_INSTRUSION_DETECTED:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.wireless_instrusion_detected.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.wireless_instrusion_detected.device_id);
+					A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.wireless_instrusion_detected.attack_mac,
+                        strmac, sizeof(strmac));
+					printf("bssid is %s\n",e->info.wireless_instrusion_detected.bssid);
+					printf("attack_mac is %s\n",strmac);
+                    printf("detect_type %d\n", e->info.wireless_instrusion_detected.detect_type);
+                    break;
+                case CNOTE_ADDRESS_REDIRECTION_ATTACK:
+                case CNOTE_LOW_SAFE_LEVEL_ATTACK:
+                case CNOTE_STA_REPITITIVE_ATTACK:
+                case CNOTE_TAMPER_ATTACK:
+                case CNOTE_USER_WITH_INVALID_CERT_INBREAK_NETWORK:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.tamper_attack.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.tamper_attack.device_id);
+                    printf("vap_id %d\n", e->info.tamper_attack.vap_id);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.tamper_attack.bssid,
+                        strmac, sizeof(strmac));
+                    printf("bssid %s\n", strmac);
+                    printf("ssid %s\n", e->info.tamper_attack.ssid);
+                    break;
+                case CNOTE_STA_UPLINK_BW_OVERRUN:
+                case CNOTE_STA_UPLINK_BW_OVERRUN_RECOV:
+                case CNOTE_STA_DNLINK_BW_OVERRUN:
+                case CNOTE_STA_DNLINK_BW_OVERRUN_RECOV:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.sta_bandwidth_overrun.client_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("client_macaddr %s\n", strmac);
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.sta_bandwidth_overrun.bssid,
+                        strmac, sizeof(strmac));
+                    printf("bssid %s\n", strmac);
+                    printf("ssid %s\n", e->info.sta_bandwidth_overrun.ssid);
+                    printf("throughput %d\n", e->info.sta_bandwidth_overrun.throughput);
+                    printf("threshold %d\n", e->info.sta_bandwidth_overrun.threshold);
+                    break;
+                case CNOTE_AP_BEACON_STUCK:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_bstuck.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.ap_bstuck.device_id);
+                    printf("reason %s\n", e->info.ap_bstuck.reason);
+                    break;
+                case CNOTE_AP_BEACON_STUCK_CLEAR:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_bstuck.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.ap_bstuck.device_id);
+                    printf("reason %s\n", e->info.ap_bstuck.reason);
+                    break;
+                case CNOTE_AP_TXBUF_LEAK:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_txbuf_leak.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.ap_txbuf_leak.device_id);
+                    printf("reason %s\n", e->info.ap_txbuf_leak.reason);
+                    break;
+                case CNOTE_AP_TXBUF_LEAK_CLEAR:
+                    A_MACADDR_TOSTR_18(
+                        (A_MACADDR*)e->info.ap_txbuf_leak.ap_macaddr,
+                        strmac, sizeof(strmac));
+                    printf("ap_macaddr %s\n", strmac);
+                    printf("device_id %s\n", e->info.ap_txbuf_leak.device_id);
+                    printf("reason %s\n", e->info.ap_txbuf_leak.reason);
+                    break;
+				case CNOTE_BUTTON_PRESS:
+					break;
+				case CNOTE_BUTTON_RELEASE:
+					break;
+				case CNOTE_AP_LOCATION_BEGIN:
+					break;
+				case CNOTE_AP_LOCATION_END:
+					break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
+    printf("test-cms-kalarm exiting\n");
+    cms_events_del(eid, 1, sk);
+    cms_events_destroy(sk);
+    return 0;
+}
+

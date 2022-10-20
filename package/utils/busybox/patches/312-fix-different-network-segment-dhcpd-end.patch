@@ -1,0 +1,45 @@
+--- a/networking/udhcp/dhcpd.c
++++ b/networking/udhcp/dhcpd.c
+@@ -352,6 +352,11 @@
+ 	 * otherwise NOMMU machines will parse config twice */
+ 	read_config(argv[0] ? argv[0] : DHCPD_CONF_FILE);
+ 
++	if((server_config.start_ip & server_config.netmask) != (server_config.end_ip & server_config.netmask))
++	{
++		return 0;
++	}
++
+ 	/* Make sure fd 0,1,2 are open */
+ 	bb_sanitize_stdio();
+ 	/* Equivalent of doing a fflush after every \n */
+
+--- a/networking/udhcp/dhcpd.h
++++ b/networking/udhcp/dhcpd.h
+@@ -39,6 +39,7 @@
+ 	/* start,end are in host order: we need to compare start <= ip <= end */
+ 	uint32_t start_ip;              /* start address of leases, in host order */
+ 	uint32_t end_ip;                /* end of leases, in host order */
++	uint32_t netmask;                /* netmask */
+ 	uint32_t max_lease_sec;         /* maximum lease time (host order) */
+ 	uint32_t min_lease_sec;         /* minimum lease time a client can request */
+ 	uint32_t max_leases;            /* maximum number of leases (including reserved addresses) */
+
+--- a/networking/udhcp/files.c
++++ b/networking/udhcp/files.c
+@@ -65,6 +65,7 @@
+ 	/* keyword        handler           variable address               default */
+ 	{"start"        , udhcp_str2nip   , &server_config.start_ip     , "192.168.0.20"},
+ 	{"end"          , udhcp_str2nip   , &server_config.end_ip       , "192.168.0.254"},
++	{"netmask"      , udhcp_str2nip   , &server_config.netmask      , "255.255.255.0"},
+ 	{"interface"    , read_str        , &server_config.interface    , "eth0"},
+ 	/* Avoid "max_leases value not sane" warning by setting default
+ 	 * to default_end_ip - default_start_ip + 1: */
+@@ -115,6 +116,8 @@
+ 
+ 	server_config.start_ip = ntohl(server_config.start_ip);
+ 	server_config.end_ip = ntohl(server_config.end_ip);
++	server_config.netmask = ntohl(server_config.netmask);
++	
+ }
+ 
+ void FAST_FUNC write_leases(void)

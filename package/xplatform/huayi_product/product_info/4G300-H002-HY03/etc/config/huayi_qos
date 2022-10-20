@@ -1,0 +1,4 @@
+config qos 'qos'
+	option qos_mode '0'		#0 is disable 1 is enable
+	option total_upspeed	 	'102400'
+	option total_dwspeed	 	'102400'

@@ -1,0 +1,16 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=99
+
+USE_PROCD=1
+PROG=/usr/sbin/hy_sc
+
+
+start_service() {
+    /usr/sbin/hy_sc &
+}
+
+stop_service(){
+	service_stop "$PROG"
+}

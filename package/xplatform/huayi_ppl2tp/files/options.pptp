@@ -1,0 +1,21 @@
+debug
+noauth
+plugin pptp.so
+refuse-eap
+ifname pptp-vpn
+linkname pptp
+refuse-chap
+refuse-mschap
+nobsdcomp
+usepeerdns
+noipdefault
+mtu 1450
+mru 1450
+persist
+holdoff 30
+lcp-echo-interval 20
+lcp-echo-failure 3
+ipcp-accept-remote
+#ipcp-accept-local
+ip-up-script /etc/ppp/pptp-up
+ip-down-script /etc/ppp/pptp-down

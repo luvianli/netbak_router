@@ -1,0 +1,258 @@
+diff -uNr a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/wsc.c b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/wsc.c
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/wsc.c	2020-08-20 17:45:45.951706122 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/wsc.c	2020-08-20 17:45:14.847966548 +0800
+@@ -36,6 +36,10 @@
+ /*#ifdef LINUX */
+ /*#include <net/iw_handler.h> */
+ /*#endif*/
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++#include "ath_dal_main.h"
++#endif
++
+ 
+ #define WSC_UPNP_MSG_TIMEOUT            (150 * OS_HZ)
+ #define RTMP_WSC_NLMSG_SIGNATURE_LEN    8
+@@ -9211,6 +9215,23 @@
+ 
+ #ifdef CONFIG_AP_SUPPORT
+ #ifdef APCLI_SUPPORT
++
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++void WpsSendNetLinkMsg(UCHAR encrtyption,UCHAR *key)
++{
++	struct huayi_port_event event;
++	
++	memset(&event,0,sizeof(struct huayi_port_event));
++	
++	event.status = 1;
++	event.port_id = WLAN_58G_WPS_PORT_NUM;
++	event.encryption = encrtyption;
++	memcpy(event.key,key,sizeof(event.key));
++
++	huayi_port_event_send(&event);
++}
++#endif
++
+ void    WscWriteConfToApCliCfg(
+ 	IN  PRTMP_ADAPTER pAd,
+ 	IN  PWSC_CTRL pWscControl,
+@@ -9223,6 +9244,11 @@
+ 	INT old_if_type = pObj->ioctl_if_type;
+ 	struct _SECURITY_CONFIG *pOldSecConfig;
+ 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	UCHAR wpa_key[65] = {0};
++	UCHAR encrtyption = 0;
++#endif
++
+ 	pOldSecConfig = pObj->pSecConfig;
+ 
+ 	if (CurApIdx >= MAX_APCLI_NUM)
+@@ -9263,6 +9289,30 @@
+ 					pWscControl->WpaPskLen = (INT) pCredential->KeyLength;
+ 					NdisZeroMemory(pWscControl->WpaPsk, 64);
+ 					NdisMoveMemory(pWscControl->WpaPsk, pCredential->Key, pWscControl->WpaPskLen);
++
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++					if(pCredential->AuthType == WSC_AUTHTYPE_WPAPSK)
++					{						
++						encrtyption |= WLAN_AUTHTYPE_WPAPSK;
++					}					
++					else if(pCredential->AuthType == WSC_AUTHTYPE_WPA2PSK)
++					{							
++						encrtyption |= WLAN_AUTHTYPE_WPA2PSK;
++					}
++
++					if(pCredential->EncrType == WSC_ENCRTYPE_TKIP)
++					{							
++						encrtyption |= WLAN_ENCRTYPE_TKIP;
++					}						
++					else if(pCredential->EncrType == WSC_ENCRTYPE_AES)
++					{						
++						encrtyption |= WLAN_ENCRTYPE_AES;
++					}
++					
++					memcpy(wpa_key,pWscControl->WpaPsk, pWscControl->WpaPskLen);
++					WpsSendNetLinkMsg(encrtyption,wpa_key);
++					
++#endif
+ 					os_zero_mem(pApCliTab->wdev.SecConfig.PSK, LEN_PSK + 1);
+ 					os_move_mem(pApCliTab->wdev.SecConfig.PSK, pCredential->Key, pCredential->KeyLength);
+ 					MTWF_LOG(DBG_CAT_SEC, CATSEC_WPS, DBG_LVL_TRACE, ("WpaPskLen = %d\n", pWscControl->WpaPskLen));
+@@ -9296,6 +9346,13 @@
+ 				}
+ 			}
+ 		}
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++		else
++		{
++			encrtyption = 0;
++			WpsSendNetLinkMsg(encrtyption,wpa_key);
++		}
++#endif
+ 	}
+ #ifdef CONFIG_MAP_SUPPORT
+ 	/* When MAP Turnkey is Enabled, WAPP uses profile and not driver */
+diff -uNr a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/mgmt/mgmt_entrytb.c b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/mgmt/mgmt_entrytb.c
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/mgmt/mgmt_entrytb.c	2020-08-20 17:45:45.927706122 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/mgmt/mgmt_entrytb.c	2020-08-20 17:44:59.858157138 +0800
+@@ -29,6 +29,76 @@
+ #include <ap_vow.h>
+ #endif /* VOW_SUPPORT */
+ 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++#include "ath_dal_main.h"
++
++void ApCliSendNetLinkMsg(int status)
++{
++	struct huayi_port_event event;
++	
++	memset(&event,0,sizeof(struct huayi_port_event));
++	
++	event.status = status;
++	event.port_id = WLAN_58G_PORT_NUM;
++
++	huayi_port_event_send(&event);
++}
++
++
++INT ApCliReportConnStatus(RTMP_ADAPTER *pAd)
++{
++	INT i = 0;
++	UCHAR ifIndex;
++	BOOLEAN bConnect = FALSE;
++	struct wifi_dev *wdev = NULL;
++
++	ifIndex = 0;
++	wdev = &pAd->StaCfg[ifIndex].wdev;
++	if (!wdev)
++		return FALSE;
++
++	if (((GetAssociatedAPByWdev(pAd, wdev)) != NULL) && (pAd->StaCfg[ifIndex].SsidLen != 0)) {
++		for (i = 0; VALID_UCAST_ENTRY_WCID(pAd, i); i++) {
++			PMAC_TABLE_ENTRY pEntry = &pAd->MacTab.Content[i];
++			STA_TR_ENTRY *tr_entry = &pAd->MacTab.tr_entry[i];
++
++			if (IS_ENTRY_PEER_AP(pEntry)
++				&& (pEntry->Sst == SST_ASSOC)
++				&& (tr_entry->PortSecured == WPA_802_1X_PORT_SECURED)) {
++				if (pEntry->wdev == &pAd->StaCfg[ifIndex].wdev) {
++					MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_OFF,
++							 ("ApCli%d         Connected AP : %02X:%02X:%02X:%02X:%02X:%02X   SSID:%s\n",
++							  ifIndex, PRINT_MAC(pEntry->Addr), pAd->StaCfg[ifIndex].Ssid));
++					bConnect = TRUE;
++					ApCliSendNetLinkMsg(1);
++				}
++			}
++			else if (IS_ENTRY_REPEATER(pEntry)
++					 && (pEntry->Sst == SST_ASSOC)
++					 && (tr_entry->PortSecured == WPA_802_1X_PORT_SECURED)) {
++				if (pEntry->wdev == &pAd->StaCfg[ifIndex].wdev) {
++					MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_OFF,
++							 ("Rept[wcid=%-3d] Connected AP : %02X:%02X:%02X:%02X:%02X:%02X   SSID:%s\n",
++							  i, PRINT_MAC(pEntry->Addr), pAd->StaCfg[ifIndex].Ssid));
++					bConnect = TRUE;
++					ApCliSendNetLinkMsg(1);
++				}
++			}
++		}
++
++		if (!bConnect)
++		{
++			ApCliSendNetLinkMsg(0);
++			MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_OFF, ("ApCli%d Connected AP : Disconnect\n", ifIndex));
++		}	
++	} else
++	{
++		ApCliSendNetLinkMsg(0);
++		MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_OFF, ("ApCli%d Connected AP : Disconnect\n", ifIndex));
++	}
++	return TRUE;
++}
++#endif/*APCLI_SUPPORT*/
+ 
+ VOID TRTableEntryDump(RTMP_ADAPTER *pAd, INT tr_idx, const RTMP_STRING *caller, INT line)
+ {
+@@ -236,6 +306,10 @@
+ 	    if so, need to check flow.
+ 	*/
+ 	NdisMoveMemory(tr_entry->bssid, wdev->bssid, MAC_ADDR_LEN);
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	ApCliReportConnStatus(pAd);
++#endif
++
+ }
+ 
+ /* TODO: this function not finish yet!! */
+@@ -1219,6 +1293,12 @@
+ 			MTWF_LOG(DBG_CAT_MLME, DBG_SUBCAT_ALL, DBG_LVL_OFF, ("%s(): disconnection fail!\n", __func__));
+ 	}
+ #endif /* CONFIG_STA_SUPPORT */
++
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	ApCliReportConnStatus(pAd);
++#endif
++
++
+ }
+ 
+ BOOLEAN MacTableDeleteEntry(RTMP_ADAPTER *pAd, USHORT wcid, UCHAR *pAddr)
+diff -uNr a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/security/cmm_wpa.c b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/security/cmm_wpa.c
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/security/cmm_wpa.c	2020-08-20 17:45:45.923706122 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/security/cmm_wpa.c	2020-08-20 17:44:46.262848872 +0800
+@@ -82,6 +82,9 @@
+ BUILD_TIMER_FUNCTION(WPAHandshakeMsgRetryExec);
+ /* --------------------EddySEC END---------------- */
+ 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	extern ApCliReportConnStatus(RTMP_ADAPTER * pAd);
++#endif
+ 
+ 
+ #ifdef DOT11R_FT_SUPPORT
+@@ -4977,6 +4980,9 @@
+ #endif
+ 
+ 	MTWF_LOG(DBG_CAT_SEC, DBG_SUBCAT_ALL, DBG_LVL_TRACE, ("<=== %s: send Msg4 of 4-way\n", __func__));
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	ApCliReportConnStatus(pAd);
++#endif
+ }
+ 
+ 
+diff -uNr a/drivers/net/wireless/mtk/mt7663/mt_wifi/include/ath_dal_main.h b/drivers/net/wireless/mtk/mt7663/mt_wifi/include/ath_dal_main.h
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/include/ath_dal_main.h	1970-01-01 08:00:00.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/include/ath_dal_main.h	2020-08-20 17:35:59.231712300 +0800
+@@ -0,0 +1,32 @@
++/*
++
++*/
++
++#ifndef _ATH_DAL_HEADER_
++#define _ATH_DAL_HEADER_
++
++#define WLAN_58G_PORT_NUM        		9
++#define WLAN_58G_WPS_PORT_NUM        	11
++
++#define WLAN_AUTHTYPE_WPAPSK      		0x01
++#define WLAN_AUTHTYPE_WPA2PSK     		0x02
++#define WLAN_AUTHTYPE_SHARED      		0x04
++
++#define WLAN_ENCRTYPE_TKIP    			0x10
++#define WLAN_ENCRTYPE_AES     			0x20
++#define WLAN_ENCRTYPE_WEP     			0x40
++
++
++typedef struct huayi_port_event{ 
++	u_int8_t port_id;
++	u_int8_t status;
++	u_int8_t encryption;
++	u_int8_t key[65];
++} port_change_event;
++
++extern int huayi_port_event_send(struct huayi_port_event *e);
++
++
++#endif
++
++

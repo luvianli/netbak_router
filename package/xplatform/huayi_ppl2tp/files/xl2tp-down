@@ -1,0 +1,14 @@
+#!/bin/sh
+
+route_type=`uci -q get ppl2tp.xl2tp.route_type`
+
+[ "$route_type" -eq 0 ] && {
+	#route del -net 192.168.7.0 netmask 255.255.255.0 gw 192.168.0.1 dev pptp-vpn
+	route del -net `echo $5 | cut -d . -f 1,2,3`.0 netmask 255.255.255.0 gw $4 dev $1
+}
+
+iptables -w -D huayi_ppp_input_filter -i $1 -j ACCEPT
+iptables -w -D huayi_ppp_forward_filter -i $1 -j ACCEPT
+
+huayi_cmd set system xl2tp_link 0
+huayi_cmd set system xl2tp_ip 0.0.0.0

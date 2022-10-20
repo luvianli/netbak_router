@@ -1,0 +1,15 @@
+--- a/ralink/Kconfig	2019-04-30 18:13:35.000000000 +0800
++++ b/ralink/Kconfig	2020-08-02 22:15:57.431530799 +0800
+@@ -47,6 +47,12 @@
+ 
+ if WIFI_DRIVER
+ 
++config HUAYI_PLATFORM_SUPPORT
++	bool	"Ralink WIFI Support HUAYI Platform"
++	depends on WIFI_DRIVER
++	default y
++	bool
++
+ choice
+ 	prompt "Choose First WiFi Interface"
+ 	config FIRST_IF_NONE

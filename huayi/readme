@@ -1,0 +1,23 @@
+新增产品需要修改的地方：
+1、新增产品配置文件： package/huayi_product/product_info 目录
+
+2、新增产品 dts文件：例如target/linux/ramips/dts/VAC2000.dts
+
+3、修改image makefile: 例如target/linux/ramips/image/Makefile
+
+4、新增mk 文件：例如 target/linux/ramips/mt7621/profiles/VAC2000.mk
+
+5、修改平台相关文件：
+target/linux/ramips/base-files/etc/diag.sh
+target/linux/ramips/base-files/lib/ramips.sh
+target/linux/ramips/base-files/lib/upgrade/platform.sh
+target/linux/ramips/base-files/etc/board.d/02_network
+
+6、修改产品makefile
+	huayi/Makefile
+
+7、产品flash生产维护：
+	主要是添加uboot文件与map文件维护
+	
+8、维护产品的config，特别注意
+CONFIG_HUAYI_PRODUCT_MODEL="VAC2000"

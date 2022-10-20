@@ -1,0 +1,157 @@
+diff -uNr a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/ap/ap_cfg.c b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/ap/ap_cfg.c
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/ap/ap_cfg.c	2020-09-24 11:11:07.919817314 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/ap/ap_cfg.c	2020-09-24 11:14:41.942439939 +0800
+@@ -1040,6 +1040,7 @@
+ #endif /* UAPSD_SUPPORT */
+ #ifdef IGMP_SNOOP_SUPPORT
+ 	{"IgmpSnEnable",				Set_IgmpSn_Enable_Proc},
++	{"IgmpForword",				Set_IgmpSn_Forword_Proc},
+ 	{"IgmpAdd",					Set_IgmpSn_AddEntry_Proc},
+ 	{"IgmpDel",					Set_IgmpSn_DelEntry_Proc},
+ #endif /* IGMP_SNOOP_SUPPORT */
+diff -uNr a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/ap/ap_data.c b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/ap/ap_data.c
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/ap/ap_data.c	2020-09-24 11:11:07.919817314 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/ap/ap_data.c	2020-09-24 11:15:07.933944994 +0800
+@@ -361,6 +361,10 @@
+ 	// TODO: shiang-usw, remove "ApCfg.IgmpSnoopEnable" and use "wdev->IgmpSnoopEnable" replace it!
+ 	if (tr_entry->EntryType == ENTRY_CAT_MCAST)
+ 	{
++		if (pAd->ApCfg.IgmpForword == 0)
++		{
++			goto drop_pkt;
++		}
+ #ifdef IGMP_SNOOP_SUPPORT
+ 		//TODO :  check global setting only!
+ 		if (pAd->ApCfg.IgmpSnoopEnable /*&& wdev->IgmpSnoopEnable*/)
+@@ -4087,7 +4091,7 @@
+ 			a4_send_clone_pkt(pAd, wdev->func_idx, pPacket, pSrcAddr);
+ 		} else if (pSrcBufVA && IS_MULTICAST_MAC_ADDR(pSrcBufVA)
+ #ifdef IGMP_SNOOP_SUPPORT
+-			&& (!pAd->ApCfg.IgmpSnoopEnable)
++			&& (!pAd->ApCfg.IgmpSnoopEnable) && (pAd->ApCfg.IgmpForword)
+ #endif
+ 			)
+ 		{
+diff -uNr a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/cmm_profile.c b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/cmm_profile.c
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/cmm_profile.c	2020-09-24 11:11:07.899817314 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/cmm_profile.c	2020-09-24 11:14:29.830081543 +0800
+@@ -3612,6 +3612,8 @@
+ #ifdef IGMP_SNOOP_SUPPORT
+ 					/* Igmp Snooping information*/
+ 					rtmp_read_igmp_snoop_from_file(pAd, tmpbuf, pBuffer);
++
++					rtmp_read_igmp_forword_from_file(pAd, tmpbuf, pBuffer);
+ #endif /* IGMP_SNOOP_SUPPORT */
+ 
+ #ifdef PREVENT_ARP_SPOOFING
+diff -uNr a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/igmp_snoop.c b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/igmp_snoop.c
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/igmp_snoop.c	2020-09-24 11:11:07.887817314 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/igmp_snoop.c	2020-09-24 11:14:20.931600963 +0800
+@@ -799,6 +799,18 @@
+ 	return TRUE;
+ }
+ 
++INT Set_IgmpSn_Forword_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg)
++{
++	UINT Enable;
++
++	Enable = (UINT) simple_strtol(arg, 0, 10);
++
++	pAd->ApCfg.IgmpForword = Enable;
++	DBGPRINT(RT_DEBUG_TRACE, ("%s:: %s\n", __FUNCTION__, Enable == 1 ? "Enable IGMP Forword":"Disable IGMP Forword"));
++
++	return TRUE;
++}
++
+ INT Set_IgmpSn_AddEntry_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg)
+ {
+ 	INT i;
+@@ -993,6 +1005,26 @@
+ 	}
+ }
+ 
++void rtmp_read_igmp_forword_from_file(
++	IN  PRTMP_ADAPTER pAd,
++	RTMP_STRING *tmpbuf,
++	RTMP_STRING *buffer)
++{
++	/*IgmpForword */
++	if(RTMPGetKeyParameter("IgmpForword", tmpbuf, 128, buffer, TRUE))
++	{
++		if ((strncmp(tmpbuf, "0", 1) == 0))
++			pAd->ApCfg.IgmpForword = 0;
++		else if ((strncmp(tmpbuf, "1", 1) == 0))
++			pAd->ApCfg.IgmpForword = 1;
++        else
++			pAd->ApCfg.IgmpForword = 0;
++
++		DBGPRINT(RT_DEBUG_TRACE, (" IGMP Snooping Enable=%d\n", pAd->ApCfg.IgmpForword));
++	}
++}
++
++
+ NDIS_STATUS IgmpPktInfoQuery(
+ 	IN PRTMP_ADAPTER pAd,
+ 	IN PUCHAR pSrcBufVA,
+diff -uNr a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/include/igmp_snoop.h b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/include/igmp_snoop.h
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/include/igmp_snoop.h	2020-09-24 11:11:07.859817315 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/include/igmp_snoop.h	2020-09-24 11:13:44.783931977 +0800
+@@ -114,6 +114,8 @@
+ 
+ INT Set_IgmpSn_Enable_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg);
+ 
++INT Set_IgmpSn_Forword_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg);
++
+ INT Set_IgmpSn_AddEntry_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg);
+ 
+ INT Set_IgmpSn_DelEntry_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg);
+@@ -124,6 +126,11 @@
+ 	IN  PRTMP_ADAPTER pAd,
+ 	RTMP_STRING *tmpbuf,
+ 	RTMP_STRING *buffer);
++
++void rtmp_read_igmp_forword_from_file(
++	IN  PRTMP_ADAPTER pAd,
++	RTMP_STRING *tmpbuf,
++	RTMP_STRING *buffer);
+ 
+ NDIS_STATUS IgmpPktInfoQuery(
+ 	IN PRTMP_ADAPTER pAd,
+diff -uNr a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/include/rtmp.h b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/include/rtmp.h
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/include/rtmp.h	2020-09-24 11:11:07.867817314 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/include/rtmp.h	2020-09-24 11:13:52.396516405 +0800
+@@ -3900,6 +3900,7 @@
+ 
+ #ifdef IGMP_SNOOP_SUPPORT
+ 	BOOLEAN IgmpSnoopEnable;	/* 0: disable, 1: enable. */
++	UINT32  IgmpForword;		/* 0: disable, 1: enable. */
+ #endif /* IGMP_SNOOP_SUPPORT */
+ 
+ #ifdef PREVENT_ARP_SPOOFING
+diff -uNr a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/tx_rx/wdev_tx.c b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/tx_rx/wdev_tx.c
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/tx_rx/wdev_tx.c	2020-09-24 11:11:07.927817314 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/tx_rx/wdev_tx.c	2020-09-24 11:14:08.402395168 +0800
+@@ -170,11 +170,21 @@
+ 							a4_send_clone_pkt(pAd, wdev->func_idx, pPacket, NULL);
+ 						} else if (pSrcBufVA && IS_MULTICAST_MAC_ADDR(pSrcBufVA)
+ #ifdef IGMP_SNOOP_SUPPORT
+-								&& (!pAd->ApCfg.IgmpSnoopEnable)
++								&& (!pAd->ApCfg.IgmpSnoopEnable) && (pAd->ApCfg.IgmpForword)
+ #endif
+ 							) {
+ 							a4_send_clone_pkt(pAd, wdev->func_idx, pPacket, NULL);
+-						} else {
++						} 
++#ifdef IGMP_SNOOP_SUPPORT
++						else if (pSrcBufVA && IS_MULTICAST_MAC_ADDR(pSrcBufVA)
++								&& (!pAd->ApCfg.IgmpForword))
++
++						{
++							RELEASE_NDIS_PACKET(pAd, pPacket, NDIS_STATUS_FAILURE);
++	                    	return 0;
++						}
++#endif
++						else {
+ 							DBGPRINT(RT_DEBUG_TRACE,
+ 								("The pkt is uc or IGMP is on, no need A4 CLONE\n"));
+ 						}

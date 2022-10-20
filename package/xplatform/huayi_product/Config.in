@@ -1,0 +1,24 @@
+choice
+	prompt "Choose Web Type"
+	depends on PACKAGE_huayi_product
+	help
+	  Choose different web types, the download paths are different 
+	config NEWUI_MTK3.6
+		bool "newui_mtk3.6"
+	config HUAYI_WEB_MTK3.6
+		bool "huayi_web_mtk3.6"
+    endchoice
+	
+choice
+	prompt "Web Code Type"
+	depends on PACKAGE_huayi_product
+	help
+	  Definition of Web Code Compile for development and release
+	config HUAYI_WEB_RELEASE
+		bool "Product Release"
+	config HUAYI_WEB_DEVELOPMENT
+		bool "Product Development"
+	config HUAYI_WEB_LOCAL_FILE
+		bool "Product Use Local Files"
+    endchoice
+

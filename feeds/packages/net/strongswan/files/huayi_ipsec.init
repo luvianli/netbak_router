@@ -1,0 +1,55 @@
+#!/bin/sh /etc/rc.common
+
+START=90
+USE_PROCD=1
+
+BIN=/usr/sbin/xl2tpd
+KEY=/var/etc/ipsec.secrets
+
+validate_xl2tpd_section() {
+	uci_validate_section xl2tpd service xl2tpd \
+		'enable:uinteger' \
+		'server_ip:string' \
+		'startip:string' \
+		'endip:string' \
+		'mtu:uinteger' \
+		'mru:uinteger' \
+		'dns_enable:uinteger' \
+		'primary_dns:string' \
+		'secondary_dns:string' \
+		'ipsec_enable:uinteger' \
+		'ipsec_key:string'
+		
+}
+setup_config() {
+	validate_xl2tpd_section || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "$enable" -eq 0 ] && return 1
+	[ "$ipsec_enable" -eq 0 ] && return 1
+	
+	mkdir -p /var/etc
+	echo ": PSK \"${ipsec_key}\" " > $KEY	
+}
+
+start_service() {
+	config_load xl2tpd
+	setup_config || return	
+	ipsec start
+}
+
+stop_service() {
+	ipsec stop
+}
+
+restart() {
+	stop_service
+	start_service
+}
+
+# reload() {
+# ipsec update
+# }
+

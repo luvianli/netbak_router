@@ -1,0 +1,66 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010-2011 OpenWrt.org
+
+START=70
+STOP=10
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+SERVICE_STOP_TIME=9
+
+error() {
+	echo "${initscript}:" "$@" 1>&2
+}
+
+mysql_back=/etc/config/data/mysql/mysql
+
+create_mysql_deamon() {
+	mysql_install_db --force >/dev/null
+	/usr/bin/mysqld --skip-grant & >/dev/null
+	sleep 2
+mysql -u root mysql <<EOF>/dev/null
+	use mysql;
+	INSERT INTO user (Host,User,Password) VALUES('localhost','root',password('huayi123456'));
+	update user set Host='localhost',select_priv='y', insert_priv='y',update_priv='y',Alter_priv='y',delete_priv='y',create_priv='y',drop_priv='y',reload_priv='y',shutdown_priv='y',Process_priv='y',file_priv='y',grant_priv='y',References_priv='y',index_priv='y',create_user_priv='y',show_db_priv='y',super_priv='y',create_tmp_table_priv='y',Lock_tables_priv='y',EVENT_priv='y',execute_priv='y',repl_slave_priv='y',repl_client_priv='y',create_view_priv='y',show_view_priv='y',create_routine_priv='y',alter_routine_priv='y',create_user_priv='y' where user='root';commit;
+	create database if not exists ac_database;
+	exit
+EOF
+	pid=`pgrep /usr/bin/mysqld`
+	kill -9 $pid
+	sleep 2
+}
+
+
+start() {
+	local datadir=$(sed -n -e "s/^[[:space:]]*datadir[[:space:]]*=[[:space:]]*[\"']\?\([^\"']*\)[\"']\?/\1/p" /etc/my.cnf)
+	local data_backup=/etc/config/data/mysql/
+	
+	if [ -d "$data_backup" ] && [  -f "$data_backup/mysql/tables_priv.MYD" ]
+	then
+	cp -rf /etc/config/data/ /tmp
+	fi
+	
+	if [ ! -d "$datadir" ]; then
+		error "datadir '$datadir' in /etc/my.cnf doesn't exist,create it"
+		mkdir -p $datadir
+		#return 1
+	fi
+	if [ ! -f "$datadir/mysql/tables_priv.MYD" ]; then
+		error "I didn't detect a privileges table, you might need to run mysql_install_db --force to initialize the system tables"
+		if [ -d "$mysql_back" ] && [ ! -f "$mysql_back/tables_priv.MYD" ]
+		then
+			error "use backup mysql"
+			cp -rf $mysql_back $datadir
+		else
+			error "create deamon"
+			create_mysql_deamon
+			#return 1
+		fi
+		#return 1
+	fi
+	service_start /usr/bin/mysqld
+}
+
+stop() {
+	service_stop /usr/bin/mysqld
+}

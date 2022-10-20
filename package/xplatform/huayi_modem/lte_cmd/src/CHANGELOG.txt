@@ -1,0 +1,48 @@
+##############################
+##      CHANGES LOG         ##
+##############################
+
+
++ 2015-02-27
+1. Header in each file is added to trace the logs
+
++ 2015-02-03
+1. Implemented:
+	Auto detach test is added.
+2. Fixed:
+	Issue fixed for reattach failed case.
+
++ 2015-01-27
+1. Fixed:
+	Enhanced - pthread wrapper functions
+
++ 2015-01-26
+1. Fixed:
+	pthread wait issue related with uClibc is fixed using thread wrapper
+
++ 2015-01-23
+1. Fixed:
+	Command blocking by send at command routine. 
+2. Implemented:
+	AT command sending queue.
+
++ 2015-01-22
+1. Implemented: 
+	Device check and restart read thread.
+	State machine for connection management.
+	
++ 2015-01-21
+1. Fixed: 
+	Segmenation fault error fixed.
+2. Implemented: 
+	USB device check routine is implemented using hotplug. 
+
++ 2015-01-20
+1. Implemented: 
+	Parsing routine is implemented for AT command response.
+ 
+
+
+=====================
+Things To Do
+

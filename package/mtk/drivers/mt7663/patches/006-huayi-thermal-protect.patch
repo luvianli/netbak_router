@@ -1,0 +1,19 @@
+--- b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/cmm_profile.c	2019-05-03 09:40:21.000000000 +0800
++++ a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/cmm_profile.c	2021-04-08 11:36:53.254229300 +0800
+@@ -6299,6 +6299,16 @@
+ 		rtmp_read_fq_parms_from_file(pAd, tmpbuf, pBuffer);
+ #endif /* FQ_SCH_SUPPORT */
+ 		rtmp_read_cp_parms_from_file(pAd, tmpbuf, pBuffer);
++#ifdef THERMAL_PROTECT_SUPPORT
++		if (RTMPGetKeyParameter("TPC", tmpbuf, 256, pBuffer, TRUE)) {
++			MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_OFF, ("TPC  tmpbuf=%s\n", tmpbuf));
++			set_thermal_protection_criteria_proc(pAd, tmpbuf);
++		}
++		if (RTMPGetKeyParameter("TPC_DUTY", tmpbuf, 256, pBuffer, TRUE)) {
++			MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_OFF, ("TPC_DUTY  tmpbuf=%s\n", tmpbuf));
++			set_thermal_protection_admin_ctrl_duty_proc(pAd, tmpbuf);
++		}
++#endif
+ 	} while (0);
+ 
+ 	os_free_mem(tmpbuf);

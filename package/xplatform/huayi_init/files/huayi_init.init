@@ -1,0 +1,43 @@
+#!/bin/sh /etc/rc.common
+
+# run 
+START=66
+
+USE_PROCD=1
+
+huayi_init_tcp_conntrack(){
+	mem_total=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
+	nf_conntrack_max=
+
+	if [ $mem_total -gt 400000 ]; then
+		nf_conntrack_max=520000
+	elif [ $mem_total -gt 200000 ]; then
+		nf_conntrack_max=300000
+	elif [ $mem_total -gt 100000 ]; then
+		nf_conntrack_max=204800
+	elif [ $mem_total -gt 50000 ]; then
+		nf_conntrack_max=102400
+	else
+		nf_conntrack_max=102400
+	fi
+
+	echo $nf_conntrack_max > /proc/sys/net/netfilter/nf_conntrack_max
+	echo 20 > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_syn_sent
+	echo 86400 > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established
+	echo 10 > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_time_wait
+	echo 10 > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_close
+	echo 60 > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_close_wait
+	echo 30 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout  
+	echo 180 > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream 
+	echo 1 > /proc/sys/net/netfilter/nf_conntrack_tcp_be_liberal
+	echo 28 > /proc/sys/net/netfilter/nf_conntrack_expect_max
+	echo 512 > /proc/sys/net/ipv4/tcp_max_orphans
+	echo 512 > /proc/sys/net/ipv4/tcp_max_tw_buckets
+}
+
+
+start_service() {
+	huayi_init_tcp_conntrack
+	/usr/bin/huayi_init
+}
+

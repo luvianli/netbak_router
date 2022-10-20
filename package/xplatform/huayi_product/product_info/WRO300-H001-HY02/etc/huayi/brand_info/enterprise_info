@@ -1,0 +1,8 @@
+config about about_soft
+	option product_name		'WRO300-H001-HY02'
+	option product_model	'WRO300-H001-HY02'
+	option product_desc		'300M Wireless Router'
+	option webui_version	'V1.0'
+	option enterprise_oid	'12358'
+	option company_address	'shenzhen'
+	option domain_name		'setup.wifi.net'

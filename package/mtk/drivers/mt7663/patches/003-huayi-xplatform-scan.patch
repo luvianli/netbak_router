@@ -1,0 +1,84 @@
+diff -uNr a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/cmm_info.c b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/cmm_info.c
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/cmm_info.c	2020-08-27 15:02:56.853381858 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/cmm_info.c	2020-08-27 15:02:35.326023480 +0800
+@@ -3738,13 +3738,28 @@
+ 	INT         Rssi = 0;
+ 	UINT        Rssi_Quality = 0;
+ 	NDIS_802_11_NETWORK_TYPE    wireless_mode;
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	CHAR		Ssid[MAX_LEN_OF_SSID + 1] = {0},ssid_buf[64] = {0};
++	RTMP_STRING SecurityStr[32] = {0},SecurityStr_buf[64] = {0};
++#else
+ 	CHAR		Ssid[MAX_LEN_OF_SSID + 1];
+ 	RTMP_STRING SecurityStr[32] = {0};
++#endif
++
+ 	/*Channel*/
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	sprintf(msg+strlen(msg),"Channel:%-4d", pBss->Channel);
++#else
+ 	sprintf(msg + strlen(msg), "%-4d", pBss->Channel);
++#endif
++
+ 	/*SSID*/
+ 	NdisZeroMemory(Ssid, (MAX_LEN_OF_SSID + 1));
+-
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	NdisMoveMemory(Ssid, pBss->Ssid, pBss->SsidLen);
++	sprintf(ssid_buf,"SSID:\"%s\"", Ssid);
++	sprintf(msg+strlen(msg),"%-40s", ssid_buf);
++#else
+ 	if (RTMPCheckStrPrintAble((PCHAR)pBss->Ssid, pBss->SsidLen))
+ 		NdisMoveMemory(Ssid, pBss->Ssid, pBss->SsidLen);
+ 	else {
+@@ -3755,10 +3770,14 @@
+ 		for (idx = 0; (idx < 14) && (idx < pBss->SsidLen); idx++)
+ 			sprintf(Ssid + 2 + (idx * 2), "%02X", (UCHAR)pBss->Ssid[idx]);
+ 	}
+-
+ 	sprintf(msg + strlen(msg), "%-33s", Ssid);
++#endif
+ 	/*BSSID*/
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT) 
++	sprintf(msg + strlen(msg), "BSSID:%02x:%02x:%02x:%02x:%02x:%02x   ",
++#else
+ 	sprintf(msg + strlen(msg), "%02x:%02x:%02x:%02x:%02x:%02x   ",
++#endif
+ 			pBss->Bssid[0],
+ 			pBss->Bssid[1],
+ 			pBss->Bssid[2],
+@@ -3768,7 +3787,12 @@
+ 	/*Security*/
+ 	RTMPZeroMemory(SecurityStr, 32);
+ 	sprintf(SecurityStr, "%s/%s", GetAuthModeStr(pBss->AKMMap), GetEncryModeStr(pBss->PairwiseCipher));
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT) 
++	sprintf(SecurityStr_buf,"Encryption:\"%s\"", SecurityStr);
++	sprintf(msg+strlen(msg), "%-36s", SecurityStr_buf);
++#else
+ 	sprintf(msg + strlen(msg), "%-23s", SecurityStr);
++#endif
+ 	/* Rssi*/
+ 	Rssi = (INT)pBss->Rssi;
+ 
+@@ -3780,8 +3804,11 @@
+ 		Rssi_Quality = (UINT)(((Rssi + 90) * 26) / 10);
+ 	else    /* < -84 dbm*/
+ 		Rssi_Quality = 0;
+-
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	sprintf(msg+strlen(msg),"Signal:%-9d", Rssi_Quality);
++#else
+ 	sprintf(msg + strlen(msg), "%-9d", Rssi_Quality);
++#endif
+ 	/* Wireless Mode*/
+ 	wireless_mode = NetworkTypeInUseSanity(pBss);
+ 
+@@ -3903,7 +3930,7 @@
+ 	MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_TRACE, ("%s(): After check, this_char = %s, out = %d\n"
+ 			 , __func__, this_char, bss_start_idx));
+ 	TotalLen = sizeof(CHAR) * ((MAX_LEN_OF_BSS_TABLE) * max_len) + 100;
+-	BufLen = IW_SCAN_MAX_DATA;
++	BufLen = MAX_LEN_OF_BSS_TABLE*max_len;
+ 	os_alloc_mem(NULL, (PUCHAR *)&msg, TotalLen);
+ 
+ 	if (msg == NULL) {

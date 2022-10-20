@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=58
+USE_PROCD=1
+
+CHAP_SECRETS=/var/etc/chap-secrets
+
+validate_login_section() {
+	uci_validate_section vpn_user login "${1}" \
+		'username:string' \
+		'password:string' \
+		'authenticate:string' \
+		'remoteip:string'
+}
+
+
+setup_login() {
+	validate_login_section "${1}" || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ -n "${username}" ] || return 0
+	[ -n "${password}" ] || return 0
+	[ -n "$authenticate" ] || return 0
+	[ -n "$remoteip" ] || remoteip=*
+	
+	echo "${username} ${authenticate} ${password} ${remoteip}" >> $CHAP_SECRETS
+}
+
+
+
+start_service() {
+	mkdir -p /var/etc
+	echo "#USERNAME  PROVIDER  PASSWORD  IPADDRESS" > $CHAP_SECRETS
+	config_load vpn_user
+	config_foreach setup_login login
+	ln -sfn	$CHAP_SECRETS /etc/ppp/chap-secrets
+}
+
+stop_service() {
+	rm -rf $CHAP_SECRETS
+}
+
+restart() {
+	stop_service
+	start_service
+}

@@ -1,0 +1,104 @@
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/ap/ap.c
+===================================================================
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/ap/ap.c	2020-08-24 11:23:03.412276982 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/ap/ap.c	2020-08-24 11:17:17.372280660 +0800
+@@ -4178,6 +4178,11 @@
+ 	/* action for ap interface up */
+ 	pAd->ApCfg.MBSSID[wdev->func_idx].mbss_idx = wdev->func_idx;
+ 	wdev->bAllowBeaconing = TRUE;
++
++	wdev->bRejectAuth = FALSE;
++	MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_TRACE,
++		("%s() set bRejectAuth %d\n", __func__, wdev->bRejectAuth));
++	
+ 	ap_run_at_boot(pAd, wdev);
+ /*bndstrg init need after auto channel selection*/
+ #ifdef BAND_STEERING
+@@ -4212,6 +4217,10 @@
+ 	IF_DEV_CONFIG_OPMODE_ON_AP(pAd) {
+ 		wdev->bAllowBeaconing = FALSE;
+ 
++		wdev->bRejectAuth = TRUE;
++		MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_TRACE,
++			("%s() set bRejectAuth %d\n", __func__, wdev->bRejectAuth));
++
+ 		if (wdev_do_linkdown(wdev) != TRUE)
+ 			MTWF_LOG(DBG_CAT_AP, DBG_SUBCAT_ALL, DBG_LVL_TRACE, ("%s() linkdown fail!!!\n", __func__));
+ 
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/wifi_sys_info.c
+===================================================================
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/wifi_sys_info.c	2020-08-24 11:23:03.384276982 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/wifi_sys_info.c	2020-08-24 11:17:17.344280660 +0800
+@@ -972,6 +972,11 @@
+ 				  __func__, bss->ucBcMcWlanIdx, sta_rec->ConnectionState));
+ 		}
+ 		/*update to hw ctrl*/
++		wdev->bRejectAuth = FALSE;
++		
++		MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_TRACE,
++			("%s() set bRejectAuth %d\n", __func__, wdev->bRejectAuth));
++		
+ 		wsys.wdev = wdev;
+ 		HW_WIFISYS_LINKUP(ad, &wsys);
+ 	}
+@@ -1012,6 +1017,11 @@
+ 				sta_rec->priv = tr_entry;
+ 			}
+ 		}
++
++		wdev->bRejectAuth = TRUE;
++		MTWF_LOG(DBG_CAT_CFG, DBG_SUBCAT_ALL, DBG_LVL_TRACE,
++			("%s() set bRejectAuth %d\n", __func__, wdev->bRejectAuth));
++		
+ 		/*update to hwctrl for hw seting*/
+ 		wsys.wdev = wdev;
+ 		/*notify other module will leave bss*/
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/fsm/ap_mgmt_auth.c
+===================================================================
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/fsm/ap_mgmt_auth.c	2020-08-24 11:23:03.420276982 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/fsm/ap_mgmt_auth.c	2020-08-24 11:17:17.384280660 +0800
+@@ -481,7 +481,13 @@
+ 	}
+ 
+ 	if ((wdev->if_dev == NULL) || ((wdev->if_dev != NULL) &&
+-								   !(RTMP_OS_NETDEV_STATE_RUNNING(wdev->if_dev)))) {
++								   	!(RTMP_OS_NETDEV_STATE_RUNNING(wdev->if_dev)))
++								   	|| (wdev->bRejectAuth == TRUE)) {
++								   	if ( wdev->bRejectAuth == TRUE ) {
++										MTWF_LOG(DBG_CAT_AP, DBG_SUBCAT_ALL, DBG_LVL_TRACE, ("Reject Auth from %02x:%02x:%02x:%02x:%02x:%02x\n",
++											PRINT_MAC(auth_info.addr2)));
++										}
++									
+ 		MTWF_LOG(DBG_CAT_AP, DBG_SUBCAT_ALL, DBG_LVL_TRACE, ("AUTH - Bssid IF didn't up yet.\n"));
+ #ifdef WAPP_SUPPORT
+ 		wapp_auth_fail = BSSID_IF_NOT_READY;
+
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/include/rtmp.h
+===================================================================
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/include/rtmp.h	2020-08-24 11:23:03.340276983 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/include/rtmp.h	2020-08-24 11:17:17.288280661 +0800
+@@ -1908,6 +1908,9 @@
+ 	/* Flag migrate from pAd partially */
+ 	UINT32 OpStatusFlags;
+ 	BOOLEAN bAllowBeaconing; /* Device opened and ready for beaconing */
++
++	BOOLEAN bRejectAuth;
++	
+ #ifdef DOT11K_RRM_SUPPORT
+ 	RRM_CONFIG RrmCfg;
+ #endif /* DOT11K_RRM_SUPPORT */
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/mgmt/mgmt_entrytb.c
+===================================================================
+--- a/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/mgmt/mgmt_entrytb.c	2020-08-24 11:23:03.360276982 +0800
++++ b/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/mgmt/mgmt_entrytb.c	2020-08-24 11:17:17.312280660 +0800
+@@ -1004,7 +1004,8 @@
+ 					((pEntry->func_tb_idx < HW_BEACON_MAX_NUM)) &&
+ 					(pAd->ApCfg.MBSSID[pEntry->func_tb_idx].MaxStaNum != 0) &&
+ 					(pAd->ApCfg.MBSSID[pEntry->func_tb_idx].StaCount >= pAd->ApCfg.MBSSID[pEntry->func_tb_idx].MaxStaNum)) {
+-					MTWF_LOG(DBG_CAT_MLME, DBG_SUBCAT_ALL, DBG_LVL_WARN, ("%s: The connection table is full in ra%d.\n", __func__, pEntry->func_tb_idx));
++					MTWF_LOG(DBG_CAT_MLME, DBG_SUBCAT_ALL, DBG_LVL_TRACE,
++						("%s: The connection table is full in ra%d.\n", __func__, pEntry->func_tb_idx)); 
+ 					NdisReleaseSpinLock(&pAd->MacTabLock);
+ 					return NULL;
+ 				}
+

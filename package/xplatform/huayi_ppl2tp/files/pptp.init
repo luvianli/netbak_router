@@ -1,0 +1,67 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=99
+USE_PROCD=1
+
+BIN=/usr/sbin/pptp-pppd
+OPTION_CONFIG=/var/etc/options.pptp
+LOGFILE=/var/log/pptp.log
+
+validate_pptp_section() {
+	uci_validate_section "${1}" ppl2tp pptp\
+		'enable:uinteger' \
+		'server_ip:string' \
+		'username:string' \
+		'password:string' \
+		'mppe:uinteger' \
+		'debug:uinteger' \
+		'route_type:uinteger'
+		
+}
+
+setup_config() {
+	validate_pptp_section "${1}" || { 
+		echo "validation failed"
+		return 1
+	}
+	
+	[ "$enable" -eq 0 ] && return 1
+	
+	mkdir -p /var/etc
+	cp /etc/ppp/options.pptp $OPTION_CONFIG
+	
+	echo "user $username" >> $OPTION_CONFIG
+	echo "password $password" >> $OPTION_CONFIG
+	echo "pptp_server $server_ip" >> $OPTION_CONFIG
+	
+	[ "$mppe" -eq 0 ] && echo "mppe required,no40,no56,stateless" >>  $OPTION_CONFIG
+	[ "$mppe" -eq 1 ] && echo "mppe stateless" >>  $OPTION_CONFIG
+	[ "$mppe" -eq 2 ] && echo "nomppe" >>  $OPTION_CONFIG
+
+	[ "$debug" -eq 1 ] && echo "logfile /var/log/pptp.log" >>  $OPTION_CONFIG
+
+	if [ "$route_type" = "1" ] ;then
+		echo "defaultroute" >> $OPTION_CONFIG
+		echo "replacedefaultroute" >> $OPTION_CONFIG
+	else
+		echo "nodefaultroute" >> $OPTION_CONFIG
+	fi
+	
+	return 0
+}
+
+start_service() {
+	config_load ppl2tp
+	setup_config ppl2tp || return
+	procd_open_instance
+	procd_set_param command $BIN file $OPTION_CONFIG
+	procd_close_instance
+}
+
+stop_service() {	
+	service_stop $BIN	
+	rm -rf $OPTION_CONFIG 
+	rm -rf $LOGFILE
+}
+

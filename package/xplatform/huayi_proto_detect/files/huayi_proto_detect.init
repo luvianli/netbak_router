@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+
+START=94
+
+opmode=`uci -q get system.mode.opmode`
+
+start() {
+	[ $mode == "0" ] || [ $mode == "3" ] && {
+		/usr/bin/huayi_proto_detect &
+	}
+}
+

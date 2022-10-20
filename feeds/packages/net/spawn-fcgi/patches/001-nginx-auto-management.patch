@@ -1,0 +1,233 @@
+--- a/src/spawn-fcgi.c	2014-06-04 19:38:56.000000000 +0800
++++ b/src/spawn-fcgi.c	2019-10-29 02:14:31.604579253 +0800
+@@ -82,6 +82,50 @@
+ 	return nbyte;
+ }
+ 
++const char* const signame[] = {
++	"SIG_0",
++		"SIGHUP",	"SIGINT",	"SIGQUIT",	"SIGILL",
++		"SIGTRAP",	"SIGABRT",	"SIGBUS",	"SIGFPE",
++		"SIGKILL",	"SIGUSR1",	"SIGSEGV",	"SIGUSR2",
++		"SIGPIPE",	"SIGALRM",	"SIGTERM",	"SIGSTKFLT",
++		"SIGCHLD",	"SIGCONT",	"SIGSTOP",	"SIGTSTP",
++		"SIGTTIN",	"SIGTTOU",	"SIGURG",	"SIGXCPU",
++		"SIGXFSZ",	"SIGVTALRM",	"SIGPROF",	"SIGWINCH",
++		"SIGIO",	"SIGPWR",	"SIGSYS",
++		"SIGRT_0",	"SIGRT_1",	"SIGRT_2",	"SIGRT_3",
++		"SIGRT_4",	"SIGRT_5",	"SIGRT_6",	"SIGRT_7",
++		"SIGRT_8",	"SIGRT_9",	"SIGRT_10",	"SIGRT_11",
++		"SIGRT_12",	"SIGRT_13",	"SIGRT_14",	"SIGRT_15",
++		"SIGRT_16",	"SIGRT_17",	"SIGRT_18",	"SIGRT_19",
++		"SIGRT_20",	"SIGRT_21",	"SIGRT_22",	"SIGRT_23",
++		"SIGRT_24",	"SIGRT_25",	"SIGRT_26",	"SIGRT_27",
++		"SIGRT_28",	"SIGRT_29",	"SIGRT_30",	"SIGRT_31",
++		"SIGRT_32"
++};
++
++
++char *fcgi_app = NULL, *changeroot = NULL, *username = NULL,
++*groupname = NULL, *unixsocket = NULL, *pid_file = NULL,
++*sockusername = NULL, *sockgroupname = NULL, *fcgi_dir = NULL,
++*addr = NULL;
++char **fcgi_app_argv = { NULL };
++char *endptr = NULL;
++unsigned short port = 0;
++int sockmode = -1;
++int child_count = -1;
++int fork_count = 1;
++int backlog = 1024;
++int i_am_root, o;
++int pid_fd = -1;
++int nofork = 0;
++int sockbeforechroot = 0;
++struct sockaddr_un un;
++int fcgi_fd = -1;
++int status = 0;
++int stop = 0;
++int child_pid=-1;
++
++
+ static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, mode_t mode, int backlog) {
+ 	int fcgi_fd, socket_type, val;
+ 
+@@ -227,7 +271,7 @@
+ }
+ 
+ static int fcgi_spawn_connection(char *appPath, char **appArgv, int fcgi_fd, int fork_count, int child_count, int pid_fd, int nofork) {
+-	int status, rc = 0;
++	int status,rc = 0;
+ 	struct timeval tv = { 0, 100 * 1000 };
+ 
+ 	pid_t child;
+@@ -311,7 +355,7 @@
+ 			switch (waitpid(child, &status, WNOHANG)) {
+ 			case 0:
+ 				fprintf(stdout, "spawn-fcgi: child spawned successfully: PID: %d\n", child);
+-
++				child_pid = child;
+ 				/* write pid file */
+ 				if (-1 != pid_fd) {
+ 					/* assume a 32bit pid_t */
+@@ -356,13 +400,7 @@
+ 			break;
+ 		}
+ 	}
+-
+-	if (-1 != pid_fd) {
+-		close(pid_fd);
+-	}
+-
+-	close(fcgi_fd);
+-
++	
+ 	return rc;
+ }
+ 
+@@ -467,25 +505,110 @@
+ 	));
+ }
+ 
++static void sigterm_handler(int signo) 
++{
++	stop     = 1;
++	fprintf(stdout, "SIG_TERM from pid=%d\n", getpid());
++	kill(child_pid,SIGKILL);
++}
++
++static void sigchld_handler(int signo, siginfo_t *si, void * p) 
++{
++	pid_t child;
++	while (  (child = waitpid (-1, &status, WNOHANG|__WALL)) > 0)
++	{
++		switch (si->si_code) 
++		{
++		case SI_USER:
++		case SI_TKILL:
++			fprintf(stdout, "SIGCHLD from pid=%d uid=%d, IGNORED\n",
++				si->si_pid, si->si_uid);
++			return; /* someone send use fake SIGCHLD */
++		case CLD_KILLED:
++			fprintf(stdout, "child %d killed by signal %s\n",
++				si->si_pid, signame[WTERMSIG(si->si_status)]);
++			break;
++		case CLD_TRAPPED:
++			fprintf(stdout, "child %d trapped\n", si->si_pid);
++			return;
++		case CLD_STOPPED:
++			fprintf(stdout, "child %d stopped\n", si->si_pid);
++
++			if(si->si_pid > 1) 
++				kill(si->si_pid, SIGCONT);
++			return;
++		case CLD_CONTINUED:
++			fprintf(stdout, "child %d continued\n", si->si_pid);
++			return;
++		case CLD_DUMPED:
++			fprintf(stdout, "child %d coredumped by signal %s\n",
++				child, signame[WTERMSIG(si->si_status)]);
++
++			fcgi_spawn_connection(fcgi_app, fcgi_app_argv, fcgi_fd, 1, child_count, pid_fd, nofork);
++			break;
++		default:
++			fprintf(stdout, "child %d default sig %d\n", si->si_pid, si->si_code);
++			break;
++		}
++	}
++}
++
++static inline void
++rlimit_reset()
++{
++	struct rlimit rlim;
++
++	int max_fd_num = 20000;
++
++	/* raise open files */
++	rlim.rlim_cur = max_fd_num;
++	rlim.rlim_max = max_fd_num;
++	if (setrlimit(RLIMIT_NOFILE, &rlim) == -1) {
++		fprintf(stdout, "INIT FD RESOURCE FAILED\n");
++	}
++
++	/* allow core dump */
++	rlim.rlim_cur = 1 << 30;
++	rlim.rlim_max = 1 << 30;
++	if (setrlimit(RLIMIT_CORE, &rlim) == -1) {
++		fprintf(stdout, "INIT CORE FILE RESOURCE FAILED\n");
++	}
++}
++
++int daemon_start()
++{
++	struct sigaction sa;
++	sigset_t sset;
++	const char *style;
++
++	rlimit_reset ();
++
++	memset(&sa, 0, sizeof(sa));
++	signal(SIGPIPE,SIG_IGN);
++
++	sa.sa_handler = sigterm_handler;
++	sigaction(SIGINT, &sa, NULL);
++	sigaction(SIGTERM, &sa, NULL);
++	sigaction(SIGQUIT, &sa, NULL);
++	sigaction(SIGHUP, &sa, NULL);
++
++	sa.sa_flags = SA_RESTART|SA_SIGINFO;
++	sa.sa_sigaction = sigchld_handler;
++	sigaction(SIGCHLD, &sa, NULL);
++
++	sigemptyset(&sset);
++	sigaddset(&sset, SIGCHLD);
++	sigprocmask(SIG_UNBLOCK, &sset, &sset);
++
++	daemon (1, 1);
++
++	return 0;
++}
++
+ 
+ int main(int argc, char **argv) {
+-	char *fcgi_app = NULL, *changeroot = NULL, *username = NULL,
+-	     *groupname = NULL, *unixsocket = NULL, *pid_file = NULL,
+-	     *sockusername = NULL, *sockgroupname = NULL, *fcgi_dir = NULL,
+-	     *addr = NULL;
+-	char **fcgi_app_argv = { NULL };
+-	char *endptr = NULL;
+-	unsigned short port = 0;
+-	mode_t sockmode =  (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) & ~read_umask();
+-	int child_count = -1;
+-	int fork_count = 1;
+-	int backlog = 1024;
+-	int i_am_root, o;
+-	int pid_fd = -1;
+-	int nofork = 0;
+-	int sockbeforechroot = 0;
+-	struct sockaddr_un un;
+-	int fcgi_fd = -1;
++
++	sockmode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) & ~read_umask();
+ 
+ 	if (argc < 2) { /* no arguments given */
+ 		show_help();
+@@ -660,6 +783,17 @@
+ 		fprintf(stderr, "spawn-fcgi: chdir('%s') failed: %s\n", fcgi_dir, strerror(errno));
+ 		return -1;
+ 	}
++	
++	daemon_start();
++
++	fcgi_spawn_connection(fcgi_app, fcgi_app_argv, fcgi_fd, fork_count, child_count, pid_fd, nofork);
+ 
+-	return fcgi_spawn_connection(fcgi_app, fcgi_app_argv, fcgi_fd, fork_count, child_count, pid_fd, nofork);
++	while( !stop )
++	{
++		sleep(1);
++	}
++	
++	close(pid_fd);
++	close(fcgi_fd); 
++	return 0;
+ }

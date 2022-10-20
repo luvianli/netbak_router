@@ -1,0 +1,283 @@
+menu "HUAYI Platform Configuration"
+config HUAYI_PLATFORM_SUPPORT
+	bool	"Support HUAYI Platform"
+	default y
+	bool
+
+config HUAYI_PRODUCT_MODEL
+	string "Which Product Model your want"
+	depends on HUAYI_PLATFORM_SUPPORT
+
+config HUAYI_ETH_PORT_NUM
+	int "Which Number of Ethernet ports your want"
+	depends on HUAYI_PLATFORM_SUPPORT
+	
+config HUAYI_WAN_PORT_NUM
+	int "Which Number of wan port"
+	depends on HUAYI_PLATFORM_SUPPORT
+	default 4
+	
+config HUAYI_LAN1_PORT_NUM_OFFSET
+	int "Which Number of lan1 port num your want"
+	depends on HUAYI_PLATFORM_SUPPORT
+	default 0
+	
+config HUAYI_FACTORY_MTD_NUM
+	int "Which Number of factory mtd your want"
+	depends on HUAYI_PLATFORM_SUPPORT
+	
+config HUAYI_FACTORY_FIRST_RF_MAC_OFFSET
+	hex "Which offset of factory first RF MAC your want"
+	depends on HUAYI_WIRELESS_SUPPORT_2G
+	
+config HUAYI_FACTORY_SECOND_RF_MAC_OFFSET
+	hex "Which offset of factory second RF MAC your want"
+	depends on HUAYI_WIRELESS_SUPPORT_5G
+
+config HUAYI_GATEWAY_MODE_SUPPORT
+	bool	"Support gateway mode"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+
+config HUAYI_AP_MODE_SUPPORT
+	bool	"Support ap mode"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+
+config HUAYI_REPEATER_MODE_SUPPORT
+	bool	"Support repeater mode"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	
+
+config HUAYI_WIRELESS_SUPPORT
+	bool	"Support WIFI Function"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	
+	menu "HUAYI Wireless Configuration"
+	depends on HUAYI_WIRELESS_SUPPORT
+	
+	config HUAYI_WIRELESS_SUPPORT_2G
+	bool	"Support WIFI 2G"
+	bool
+	
+	config HUAYI_WIRELESS_SUPPORT_5G
+	bool	"Support WIFI 5G"
+	bool
+
+	config HUAYI_WIRELESS_GUEST_SUPPORT_2G
+	bool	"Support WIFI Guest 2G"
+	bool
+
+	config HUAYI_WIRELESS_GUEST_SUPPORT_5G
+	bool	"Support WIFI Guest 5G"
+	bool
+	
+	endmenu
+
+config HUAYI_JTAG_GPIO_MODE
+	bool	"HUAYI Platform Set JTAG PIN As GPIO Mode"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	
+config HUAYI_FLASH_CUSTOMER_ID
+	bool	"HUAYI Platform Support flash customer id"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+
+config HUAYI_SUPPORT_GPIO_EVENT
+	bool	"Support GPIO driver netlink event"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	
+config HUAYI_BUTTON_RESET_SUPPORT
+	bool	"Support GPIO reset button"
+	depends on HUAYI_SUPPORT_GPIO_EVENT
+	bool
+	
+	config HUAYI_BUTTON_RESET_GPIO_NUM
+	int "Which Number of reset button gpio"
+	depends on HUAYI_BUTTON_RESET_SUPPORT
+	
+config HUAYI_BUTTON_WPS_SUPPORT
+	bool	"Support GPIO wps button"
+	depends on HUAYI_SUPPORT_GPIO_EVENT
+	bool
+	
+	config HUAYI_BUTTON_WPS_GPIO_NUM
+	int "Which Number of wps button gpio"
+	depends on HUAYI_BUTTON_WPS_SUPPORT
+
+config HUAYI_WPS_LED_SUPPORT
+	bool	"Support wps led"
+	depends on HUAYI_SUPPORT_GPIO_EVENT
+	bool
+	
+	config HUAYI_WPS_LED_GPIO_NUM
+	int "Which Number of wps led gpio"
+	depends on HUAYI_WPS_LED_SUPPORT
+	
+	config HUAYI_WPS_LED_DEFAULT_STATUS
+	int "Which on or off the wps gpio status for AP mode and Router mode"
+	depends on HUAYI_WPS_LED_SUPPORT
+	default 0
+
+config HUAYI_MT7628_EXTERNAL_PA
+	bool	"Support MT7628 external PA"
+	depends on (HUAYI_PLATFORM_SUPPORT)
+	help	
+		will set 7628 register I2S_MODE and UART1_MODE to enable the pin.
+	bool
+
+config HUAYI_WIFI_MT7628_WLANLED
+	bool	"Support wifi MT7628 wlanled"
+	depends on (HUAYI_PLATFORM_SUPPORT)
+	help	
+		The application layer can control 2.4GWiFi lights.
+	bool
+	
+config HUAYI_SPECIAL_LED_SUPPORT
+	bool	"Support special two-color led"
+	depends on (HUAYI_PLATFORM_SUPPORT && !HUAYI_WPS_LED_SUPPORT)
+	bool
+
+	config HUAYI_REPEATER_ONLY_LED_INTERNET
+	bool "Support repeater only led internet"	
+	depends on HUAYI_SPECIAL_LED_SUPPORT
+
+	config HUAYI_WHITE_LED_GPIO_LOW_LEVEL
+	bool "white LED GPIO low level effective"	
+	depends on HUAYI_SPECIAL_LED_SUPPORT
+
+	config HUAYI_WHITE_LED_GPIO_NUM
+	int "Which Number of white light led gpio"
+	depends on HUAYI_SPECIAL_LED_SUPPORT
+
+	config HUAYI_ORANGE_LED_GPIO_LOW_LEVEL
+	bool "orange LED GPIO low level effective"	
+	depends on HUAYI_SPECIAL_LED_SUPPORT
+	
+	config HUAYI_ORANGE_LED_GPIO_NUM
+	int "Which Number of orange light led gpio"
+	depends on HUAYI_SPECIAL_LED_SUPPORT
+
+config HUAYI_INTERNET_LED_SUPPORT
+	bool	"Support internet led"
+	depends on (HUAYI_PLATFORM_SUPPORT && !HUAYI_SPECIAL_LED_SUPPORT)
+	bool
+
+	config HUAYI_INTERNET_LED_GPIO_NUM
+	int "Which Number of internet led gpio"
+	depends on HUAYI_INTERNET_LED_SUPPORT
+	
+config HUAYI_REPEATER_LED_SUPPORT
+	bool	"Support repeater led"
+	depends on HUAYI_REPEATER_MODE_SUPPORT
+	bool
+	
+	config HUAYI_SIGNAL_1_LED_GPIO_NUM
+	int "Which Number of signal 1 led gpio"
+	depends on HUAYI_REPEATER_LED_SUPPORT
+	default 1000
+	
+	config HUAYI_SIGNAL_2_LED_GPIO_NUM
+	int "Which Number of signal 2 led gpio"
+	depends on HUAYI_REPEATER_LED_SUPPORT
+	default 1000
+	
+	config HUAYI_SIGNAL_3_LED_GPIO_NUM
+	int "Which Number of signal 3 led gpio"
+	depends on HUAYI_REPEATER_LED_SUPPORT
+	default 1000
+	
+config HUAYI_POWER_LED_SUPPORT
+	bool	"Support power led"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	
+	config HUAYI_POWER_LED_GPIO_NUM
+	int "Which Number of power led gpio"
+	depends on HUAYI_POWER_LED_SUPPORT
+
+config HUAYI_BUTTON_WIFI_SUPPORT
+	bool	"Support GPIO WIFI button"
+	depends on HUAYI_SUPPORT_GPIO_EVENT
+	bool
+	
+	config HUAYI_BUTTON_WIFI_GPIO_NUM
+	int "Which Number of WIFI button gpio"
+	depends on HUAYI_BUTTON_WIFI_SUPPORT
+
+config HUAYI_SUPPORT_DNS_TRAP_IPV6_DROP
+	bool	"Support dns trap need drop ipv6"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	
+config HUAYI_SUPPORT_IPV6
+	bool	"Support ipv6"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	default n
+	
+config HUAYI_SUPPORT_FLUSH_ARP
+	bool	"Support flush arp list"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	default n
+
+config HUAYI_SUPPORT_REPEATER_DHCPD
+	bool	"Support repeater success dhcpd start"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	default y
+
+config HUAYI_SUPPORT_PASSWORD_OPTION
+	bool	"Support password option"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	default n
+
+config HUAYI_SUPPORT_NO_LOGIN_OPTION
+	bool	"Support huayi no login"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	menu "Support huayi no login"
+	depends on HUAYI_SUPPORT_NO_LOGIN_OPTION
+	config HUAYI_SUPPORT_CONTROL_TELNET_OPTION	
+		bool	"Support control telnet option"	
+		bool	
+		default n
+	endmenu	
+
+config HUAYI_SIM_CHANGE_SUPPORT
+	bool	"Support sim change"
+	bool
+	
+	config HUAYI_SIM_CHANGE_GPIO_NUM
+	int "Which Number of sim card change gpio"
+	depends on HUAYI_SIM_CHANGE_SUPPORT
+
+config HUAYI_SUPPORT_CUSTOM_MAC_CHECK
+	bool	"Support custom mac check"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	default n
+	
+	config HUAYI_CUSTOM_MAC_START
+	string "Which custom mac start example 6C:60:EB:AA:48:85"
+	depends on HUAYI_SUPPORT_CUSTOM_MAC_CHECK
+	default "\\\"6C:60:EB:AA:48:85\\\""
+
+	config HUAYI_CUSTOM_MAC_END
+	string "Which custom mac end  example 6C:60:EB:AA:4A:DD"
+	depends on HUAYI_SUPPORT_CUSTOM_MAC_CHECK
+	default "\\\"6C:60:EB:AA:4A:DD\\\""
+
+	config HUAYI_CUSTOM_COMPANY_MAC
+	string "Which custom company mac example 6C:60:EB"
+	depends on HUAYI_SUPPORT_CUSTOM_MAC_CHECK
+	default "\\\"6C:60:EB\\\""		
+endmenu
+
+comment "HUAYI Platform global features config"

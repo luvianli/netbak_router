@@ -1,0 +1,74 @@
+--- a/drivers/net/raeth/Kconfig	2020-02-26 11:36:17.373005800 +0800
++++ b/drivers/net/raeth/Kconfig	2020-02-25 10:47:04.474131300 +0800
+@@ -35,7 +35,7 @@
+ config  HUAYI_PORT_EVENT
+         bool "SUPPORT HUAYI PORT EVENT"
+ 	default y
+-        depends on RAETH && (RALINK_MT7621)
++        depends on RAETH
+ 
+ #config TASKLET_WORKQUEUE_SW
+ #        bool "Tasklet and Workqueue switch"
+
+--- a/drivers/net/raeth/raether.c	2020-02-26 11:36:17.377005800 +0800
++++ b/drivers/net/raeth/raether.c	2020-02-26 11:38:44.313808561 +0800
+@@ -2181,6 +2181,10 @@
+ 	
+ 	struct net_device *dev = (struct net_device *) dev_id;
+ 	END_DEVICE *ei_local = netdev_priv(dev);
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/
++	unsigned int link = 0;
++	unsigned int port_no = 255;
++#endif
+ 
+ 
+ 	spin_lock_irqsave(&(ei_local->page_lock), flags);
+@@ -2322,18 +2326,33 @@
+ 
+ #else // not RT6855
+ 	if (reg_int_val & PORT_ST_CHG) {
+-		printk("RT305x_ESW: Link Status Changed\n");
++		printk("RT305x_ESW: Link Status Changed \n");
+ 
+ 		stat_curr = *((volatile u32 *)(RALINK_ETH_SW_BASE+0x80));
++
+ #ifdef CONFIG_WAN_AT_P0
+ 		//link down --> link up : send signal to user application
+ 		//link up --> link down : ignore
+-		if ((stat & (1<<25)) || !(stat_curr & (1<<25)))
++		if ((stat & (1<<25)) || !(stat_curr & (1<<25))) {	
+ #else
+-		if ((stat & (1<<29)) || !(stat_curr & (1<<29)))
++		if ((stat & (1<<29)) || !(stat_curr & (1<<29))) 
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/
++		{
++			printk("RT305x_ESW: Link Down !\n");
++			link  = 0;
++			port_no = 4;
++#endif
+ #endif
+ 			goto out;
+-
++#ifdef CONFIG_WAN_AT_P4
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/	
++		} else {
++			printk("RT305x_ESW: Link Up !\n");
++			link  = 1;
++            port_no = 4;
++		}
++#endif
++#endif
+ 		schedule_work(&ei_local->kill_sig_wq);
+ out:
+ 		stat = stat_curr;
+@@ -2344,6 +2363,10 @@
+ 	sysRegWrite(ESW_ISR, reg_int_val);
+ 
+ 	spin_unlock_irqrestore(&(ei_local->page_lock), flags);
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/	
++	if(port_no != 255) raeth_port_notification(port_no,link);
++#endif
++
+ 	return IRQ_HANDLED;
+ }
+ 

@@ -1,0 +1,16 @@
+#!/bin/sh
+
+#for repeater / wisp mode scan
+iwpriv apcli0 set SiteSurvey=
+sleep 5
+[ -d "/sys/class/net/rai0" ] && {
+	iwpriv rai1 set SiteSurvey=
+	sleep 15
+}
+
+iwpriv apcli0 get_site_survey > /tmp/ScanList
+[ -d "/sys/class/net/rai0" ] && {
+	iwpriv rai1 get_site_survey >> /tmp/ScanList
+}
+
+exit 0

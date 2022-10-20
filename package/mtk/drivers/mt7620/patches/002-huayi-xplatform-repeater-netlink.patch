@@ -1,0 +1,265 @@
+diff -uNr a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/ap/ap_apcli.c b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/ap/ap_apcli.c
+--- a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/ap/ap_apcli.c	2020-10-12 20:01:44.138365593 +0800
++++ b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/ap/ap_apcli.c	2020-10-12 20:00:25.943821364 +0800
+@@ -51,7 +51,9 @@
+ 
+ #include "rt_config.h"
+ 
+-
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++#include "ath_dal_main.h"
++#endif
+ 
+ /* --------------------------------- Public -------------------------------- */
+ /*
+@@ -250,6 +252,71 @@
+ }
+ #endif /* DOT11_N_SUPPORT */
+ 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++void ApCliSendNetLinkMsg(int status)
++{
++	struct huayi_port_event event;
++	
++	memset(&event,0,sizeof(struct huayi_port_event));
++	
++	event.status = status;
++	event.port_id = WLAN_24G_PORT_NUM;
++
++	huayi_port_event_send(&event);
++}
++
++
++INT ApCliReportConnStatus(PRTMP_ADAPTER pAd, int CtrlCurrState,int status)
++{
++
++ 	INT i=0;
++ 	UCHAR ifIndex;
++	BOOLEAN bConnect=FALSE;
++
++ 	DBGPRINT(RT_DEBUG_ERROR, ("==>RTMPIoctlConnStatus\n"));
++	
++ 	ifIndex = 0;
++
++ 	DBGPRINT(RT_DEBUG_ERROR, ("=============================================================\n"));
++	
++ 	if((CtrlCurrState == TRUE)
++ 		&& (pAd->ApCfg.ApCliTab[ifIndex].SsidLen != 0))
++ 	{
++ 		for (i=0; i<MAX_LEN_OF_MAC_TABLE; i++)
++ 		{
++ 			PMAC_TABLE_ENTRY pEntry = &pAd->MacTab.Content[i];
++			
++ 			if ( IS_ENTRY_APCLI(pEntry)
++				&& (pEntry->Sst == SST_ASSOC)
++				&& (pEntry->PortSecured == WPA_802_1X_PORT_SECURED)
++				&& (status == 1))
++ 				{
++					DBGPRINT(RT_DEBUG_ERROR, ("ApCli%d Connected AP : %02X:%02X:%02X:%02X:%02X:%02X   SSID:%s\n",
++							ifIndex, PRINT_MAC(pEntry->Addr), pAd->ApCfg.ApCliTab[ifIndex].Ssid));
++					bConnect=TRUE;
++					ApCliSendNetLinkMsg(status);
++ 				}
++ 		}
++
++		if (!bConnect && (status == 0))
++		{
++			DBGPRINT(RT_DEBUG_ERROR, ("ApCli%d Connected AP : Disconnect\n",ifIndex));
++			ApCliSendNetLinkMsg(status);
++		}
++ 	}
++ 	else if(status == 0)
++ 	{
++		DBGPRINT(RT_DEBUG_ERROR, ("ApCli%d Connected AP : Disconnect\n",ifIndex));
++		ApCliSendNetLinkMsg(status);
++ 	}
++
++ 	DBGPRINT(RT_DEBUG_ERROR, ("=============================================================\n"));
++    DBGPRINT(RT_DEBUG_ERROR, ("<==RTMPIoctlConnStatus\n"));
++
++ 	return TRUE;
++}
++#endif
++
+ /*
+     ==========================================================================
+ 
+@@ -886,6 +953,9 @@
+ #endif /* APCLI_CERT_SUPPORT */	
+ #endif /* DOT11N_DRAFT3 */
+ #endif /* DOT11_N_SUPPORT */
++
++	ApCliReportConnStatus(pAd,result,1);
++
+ 	return result;
+ }
+ 
+@@ -960,6 +1030,7 @@
+ 
+ 	MacTableDeleteEntry(pAd, MacTabWCID, APCLI_ROOT_BSSID_GET(pAd, pApCliEntry->MacTabWCID));
+ 
++	ApCliReportConnStatus(pAd, FALSE,0);
+ #ifdef MAC_REPEATER_SUPPORT
+ 	if (CliIdx != 0xFF)
+ 	{
+diff -uNr a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/cmm_wpa.c b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/cmm_wpa.c
+--- a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/cmm_wpa.c	2020-10-12 20:01:44.114365593 +0800
++++ b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/cmm_wpa.c	2020-10-12 20:00:38.658859655 +0800
+@@ -55,6 +55,12 @@
+ UCHAR   	OUI_MSA_PSK_AKM[4]   	= {0x00, 0x0F, 0xAC, 0x06};		/* Not yet final - IEEE 802.11s-D1.06*/
+ #endif /* MESH_SUPPORT */
+ 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++#ifdef APCLI_SUPPORT
++extern INT ApCliReportConnStatus(PRTMP_ADAPTER pAd, int CtrlCurrState,int status);
++#endif
++#endif
++
+ 
+ static VOID	ConstructEapolKeyData(
+ 	IN	PMAC_TABLE_ENTRY	pEntry,
+@@ -1576,7 +1582,12 @@
+ 		pEntry->AuthMode == Ndis802_11AuthModeWPA2)
+ 	{
+ 		pEntry->PortSecured = WPA_802_1X_PORT_SECURED;
+-		pEntry->PrivacyFilter = Ndis802_11PrivFilterAcceptAll;	
++		pEntry->PrivacyFilter = Ndis802_11PrivFilterAcceptAll;
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++#ifdef APCLI_SUPPORT
++		ApCliReportConnStatus(pAd,TRUE,1);
++#endif
++#endif
+ #ifdef MAC_REPEATER_SUPPORT
+ 		if (CliIdx != 0xFF)
+ 		{
+diff -uNr a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/wsc.c b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/wsc.c
+--- a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/wsc.c	2020-10-12 20:01:44.122365593 +0800
++++ b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/wsc.c	2020-10-12 20:01:04.296935426 +0800
+@@ -37,6 +37,11 @@
+ /*#include <net/iw_handler.h> */
+ /*#endif*/
+ 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++#include "ath_dal_main.h"
++#endif
++
++
+ #define WSC_UPNP_MSG_TIMEOUT			(150 * OS_HZ)
+ #define RTMP_WSC_NLMSG_SIGNATURE_LEN	8
+ #define MAX_WEPKEYNAME_LEN 				20
+@@ -185,6 +190,24 @@
+ 	Note:
+ 		Actually, to IOT with JumpStart, we fix the first 10 bytes of UUID string!!!!
+ */
++
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++void WpsSendNetLinkMsg(UCHAR encrtyption,UCHAR *key)
++{
++	struct huayi_port_event event;
++	
++	memset(&event,0,sizeof(struct huayi_port_event));
++	
++	event.status = 1;
++	event.port_id = WLAN_24G_WPS_PORT_NUM;
++	event.encryption = encrtyption;
++	memcpy(event.key,key,sizeof(event.key));
++
++	huayi_port_event_send(&event);
++}
++#endif
++
++
+ INT WscGenerateUUID(
+ 	RTMP_ADAPTER	*pAd, 
+ 	UCHAR 			*uuidHexStr, 
+@@ -9448,6 +9471,11 @@
+ {
+ 	UCHAR			CurApIdx = BSS0;
+ 	APCLI_STRUCT	*pApCliTab;
++
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	UCHAR wpa_key[65] = {0};
++	UCHAR encrtyption = 0;
++#endif
+ 	
+ 	DBGPRINT(RT_DEBUG_TRACE, ("-----> WscWriteConfToApCliCfg\n"));
+     
+@@ -9492,6 +9520,28 @@
+ 							RT_CfgSetWPAPSKKey(pAd, (PSTRING) pCredential->Key, pWscControl->WpaPskLen, 
+ 										(PUCHAR)pApCliTab->Ssid, pApCliTab->SsidLen, 
+ 										pApCliTab->PMK);
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++						if(pCredential->AuthType == WSC_AUTHTYPE_WPAPSK)
++						{
++							encrtyption |= WLAN_AUTHTYPE_WPAPSK;
++						}
++						else if(pCredential->AuthType == WSC_AUTHTYPE_WPA2PSK)
++						{
++							encrtyption |= WLAN_AUTHTYPE_WPA2PSK;
++						}
++
++						if(pCredential->EncrType == WSC_ENCRTYPE_TKIP)
++						{
++							encrtyption |= WLAN_ENCRTYPE_TKIP;
++						}
++						else if(pCredential->EncrType == WSC_ENCRTYPE_AES)
++						{
++							encrtyption |= WLAN_ENCRTYPE_AES;
++						}
++						
++						memcpy(wpa_key,pWscControl->WpaPsk, pWscControl->WpaPskLen);
++						WpsSendNetLinkMsg(encrtyption,wpa_key);
++#endif
+ 	                    DBGPRINT(RT_DEBUG_TRACE, ("WpaPskLen = %d\n", pWscControl->WpaPskLen));
+ 	                }
+ 	                else
+@@ -9544,6 +9594,13 @@
+ 				}
+ 			}
+ 		}
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++		else
++		{			
++			encrtyption = 0;
++			WpsSendNetLinkMsg(encrtyption,wpa_key);
++		}
++#endif		
+ 	}
+ 
+ 	if (pWscControl->WscProfile.ProfileCnt > 1)
+diff -uNr a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/include/ath_dal_main.h b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/include/ath_dal_main.h
+--- a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/include/ath_dal_main.h	1970-01-01 08:00:00.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/include/ath_dal_main.h	2020-10-12 19:53:54.498370500 +0800
+@@ -0,0 +1,32 @@
++/*
++
++*/
++
++#ifndef _ATH_DAL_HEADER_
++#define _ATH_DAL_HEADER_
++
++#define WLAN_24G_PORT_NUM        8
++#define WLAN_24G_WPS_PORT_NUM 	 10
++
++
++#define WLAN_AUTHTYPE_WPAPSK      	0x01
++#define WLAN_AUTHTYPE_WPA2PSK     	0x02
++#define WLAN_AUTHTYPE_SHARED      	0x04
++
++#define WLAN_ENCRTYPE_TKIP    		0x10
++#define WLAN_ENCRTYPE_AES     		0x20
++#define WLAN_ENCRTYPE_WEP     		0x40
++
++
++typedef struct huayi_port_event{ 
++	u_int8_t port_id;
++	u_int8_t status;
++	u_int8_t encryption;
++	u_int8_t key[65];
++} port_change_event;
++
++extern int huayi_port_event_send(struct huayi_port_event *e);
++
++#endif
++
++

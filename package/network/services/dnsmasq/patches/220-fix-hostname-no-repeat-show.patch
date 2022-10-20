@@ -1,0 +1,11 @@
+--- a/src/lease.c	2020-12-11 15:31:18.019440104 +0800
++++ b/src/lease.c	2020-12-11 15:22:23.115445790 +0800
+@@ -971,7 +971,7 @@
+ 	      return;
+ 	    }
+ 	
+-	  kill_name(lease_tmp);
++	  //kill_name(lease_tmp);
+ 	  break;
+ 	}
+     }

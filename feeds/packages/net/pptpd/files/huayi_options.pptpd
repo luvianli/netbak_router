@@ -1,0 +1,19 @@
+#debug
+#logfile /tmp/pptp-server.log
+auth
+name "pptp-server"
+default-asyncmap
+nobsdcomp
+nodeflate
+#noproxyarp
+#nomppc
+ipcp-accept-local
+require-mschap-v2
+refuse-chap
+refuse-mschap
+refuse-eap
+refuse-pap
+#plugin radius.so
+#radius-config-file /etc/radius.conf
+ip-up-script /etc/ppp/pptpd-up
+ip-down-script /etc/ppp/pptpd-down

@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+#ipv6 default route always right
+[ "$ACTION" = ifup ] || exit 0
+iface=wan6
+[ -z "$iface" -o "$INTERFACE" = "$iface" ] || exit 0
+
+# Bad route 1
+ifName=$(uci get network.wan6.ifname 2>&1)
+bad=$(ip -6 route show default | grep -v "$ifName" | sed 's/expire.*//')
+if [ "x$bad" != "x" ]; then
+	echo "Old IPv6 route w/o PPPoE: $bad" > /dev/console
+	status=$(ip -6 route delete $bad 2>&1)
+	echo "delete: $status" > /dev/console
+fi
+
+# Bad route 2
+good=$(ip -6 route show default | grep "$ifName" | sed 's/from [^ ]* //' | head -n1)
+echo "Good route is: $good" > /dev/console
+status=$(ip -6 route add $good 2>&1)
+echo "Add good IPv6 route: $status" > /dev/console

@@ -1,0 +1,83 @@
+diff -ur linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/ap/ap_cfg.c linux-3.10.108_patch/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/ap/ap_cfg.c
+--- linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/ap/ap_cfg.c	2019-05-03 09:39:42.000000000 +0800
++++ linux-3.10.108_patch/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/ap/ap_cfg.c	2021-05-11 10:20:41.000000000 +0800
+@@ -2343,12 +2343,43 @@
+ 	while ((this_char = strsep((char **)&tmp, ",")) != NULL) {
+ 		if (!*this_char)
+ 			continue;
+-
++		value = NULL;
+ 		value = strchr(this_char, '=');
+ 
+ 		if (value != NULL)
+ 			*value++ = 0;
+ 
++/* spacific */
++#ifdef CUSTOMER_VENDOR_IE_SUPPORT
++		if(strcmp(this_char,"hy_vendor")==0){
++			UCHAR apidx;
++			POS_COOKIE pObj = (POS_COOKIE) pAd->OS_Cookie;
++			struct customer_vendor_ie *pvie;
++				
++			apidx = pObj->ioctl_if;
++			pvie = &pAd->ApCfg.MBSSID[apidx].ap_vendor_ie;
++			RTMP_SPIN_LOCK(&pvie->vendor_ie_lock);
++			
++			if(pvie->pointer){
++				os_free_mem(pvie->pointer);
++				pvie->length = 0;
++			}
++			if(value && (strlen(value)<=HY_VENDOR_MAX_LEN)){
++				os_alloc_mem(pAd,(UCHAR **)&pvie->pointer,strlen(value)+1);
++				strcpy(pvie->pointer,value);
++				pvie->length = strlen(value);
++			}
++			else
++				printk("hy_vendor length must be 0 ~ %d byte\n",HY_VENDOR_MAX_LEN);
++		//	printk("%s[%d]~~~~ pvie->pointer=%s\n",__FUNCTION__,__LINE__,pvie->pointer); 
++			
++			RTMP_SPIN_UNLOCK(&pvie->vendor_ie_lock);
++
++			continue;
++		}
++#endif
++/* end spacific */ 
++
+ 		if (!value
+ #ifdef WSC_AP_SUPPORT
+ 			&& (
+diff -ur linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/bcn.c linux-3.10.108_patch/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/bcn.c
+--- linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/bcn.c	2019-05-03 09:40:22.000000000 +0800
++++ linux-3.10.108_patch/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/bcn.c	2021-05-11 10:04:36.000000000 +0800
+@@ -1241,13 +1241,17 @@
+ 		else {
+ 
+ 			ULONG TmpLen;
++			// SpecificIe
++			UCHAR hySpecificIe[HY_VENDOR_MAX_LEN+5] = {IE_VENDOR_SPECIFIC, HY_VENDOR_MAX_LEN+3, 0x90, 0x91, 0x64};
+ 
+ 			MTWF_LOG(DBG_CAT_AP, DBG_SUBCAT_ALL, DBG_LVL_INFO,
+ 				("BCN add vendor ie\n"));
++			memset(&hySpecificIe[5],0,sizeof(hySpecificIe)-5);
++			sprintf(&hySpecificIe[5],pAd->ApCfg.MBSSID[apidx].ap_vendor_ie.pointer);
++
+ 			MakeOutgoingFrame(pBeaconFrame + FrameLen,
+ 					  &TmpLen,
+-					  pAd->ApCfg.MBSSID[apidx].ap_vendor_ie.length,
+-					  pAd->ApCfg.MBSSID[apidx].ap_vendor_ie.pointer,
++					  sizeof(hySpecificIe),   hySpecificIe,
+ 					  END_OF_ARGS);
+ 			FrameLen += TmpLen;
+ 		}
+diff -ur linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/include/rtmp.h linux-3.10.108_patch/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/include/rtmp.h
+--- linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/include/rtmp.h	2021-05-11 10:42:06.490094297 +0800
++++ linux-3.10.108_patch/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/include/rtmp.h	2021-05-10 20:41:26.000000000 +0800
+@@ -379,6 +379,8 @@
+ #define CFI_LEN 1
+ #define VID_LEN 12
+ 
++#define HY_VENDOR_MAX_LEN 20
++
+ #ifdef VLAN_SUPPORT
+ /*
+ 	VLAN TX Checking Policy :

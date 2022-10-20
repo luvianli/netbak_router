@@ -1,0 +1,7 @@
+config ftp 'ftp_service'
+	option enable '0'
+    option drive_path ''
+    option mnt_path ''
+    option ftp_path ''
+    option is_usb '0'    
+	

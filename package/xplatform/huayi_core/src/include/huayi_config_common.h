@@ -1,0 +1,30 @@
+#ifndef _HUAYI_CONFIG_COMMON_HEADER_
+#define _HUAYI_CONFIG_COMMON_HEADER_
+
+
+#if defined(CONFIG_HUAYI_ETH_PORT_NUM)
+#define HUAYI_ETH_PORT_NUM 						CONFIG_HUAYI_ETH_PORT_NUM
+#endif
+
+#if defined(CONFIG_HUAYI_FACTORY_MTD_NUM)
+#define HUAYI_FACTORY_MTD_NUM 					CONFIG_HUAYI_FACTORY_MTD_NUM
+#endif
+
+#if defined(CONFIG_HUAYI_FACTORY_FIRST_RF_MAC_OFFSET)
+#define HUAYI_FACTORY_FIRST_RF_MAC_OFFSET 				CONFIG_HUAYI_FACTORY_FIRST_RF_MAC_OFFSET
+#endif
+
+#if defined(CONFIG_HUAYI_FACTORY_SECOND_RF_MAC_OFFSET)
+#define HUAYI_FACTORY_SECOND_RF_MAC_OFFSET 				CONFIG_HUAYI_FACTORY_SECOND_RF_MAC_OFFSET
+#endif
+
+#if defined(CONFIG_HUAYI_ETH_PORT_NUM)
+#define HUAYI_ETH_PORT_NUM 						CONFIG_HUAYI_ETH_PORT_NUM
+#endif
+
+#if defined(CONFIG_HUAYI_LAN1_PORT_NUM_OFFSET)
+#define HUAYI_LAN1_PORT_NUM_OFFSET 				CONFIG_HUAYI_LAN1_PORT_NUM_OFFSET
+#endif
+
+#define lv_print(fmt, args...) do{FILE *fpFP=fopen("/dev/console","w+");if(fpFP){fprintf(fpFP,"\n%s[%d]~~~~~~~~" fmt, __FUNCTION__, __LINE__, ## args);fclose(fpFP);}}while(0);
+#endif

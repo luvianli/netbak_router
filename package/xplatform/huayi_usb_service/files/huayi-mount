@@ -1,0 +1,35 @@
+/sbin/block hotplug
+
+logger $ACTION $DEVNAME $DEVTYPE
+[ "$ACTION" = "add" ] && {
+	if [ -x /usr/bin/ntfs-3g ];then
+		mkdir -p /mnt/$DEVICENAME
+		str=`echo $DEVICENAME|grep "sd"`
+		if [ ! -z "$str" ];then
+			if [ -b "/dev/$DEVICENAME" ];then
+				if [ -d "/mnt/$DEVICENAME" ];then
+					/sbin/uci set usb_config.ftp_service.drive_path=/dev/$DEVICENAME
+					/sbin/uci set usb_config.ftp_service.mnt_path=/mnt/$DEVICENAME
+					/sbin/uci set usb_config.ftp_service.ftp_path=$DEVICENAME
+					/sbin/uci set usb_config.ftp_service.is_usb=1
+					/sbin/uci commit usb_config
+					huayi-reset mount
+				fi
+			fi
+		fi
+	fi
+}
+[ "$ACTION" = "remove" ] && {
+	#rmdir /mnt/$DEVICENAME
+	str=`echo $DEVICENAME|grep "sd"`
+    if [ ! -z "$str" ];then
+    	/etc/init.d/vsftpd stop
+    	umount /mnt/$DEVICENAME
+		/sbin/uci set usb_config.ftp_service.is_usb=0
+		/sbin/uci set usb_config.ftp_service.drive_path=' '
+		/sbin/uci set usb_config.ftp_service.mnt_path=' '
+		/sbin/uci commit usb_config
+	fi
+}
+
+

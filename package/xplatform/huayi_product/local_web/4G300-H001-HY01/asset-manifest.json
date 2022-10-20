@@ -1,0 +1,21 @@
+{
+  "files": {
+    "main.css": "/static/css/main.b6139e93.chunk.css",
+    "main.js": "/static/js/main.2c006570.chunk.js",
+    "runtime-main.js": "/static/js/runtime-main.b2df4a99.js",
+    "static/css/2.8c38a080.chunk.css": "/static/css/2.8c38a080.chunk.css",
+    "static/js/2.9a936e40.chunk.js": "/static/js/2.9a936e40.chunk.js",
+    "index.html": "/index.html",
+    "precache-manifest.ac138fe54e2af3ad857e954881ce125e.js": "/precache-manifest.ac138fe54e2af3ad857e954881ce125e.js",
+    "service-worker.js": "/service-worker.js",
+    "static/media/login.less": "/static/media/emui-icon.51666463.jpg",
+    "static/media/logo.png": "/static/media/logo.dd22ed95.png"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.b2df4a99.js",
+    "static/css/2.8c38a080.chunk.css",
+    "static/js/2.9a936e40.chunk.js",
+    "static/css/main.b6139e93.chunk.css",
+    "static/js/main.2c006570.chunk.js"
+  ]
+}

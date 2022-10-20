@@ -1,0 +1,182 @@
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/Kconfig
+===================================================================
+--- linux-3.10.108.orig/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/Kconfig	2019-04-26 14:33:08.000000000 +0800
++++ linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/Kconfig	2019-04-26 14:50:50.157637971 +0800
+@@ -1,53 +1,53 @@
+-config MT_WIFI
+-	tristate "MT WIFI Driver"
+-	select WIFI_BASIC_FUNC if MT_WIFI
++config MT7628_WIFI
++	tristate "MT 7628 WIFI Driver"
++	select MT7628_WIFI_BASIC_FUNC if MT7628_WIFI
+ 
+-#config MT_WIFI_PATH
++#config MT7628_MT_WIFI_PATH
+ #		string
+-#		depends on MT_WIFI
++#		depends on MT7628_WIFI
+ #		default "rlt_wifi"
+ 
+-if MT_WIFI
++if MT7628_WIFI
+ menu "WiFi Generic Feature Options"
+ choice
+ 		prompt "EEPROM Type of 1st Card"
+ 		depends on ! FIRST_IF_NONE
+ 
+-		config FIRST_IF_EEPROM_FLASH
++		config MT7628_FIRST_IF_EEPROM_FLASH
+ 		bool "FLASH"
+ endchoice
+ 
+-config RT_FIRST_CARD_EEPROM
++config MT7628_RT_FIRST_CARD_EEPROM
+ 		string
+ 		depends on ! FIRST_IF_NONE
+-		default "flash" if FIRST_IF_EEPROM_FLASH
++		default "flash" if MT7628_FIRST_IF_EEPROM_FLASH
+ 
+ choice
+ 		prompt "EEPROM Type of 2nd Card"
+ 		depends on ! SECOND_IF_NONE
+ 
+-		config SECOND_IF_EEPROM_PROM
++		config MT7628_SECOND_IF_EEPROM_PROM
+ 		bool "EEPROM"
+ 
+-		config SECOND_IF_EEPROM_EFUSE
++		config MT7628_SECOND_IF_EEPROM_EFUSE
+ 		bool "EFUSE"
+ 
+-		config SECOND_IF_EEPROM_FLASH
++		config MT7628_SECOND_IF_EEPROM_FLASH
+ 		bool "FLASH"
+ endchoice
+ 
+-config RT_SECOND_CARD_EEPROM
++config MT7628_RT_SECOND_CARD_EEPROM
+ 		string
+ 		depends on ! SECOND_IF_NONE
+-		default "prom" if SECOND_IF_EEPROM_PROM
+-		default "efuse" if SECOND_IF_EEPROM_EFUSE
+-		default "flash" if SECOND_IF_EEPROM_FLASH
++		default "prom" if MT7628_SECOND_IF_EEPROM_PROM
++		default "efuse" if MT7628_SECOND_IF_EEPROM_EFUSE
++		default "flash" if MT7628_SECOND_IF_EEPROM_FLASH
+ 		
+-config MULTI_INF_SUPPORT
++config MT7628_MULTI_INF_SUPPORT
+ 		bool
+ 		default y if !FIRST_IF_NONE && !SECOND_IF_NONE
+ 		
+-config WIFI_BASIC_FUNC
++config MT7628_WIFI_BASIC_FUNC
+ 	bool "Basic Functions"
+ 	select WIRELESS_EXT
+ 	select WEXT_SPY
+@@ -189,7 +189,7 @@
+ # Section for chip architectures
+ #
+ # "MT MAC Support"
+-config MT_MAC
++config MT7628_MAC
+ 	bool
+ 	depends on WIFI_DRIVER
+ 	default n
+@@ -238,32 +238,32 @@
+ 		default MT_WIFI_MODE_AP
+ 
+ 		config MT_WIFI_MODE_AP
+-				bool "AP"
+-				select MT_AP_SUPPORT
++				tristate "AP"
++				select MT7628_AP_SUPPORT
+ 
+ 		config MT_WIFI_MODE_STA
+-				bool "STA"
+-				select MT_STA_SUPPORT
++				tristate "STA"
++				select MT7628_STA_SUPPORT
+ 
+ 		config MT_WIFI_MODE_BOTH
+-				bool "APSTA"
+-				select MT_AP_SUPPORT
+-				select MT_STA_SUPPORT
++				tristate "APSTA"
++				select MT7628_AP_SUPPORT
++				select MT7628_STA_SUPPORT
+ 
+     endchoice
+ 
+     if MT_WIFI_MODE_AP || MT_WIFI_MODE_BOTH
+-		source "drivers/net/wireless/mt_wifi_ap/Kconfig"
++		source "drivers/net/wireless/mtk/mt7628/mt7628_wifi_ap/Kconfig"
+     endif
+ 
+ #    if MT_WIFI_MODE_STA || MT_WIFI_MODE_BOTH
+-#		source "drivers/net/wireless/mt_wifi_sta/Kconfig"
++#		source "drivers/net/wireless/mt7628_wifi_sta/Kconfig"
+ #    endif
+ 
+-config MT_AP_SUPPORT
++config MT7628_AP_SUPPORT
+ 		bool
+ 
+-config MT_STA_SUPPORT
++config MT7628_STA_SUPPORT
+ 		bool
+ 
+ endmenu	
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi_ap/Kconfig
+===================================================================
+--- linux-3.10.108.orig/drivers/net/wireless/mtk/mt7628/mt7628_wifi_ap/Kconfig	2019-04-26 14:33:23.000000000 +0800
++++ linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi_ap/Kconfig	2019-04-26 14:51:11.426224763 +0800
+@@ -1,6 +1,6 @@
+ config MT7628_AP_SUPPORT
+ 	tristate "Mediatek MT7628 802.11n AP support"
+-	depends on MT_WIFI
++	depends on MT7628_WIFI
+ 	select WIRELESS_EXT
+ 	select WEXT_SPY
+ 	select WEXT_PRIV
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi_ap/Makefile
+===================================================================
+--- linux-3.10.108.orig/drivers/net/wireless/mtk/mt7628/mt7628_wifi_ap/Makefile	2019-04-26 14:33:23.000000000 +0800
++++ linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi_ap/Makefile	2019-04-26 14:51:34.433906095 +0800
+@@ -1,17 +1,17 @@
+ 
+ ifeq ($(CONFIG_SUPPORT_OPENWRT),y)
+-EXTRA_CFLAGS = -I$(src)/../src/include \
+-				-I$(src)/../src/embedded/include \
+-				-I$(src)/../src/ate/include
++EXTRA_CFLAGS = -I$(src)/../mt7628_wifi/include \
++				-I$(src)/../mt7628_wifi/embedded/include \
++				-I$(src)/../mt7628_wifi/ate/include
+ DRV_NAME = mt7628
+-SRC_DIR = ../src/embedded
+-obj-m += $(DRV_NAME).o
++SRC_DIR = ../mt7628_wifi/embedded
++obj-$(CONFIG_MT7628_AP_SUPPORT) += $(DRV_NAME).o
+ else
+-EXTRA_CFLAGS = -Idrivers/net/wireless/mt_wifi/include \
+-				-Idrivers/net/wireless/mt_wifi/embedded/include \
+-				-Idrivers/net/wireless/mt_wifi/ate/include
+-DRV_NAME = mt_wifi
+-SRC_DIR = ../mt_wifi/embedded
++EXTRA_CFLAGS = -Idrivers/net/wireless/mtk/mt7628/mt7628_wifi/include \
++				-Idrivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/include \
++				-Idrivers/net/wireless/mtk/mt7628/mt7628_wifi/ate/include
++DRV_NAME = mt7628_wifi
++SRC_DIR = ../mt7628_wifi/embedded
+ obj-$(CONFIG_MT7628_AP_SUPPORT) += $(DRV_NAME).o
+ endif
+ 
+@@ -112,7 +112,7 @@
+ #	spec_objs += $(SRC_DIR)/common/ral_ps.o
+ #endif
+ 
+-ifeq ($(CONFIG_MT_MAC),y)
++ifeq ($(CONFIG_MT7628_MAC),y)
+ 	EXTRA_CFLAGS += -DMT_PS
+ 	spec_objs += $(SRC_DIR)/common/mt_ps.o
+ 	spec_objs += $(SRC_DIR)/common/mt_io.o

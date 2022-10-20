@@ -1,0 +1,276 @@
+--- a/drivers/char/ralink_gpio.c	2021-01-22 15:41:20.932865134 +0800
++++ b/drivers/char/ralink_gpio.c	2021-01-25 15:31:12.802116700 +0800
+@@ -224,6 +224,10 @@
+ 		}
+ 		//register led data
+ 		ralink_gpio_led_data[led.gpio].gpio = led.gpio;
++#ifdef	CONFIG_HUAYI_REPEATER_ONLY_LED_INTERNET	
++		ralink_gpio_led_data[led.gpio].secondLED = led.secondLED;
++		ralink_gpio_led_data[led.gpio].andOr = led.andOr;
++#endif
+ 		ralink_gpio_led_data[led.gpio].on = (led.on == 0)? 1 : led.on;
+ 		ralink_gpio_led_data[led.gpio].off = (led.off == 0)? 1 : led.off;
+ 		ralink_gpio_led_data[led.gpio].blinks = (led.blinks == 0)? 1 : led.blinks;
+@@ -270,6 +274,30 @@
+ 			tmp |= RALINK_GPIO((led.gpio-64));
+ 			*(volatile u32 *)(RALINK_REG_PIO9564DIR) = tmp;
+ 		}
++#ifdef	CONFIG_HUAYI_REPEATER_ONLY_LED_INTERNET	
++		if(led.secondLED){ 
++			ralink_gpio_led_data[led.secondLED].gpio = -1;
++			ralink_gpio_led_data[led.secondLED].off = -1;
++			ralink_gpio_led_data[led.secondLED].rests = -1;
++			ralink_gpio_led_data[led.secondLED].on = -1;
++			ralink_gpio_led_data[led.secondLED].blinks = -1;
++			ralink_gpio_led_data[led.secondLED].times = -1; 
++			if (led.secondLED <= 31) {
++				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
++				tmp |= RALINK_GPIO(led.secondLED);
++				*(volatile u32 *)(RALINK_REG_PIODIR) = tmp;
++			} else if (led.secondLED <= 63) {
++				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO6332DIR));
++				tmp |= RALINK_GPIO((led.secondLED-32));
++				*(volatile u32 *)(RALINK_REG_PIO6332DIR) = tmp;
++			} else {
++				tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIO9564DIR));
++				tmp |= RALINK_GPIO((led.secondLED-64));
++				*(volatile u32 *)(RALINK_REG_PIO9564DIR) = tmp;
++			}
++
++		}
++#endif
+ #else
+ 		if (led.gpio <= 23) {
+ 			tmp = le32_to_cpu(*(volatile u32 *)(RALINK_REG_PIODIR));
+@@ -1219,18 +1247,74 @@
+ 		}
+ 		if (x < ralink_gpio_led_data[i].on) {
+ 			__LED_ON(i);
++#ifdef CONFIG_HUAYI_REPEATER_ONLY_LED_INTERNET			
++			if(ralink_gpio_led_data[i].secondLED){
++				if(ralink_gpio_led_data[i].secondLED <= 31){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED_ON(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else if(ralink_gpio_led_data[i].secondLED <= 63){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED6332_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED6332_ON(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else{
++					if(ralink_gpio_led_data[i].andOr){
++						__LED9564_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED9564_ON(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++			}	
++#endif 		
+ 			if (ralink_gpio_led_stat[i].ticks && x == 0)
+ 				ralink_gpio_led_stat[i].offs++;
+ #if RALINK_LED_DEBUG
+-			printk("t%d gpio%d on,", ralink_gpio_led_stat[i].ticks, i);
++			printk("t%d gpio%d on,\n", ralink_gpio_led_stat[i].ticks, i);
+ #endif
+ 		}
+ 		else {
+ 			__LED_OFF(i);
++#ifdef CONFIG_HUAYI_REPEATER_ONLY_LED_INTERNET		
++			if(ralink_gpio_led_data[i].secondLED){
++				if(ralink_gpio_led_data[i].secondLED <= 31){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED_ON(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else if(ralink_gpio_led_data[i].secondLED <= 63){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED6332_ON(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED6332_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else{
++					if(ralink_gpio_led_data[i].andOr){
++						__LED9564_ON(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED9564_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++			}	
++#endif 		
+ 			if (x == ralink_gpio_led_data[i].on)
+ 				ralink_gpio_led_stat[i].ons++;
+ #if RALINK_LED_DEBUG
+-			printk("t%d gpio%d off,", ralink_gpio_led_stat[i].ticks, i);
++			printk("t%d gpio%d off,\n", ralink_gpio_led_stat[i].ticks, i);
+ #endif
+ 		}
+ 
+@@ -1858,6 +1942,34 @@
+ 		}
+ 		if (x < ralink_gpio_led_data[i].on) {
+ 			__LED6332_ON(i);
++#ifdef CONFIG_HUAYI_REPEATER_ONLY_LED_INTERNET			
++			if(ralink_gpio_led_data[i].secondLED){
++				if(ralink_gpio_led_data[i].secondLED <= 31){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED_ON(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else if(ralink_gpio_led_data[i].secondLED <= 63){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED6332_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED6332_ON(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else{
++					if(ralink_gpio_led_data[i].andOr){
++						__LED9564_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED9564_ON(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++			}	
++#endif 		
+ 			if (ralink_gpio_led_stat[i].ticks && x == 0)
+ 				ralink_gpio_led_stat[i].offs++;
+ #if RALINK_LED_DEBUG
+@@ -1866,6 +1978,34 @@
+ 		}
+ 		else {
+ 			__LED6332_OFF(i);
++#ifdef CONFIG_HUAYI_REPEATER_ONLY_LED_INTERNET			
++			if(ralink_gpio_led_data[i].secondLED){
++				if(ralink_gpio_led_data[i].secondLED <= 31){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED_ON(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else if(ralink_gpio_led_data[i].secondLED <= 63){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED6332_ON(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED6332_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else{
++					if(ralink_gpio_led_data[i].andOr){
++						__LED9564_ON(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED9564_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++			}	
++#endif 		
+ 			if (x == ralink_gpio_led_data[i].on)
+ 				ralink_gpio_led_stat[i].ons++;
+ #if RALINK_LED_DEBUG
+@@ -1964,6 +2104,34 @@
+ 		}
+ 		if (x < ralink_gpio_led_data[i].on) {
+ 			__LED9564_ON(i);
++#ifdef CONFIG_HUAYI_REPEATER_ONLY_LED_INTERNET	
++			if(ralink_gpio_led_data[i].secondLED){
++				if(ralink_gpio_led_data[i].secondLED <= 31){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED_ON(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else if(ralink_gpio_led_data[i].secondLED <= 63){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED6332_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED6332_ON(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else{
++					if(ralink_gpio_led_data[i].andOr){
++						__LED9564_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED9564_ON(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++			}	
++#endif 	
+ 			if (ralink_gpio_led_stat[i].ticks && x == 0)
+ 				ralink_gpio_led_stat[i].offs++;
+ #if RALINK_LED_DEBUG
+@@ -1972,6 +2140,35 @@
+ 		}
+ 		else {
+ 			__LED9564_OFF(i);
++#ifdef CONFIG_HUAYI_REPEATER_ONLY_LED_INTERNET			
++//			printk("[%d]secondLED=%d andOr=%d\n",__LINE__,ralink_gpio_led_data[i].secondLED,ralink_gpio_led_data[i].andOr);
++			if(ralink_gpio_led_data[i].secondLED){
++				if(ralink_gpio_led_data[i].secondLED <= 31){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED_ON(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else if(ralink_gpio_led_data[i].secondLED <= 63){
++					if(ralink_gpio_led_data[i].andOr){
++						__LED6332_ON(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED6332_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++				else{
++					if(ralink_gpio_led_data[i].andOr){
++						__LED9564_ON(ralink_gpio_led_data[i].secondLED);
++					}
++					else{
++						__LED9564_OFF(ralink_gpio_led_data[i].secondLED);
++					}
++				}
++			}	
++#endif 		
+ 			if (x == ralink_gpio_led_data[i].on)
+ 				ralink_gpio_led_stat[i].ons++;
+ #if RALINK_LED_DEBUG
+
+--- a/drivers/char/ralink_gpio.h	2021-01-22 15:41:20.788865135 +0800
++++ b/drivers/char/ralink_gpio.h	2021-01-25 15:31:12.666116701 +0800
+@@ -565,6 +565,10 @@
+ #define RALINK_GPIO_LED_INFINITY	4000
+ typedef struct {
+ 	int gpio;			//gpio number (0 ~ 23)
++#ifdef	CONFIG_HUAYI_REPEATER_ONLY_LED_INTERNET
++	int secondLED;		//for LED blink alternately
++	int andOr;			// if the gpio and secondLED work with the same level logic
++#endif
+ 	unsigned int on;		//interval of led on
+ 	unsigned int off;		//interval of led off
+ 	unsigned int blinks;		//number of blinking cycles

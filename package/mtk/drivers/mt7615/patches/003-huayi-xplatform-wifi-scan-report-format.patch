@@ -1,0 +1,73 @@
+--- a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/cmm_info.c	2019-05-03 09:37:09.000000000 +0800
++++ a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/cmm_info.c	2020-08-03 11:37:00.081283174 +0800
+@@ -4253,13 +4253,27 @@
+ 	INT         Rssi = 0;
+ 	UINT        Rssi_Quality = 0;
+ 	NDIS_802_11_NETWORK_TYPE    wireless_mode;
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	CHAR		Ssid[2*MAX_LEN_OF_SSID + 2],ssid_buf[2*MAX_LEN_OF_SSID + 2 +8];
++	RTMP_STRING SecurityStr[32] = {0},SecurityStr_buf[32 + 13] = {0};
++#else
+ 	CHAR		Ssid[MAX_LEN_OF_SSID + 1];
+ 	RTMP_STRING SecurityStr[32] = {0};
++#endif
++
+ 	/*Channel*/
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	sprintf(msg+strlen(msg),"Channel:%-4d", pBss->Channel);
++#else
+ 	sprintf(msg + strlen(msg), "%-4d", pBss->Channel);
++#endif
+ 	/*SSID*/
+ 	NdisZeroMemory(Ssid, (MAX_LEN_OF_SSID + 1));
+-
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	NdisMoveMemory(Ssid, pBss->Ssid, pBss->SsidLen);
++	sprintf(ssid_buf,"SSID:\"%s\"", Ssid);
++	sprintf(msg+strlen(msg),"%-65s", ssid_buf);
++#else
+ 	if (RTMPCheckStrPrintAble((PCHAR)pBss->Ssid, pBss->SsidLen))
+ 		NdisMoveMemory(Ssid, pBss->Ssid, pBss->SsidLen);
+ 	else {
+@@ -4272,8 +4286,13 @@
+ 	}
+ 
+ 	sprintf(msg + strlen(msg), "%-33s", Ssid);
++#endif
+ 	/*BSSID*/
+-	sprintf(msg + strlen(msg), "%02x:%02x:%02x:%02x:%02x:%02x   ",
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT) 
++	sprintf(msg + strlen(msg), "BSSID:%02x:%02x:%02x:%02x:%02x:%02x   ",
++#else
++	sprintf(msg + strlen(msg), "%02x:%02x:%02x:%02x:%02x:%02x	",
++#endif
+ 			pBss->Bssid[0],
+ 			pBss->Bssid[1],
+ 			pBss->Bssid[2],
+@@ -4283,7 +4302,12 @@
+ 	/*Security*/
+ 	RTMPZeroMemory(SecurityStr, 32);
+ 	snprintf(SecurityStr, sizeof(SecurityStr), "%s/%s", GetAuthModeStr(pBss->AKMMap), GetEncryModeStr(pBss->PairwiseCipher));
+-	sprintf(msg + strlen(msg), "%-23s", SecurityStr);
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	sprintf(SecurityStr_buf,"Encryption:\"%s\"", SecurityStr);
++	sprintf(msg+strlen(msg), "%-28s", SecurityStr_buf);
++#else
++	sprintf(msg + strlen(msg),"%-23s", SecurityStr);
++#endif
+ 	/* Rssi*/
+ 	Rssi = (INT)pBss->Rssi;
+ 
+@@ -4296,7 +4320,12 @@
+ 	else    /* < -84 dbm*/
+ 		Rssi_Quality = 0;
+ 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	sprintf(msg+strlen(msg),"Signal:%-9d", Rssi_Quality);
++#else
+ 	sprintf(msg + strlen(msg), "%-9d", Rssi_Quality);
++#endif
++
+ 	/* Wireless Mode*/
+ 	wireless_mode = NetworkTypeInUseSanity(pBss);
+ 

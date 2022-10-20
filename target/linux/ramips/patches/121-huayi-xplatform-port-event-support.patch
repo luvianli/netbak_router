@@ -1,0 +1,284 @@
+--- a/drivers/net/raeth/Kconfig	2018-09-03 10:14:10.000000000 +0800
++++ b/drivers/net/raeth/Kconfig	2019-09-06 13:40:11.280902500 +0800
+@@ -32,6 +32,11 @@
+ 
+ endchoice
+ 
++config  HUAYI_PORT_EVENT
++        bool "SUPPORT HUAYI PORT EVENT"
++	default y
++        depends on RAETH && (RALINK_MT7621)
++
+ #config TASKLET_WORKQUEUE_SW
+ #        bool "Tasklet and Workqueue switch"
+ #        depends on RA_NETWORK_TASKLET_BH
+ 
+ 
+--- a/drivers/net/raeth/Makefile	2018-09-03 10:14:10.000000000 +0800
++++ b/drivers/net/raeth/Makefile	2019-09-06 13:43:33.687332600 +0800
+@@ -20,6 +20,11 @@
+ 
+ raeth-objs += raether.o
+ 
++ifeq ($(CONFIG_HUAYI_PORT_EVENT),y)
++raeth-objs += huayi_port_event.o
++EXTRA_CFLAGS    += -DCONFIG_HUAYI_PORT_EVENT
++endif
++
+ ifeq ($(CONFIG_ETHTOOL),y)
+ raeth-objs += ra_ethtool.o
+ endif
+ 
+ 
+--- a/drivers/net/raeth/raether.c	2019-09-06 14:08:24.340045272 +0800
++++ b/drivers/net/raeth/raether.c	2019-09-06 14:06:46.893674000 +0800
+@@ -2093,6 +2093,30 @@
+ 	return IRQ_HANDLED;
+ }
+ 
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/
++#include "huayi_port_event.h"
++extern int huayi_port_event_send(struct huayi_port_event *e);
++#endif
++
++
++
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/	
++static void raeth_port_notification(int port_no,int status)
++{    
++	struct huayi_port_event e;
++
++	memset(&e,0,sizeof(struct huayi_port_event));
++	
++	e.port_id = port_no;	
++
++	e.status = status;	
++
++	huayi_port_event_send(&e);
++	
++	return;
++}
++#endif
++
+ #if defined (CONFIG_RALINK_RT6855) || defined (CONFIG_RALINK_RT6855A) || \
+     defined (CONFIG_RALINK_MT7620)|| defined (CONFIG_RALINK_MT7621) || defined(CONFIG_ARCH_MT7623)
+ static void esw_link_status_changed(int port_no, void *dev_id)
+@@ -2101,6 +2125,9 @@
+     //struct net_device *dev = (struct net_device *) dev_id;
+     struct net_device *dev = dev_raether;
+     END_DEVICE *ei_local = netdev_priv(dev);
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/
++	unsigned int link;
++#endif
+ 
+ #if defined (CONFIG_RALINK_RT6855) || defined(CONFIG_RALINK_RT6855A) || \
+     defined (CONFIG_RALINK_MT7620)
+@@ -2109,6 +2136,9 @@
+     mii_mgr_read(31, (0x3008 + (port_no*0x100)), &reg_val);
+ #endif    
+     if(reg_val & 0x1) {
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/	
++	link  = 1;
++#endif
+ 	printk("ESW: Link Status Changed - Port%d Link UP\n", port_no);
+ 
+ #if defined (CONFIG_WAN_AT_P0)
+@@ -2120,10 +2150,18 @@
+ 	    schedule_work(&ei_local->kill_sig_wq);
+ 	}
+ #endif
+-    } else {	    
++    } else {
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/
++	link = 0;
++#endif
+ 	printk("ESW: Link Status Changed - Port%d Link Down\n", port_no);
+ 
+     }
++
++#if defined(CONFIG_HUAYI_PORT_EVENT) /*add by huayi for port event 20190906*/	
++	raeth_port_notification(port_no,link);
++#endif
++
+ }
+ #endif
+ 
+ 
+ 
+--- a/drivers/net/raeth/huayi_port_event.h	2019-09-06 14:51:54.196017533 +0800
++++ b/drivers/net/raeth/huayi_port_event.h	2019-09-06 14:16:48.099009600 +0800
+@@ -0,0 +1,28 @@
++/*******************************************************************************************
++ * Project:  huayi_port_event                                                                    *
++ *                                                                                         *
++ * Author :  huayi								                                      	   *  
++ *  																					   * 
++ * Changelist: 																		       *
++ * 20190906 add by huayi  Version 0.0 													   *
++ ******************************************************************************************/
++
++#ifndef _HUAYI_PORT_EVENT_HEADER_
++#define _HUAYI_PORT_EVENT_HEADER_
++
++#define HUAYI_PORT_NETLINK_MSG_TYPE   		30
++#define HUAYI_PORT_NETLINK_PORT_ID    		50
++
++
++typedef struct huayi_port_event
++{ 
++	u_int8_t port_id;          
++	u_int8_t status;
++	u_int8_t encryption;
++	u_int8_t key[65];
++} port_change_event;
++
++int huayi_port_event_send(struct huayi_port_event *e);
++
++
++#endif
+
+
+--- a/drivers/net/raeth/huayi_port_event.c	2019-09-06 14:51:57.136017502 +0800
++++ b/drivers/net/raeth/huayi_port_event.c	2019-09-06 14:53:30.210341892 +0800
+@@ -0,0 +1,141 @@
++/*******************************************************************************************
++ * Project:  huayi_port_event                                                                    *
++ *                                                                                         *
++ * Author :  huayi								                                      	   *  
++ *  																					   * 
++ * Changelist: 																		       *
++ * 20190906 add by huayi  Version 0.0 													   *
++ ******************************************************************************************/
++
++
++#include <linux/init.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/types.h>
++#include <linux/sched.h>
++#include <net/sock.h>
++#include <linux/netlink.h>
++#include "huayi_port_event.h"
++
++
++
++static struct sock *netlinkfd = NULL;
++
++struct netlink_kernel_cfg cfg;
++
++
++void print_mem (unsigned char *p, int k)
++{
++	int i;
++	printk("\n");
++
++	for (i = 0; i < k; i++)
++	{
++		printk("%02x ", *p++);
++
++		if ((i + 1) % 16 == 0) printk("\n");
++	}
++
++	printk("\n");
++}
++
++
++
++int huayi_port_event_send_msg(int8_t *pbuf, uint16_t len)
++{
++    struct sk_buff *nl_skb;
++    struct nlmsghdr *nlh;
++    int ret;
++
++    nl_skb = nlmsg_new(len, GFP_ATOMIC);
++
++	if(!nl_skb)
++    {
++        printk("netlink_alloc_skb error\n");
++		
++        return -1;
++    }
++
++    nlh = nlmsg_put(nl_skb, 0, 0, 28, len, 0);
++
++	if(nlh == NULL)
++    {
++        printk("nlmsg_put() error\n");
++
++		nlmsg_free(nl_skb);
++
++		return -1;
++    }
++	
++    memcpy(nlmsg_data(nlh), pbuf, len);
++
++    ret = netlink_unicast(netlinkfd, nl_skb, HUAYI_PORT_NETLINK_PORT_ID, MSG_DONTWAIT);
++
++    return ret;
++}
++
++
++int huayi_port_event_send(struct huayi_port_event* e)
++{	
++	return	huayi_port_event_send_msg((char*)e,sizeof(struct huayi_port_event));
++}
++EXPORT_SYMBOL(huayi_port_event_send);
++
++
++static void huayi_netlink_recv_cb(struct sk_buff *skb)
++{
++    struct nlmsghdr *nlh = NULL;
++	struct huayi_notification *e;
++	
++    if(skb->len >= nlmsg_total_size(0))
++    {
++        nlh = nlmsg_hdr(skb);
++
++		e = NLMSG_DATA(nlh);
++    }
++} 
++
++
++static void netlink_cfg_init(struct netlink_kernel_cfg *cfg)
++{
++	memset(cfg,0,sizeof(cfg));
++
++	cfg->groups = 0;   /*unicast*/
++
++	cfg->input = huayi_netlink_recv_cb;
++
++	return;
++}
++
++static int __init huayi_port_event_init(void)
++{
++	netlink_cfg_init(&cfg);
++	
++    netlinkfd = netlink_kernel_create(&init_net, HUAYI_PORT_NETLINK_MSG_TYPE, &cfg);
++
++	if(!netlinkfd)
++    {
++        printk("can not create a netlink socket!\n");
++
++		return -1;
++    }
++
++	//printk("huayi_port_event_init!\n");
++
++	return 0;
++}
++
++static void __exit huayi_port_event_exit(void)
++{
++	sock_release(netlinkfd->sk_socket);
++
++	//printk("huayi_port_event exit\n!");
++
++	return;
++}
++
++module_init(huayi_port_event_init);
++module_exit(huayi_port_event_exit);
++MODULE_LICENSE("GPL");  
++MODULE_AUTHOR("huayi.luo@fixdlink.com");  
++MODULE_DESCRIPTION("huayi port event");

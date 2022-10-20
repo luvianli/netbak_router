@@ -1,0 +1,24 @@
+--- a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/wsc.c	2022-03-31 09:43:06.704204806 +0800
++++ b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/common/wsc.c	2022-03-31 09:50:40.180187492 +0800
+@@ -9529,6 +9529,10 @@
+ 						{
+ 							encrtyption |= WLAN_AUTHTYPE_WPA2PSK;
+ 						}
++						else if(pCredential->AuthType == WSC_AUTHTYPE_WPAPSKWPA2PSK)
++						{
++							encrtyption |= WSC_AUTHTYPE_WPAPSKWPA2PSK;
++						}
+ 
+ 						if(pCredential->EncrType == WSC_ENCRTYPE_TKIP)
+ 						{
+--- a/drivers/net/wireless/mtk/mt7620/mt7620_wifi/include/wsc_tlv.h	2022-03-31 09:49:33.746375990 +0800
++++ b/drivers/net/wireless/mtk/mt7620/mt7620_wifi/include/wsc_tlv.h	2022-03-31 09:51:04.887412634 +0800
+@@ -149,6 +149,8 @@
+ #define WSC_AUTHTYPE_WPA2        0x0010
+ #define WSC_AUTHTYPE_WPA2PSK     0x0020
+ #define WSC_AUTHTYPE_WPANONE     0x0080
++#define WSC_AUTHTYPE_WPAPSKWPA2PSK  0x0022
++
+ 
+ /* Config methods */
+ #define WSC_CONFMET_USBA            0x0001

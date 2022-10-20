@@ -1,0 +1,16 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=50
+
+start() {
+	mkdir -m 0755 -p /var/run/vsftpd
+	enable=`/sbin/uci get usb_config.ftp_service.enable`
+	if [ "$enable" -ne "0" ];then
+		service_start /usr/sbin/vsftpd
+	fi
+}
+
+stop() {
+	service_stop /usr/sbin/vsftpd
+}

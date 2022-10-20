@@ -1,0 +1,4 @@
+config hwnat 'global'
+	option enabled 1
+	option pre_qos 0
+	option pre_hw	1

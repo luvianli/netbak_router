@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "hotplug detected : "$ACTION > /var/log/usb_status
+

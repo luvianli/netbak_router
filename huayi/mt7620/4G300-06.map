@@ -1,0 +1,6 @@
+FILE = MT7620_DDR2_64M_SINGLEIMG-uboot_4G300_06.bin
+ADDR = 0
+FILE = 4G300-06.factory
+ADDR = 0x40000
+FILE = huayi_firmware.bin
+ADDR = 0x50000

@@ -1,0 +1,68 @@
+--- a/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_cfg.c	2019-04-26 14:33:08.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_cfg.c	2020-08-20 22:41:30.100778700 +0800
+@@ -5587,6 +5587,7 @@
+ 		/* re-calculate QloadBusyTimeThreshold */
+ 		QBSS_LoadAlarmReset(pAd);
+ #endif /* AP_QLOAD_SUPPORT */
++		AsicEnableBssSync(pAd, pAd->CommonCfg.BeaconPeriod);
+ 	}
+ 	else
+ 		success = FALSE;
+--- a/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_auth.c	2019-04-26 14:33:08.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_auth.c	2020-08-20 22:39:57.095658800 +0800
+@@ -553,7 +553,8 @@
+ 					NdisMoveMemory(&pEntry->MdIeInfo, &auth_info.FtInfo.MdIeInfo, sizeof(FT_MDIE_INFO));
+ 
+ 					pEntry->AuthState = AS_AUTH_OPEN;
+-					pEntry->Sst = SST_AUTH;
++					if(pEntry->Sst != SST_ASSOC) /*According to specific, if it already in SST_ASSOC, it can not go back */
++						pEntry->Sst = SST_AUTH;
+ 				}
+ 
+ 				FT_EnqueueAuthReply(pAd, pRcvHdr, auth_info.auth_alg, 2, result,
+@@ -595,7 +596,8 @@
+ #endif /* DOT11W_PMF_SUPPORT */
+                         {
+ 			pEntry->AuthState = AS_AUTH_OPEN;
+-			pEntry->Sst = SST_AUTH; /* what if it already in SST_ASSOC ??????? */
++			if(pEntry->Sst != SST_ASSOC) /*According to specific, if it already in SST_ASSOC, it can not go back */
++				pEntry->Sst = SST_AUTH; /* what if it already in SST_ASSOC ??????? */
+                         }
+ 			APPeerAuthSimpleRspGenAndSend(pAd, pRcvHdr, auth_info.auth_alg, auth_info.auth_seq + 1, MLME_SUCCESS);
+ 
+@@ -613,7 +615,8 @@
+ 		if (pEntry)
+ 		{
+ 			pEntry->AuthState = AS_AUTHENTICATING;
+-			pEntry->Sst = SST_NOT_AUTH; /* what if it already in SST_ASSOC ??????? */
++			if(pEntry->Sst != SST_ASSOC) /*According to specific, if it already in SST_ASSOC, it can not go back */
++				pEntry->Sst = SST_NOT_AUTH; /* what if it already in SST_ASSOC ??????? */
+ 
+ 			/* log this STA in AuthRspAux machine, only one STA is stored. If two STAs using */
+ 			/* SHARED_KEY authentication mingled together, then the late comer will win. */
+--- a/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/tx_rx/txs.c	2019-04-26 14:33:08.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/tx_rx/txs.c	2020-08-20 22:37:44.711581800 +0800
+@@ -402,6 +402,11 @@
+ 	RTMP_SPIN_LOCK_IRQSAVE(&TxSCtl->TxSTypeLock[Pid % TOTAL_PID_HASH_NUMS], &Flags);
+ 	DlListForEach(TxSType, &TxSCtl->TxSType[Pid % TOTAL_PID_HASH_NUMS], TXS_TYPE, List) 
+ 	{
++		if (TxSType == NULL) {
++			MTWF_LOG(DBG_CAT_ALL, DBG_SUBCAT_ALL, DBG_LVL_ERROR, ("%s: TxSType is NULL \n", __FUNCTION__));
++			break;
++		}
++	
+ 		if (TxSType->Pid == Pid && TxSType->Format == Format)
+ 		{
+ 			if (TxSType->DumpTxSReport)
+--- a/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/mgmt/mgmt_entrytb.c	2019-04-26 14:33:08.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/mgmt/mgmt_entrytb.c	2020-08-20 22:35:53.503521100 +0800
+@@ -1057,6 +1057,9 @@
+ 			if (pEntry->StreamModeMACReg != 0)
+ 				RTMP_IO_WRITE32(pAd, pEntry->StreamModeMACReg+4, 0);
+ #endif // STREAM_MODE_SUPPORT //
++#if defined(MT_MAC) && defined(WSC_INCLUDED) && defined(CONFIG_AP_SUPPORT)
++						RTMPReleaseTimer(&pEntry->EapReqIdRetryTimer, &Cancelled);
++#endif /*wifi reload mem leak*/
+ 
+ #ifdef DOT11W_PMF_SUPPORT
+ 			RTMPReleaseTimer(&pEntry->SAQueryTimer, &Cancelled);

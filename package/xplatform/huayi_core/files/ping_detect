@@ -1,0 +1,13 @@
+#!/bin/sh
+
+ping_detect=`uci get -c /proc/huayi status_system.sys.ping_detect`
+
+if [ $ping_detect -eq 1 ]
+then
+exit 1
+fi
+
+huayi_cmd set system ping_detect 1
+ping $@
+huayi_cmd set system ping_detect 2
+

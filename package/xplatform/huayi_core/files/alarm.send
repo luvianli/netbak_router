@@ -1,0 +1,17 @@
+#!/bin/sh
+
+alarm() {
+    event=$1
+    shift
+    args=$@
+
+    nid=`cat /proc/huayi/kalarm | awk -F: '$2 ~/^'$event'$/ {print $1}'`
+    [ -z "$nid" ] && {
+        echo "usage: $0 [event] [args]"
+        cat /proc/huayi/kalarm | grep -v "not_supported" | cut -d':' -f2,3 | sed 's/:/ /'
+        exit 1
+    }
+    echo $nid $args > /proc/huayi/kalarm
+}                                                             
+alarm $@
+

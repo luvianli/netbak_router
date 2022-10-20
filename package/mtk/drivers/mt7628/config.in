@@ -1,0 +1,31 @@
+choice
+    prompt "mt7628 build type"
+    depends on PACKAGE_kmod-mt7628 || PACKAGE_kmod-mt7628
+    default MT7628_BUILD_KO
+config  MT7628_BUILD_KO
+    bool "build as module (mt7628.ko)"
+    select PACKAGE_kmod-mt7628-ko
+config  MT7628_BUILD_IN
+    bool "build into kernel"
+    select PACKAGE_kmod-mt7628-in
+endchoice
+
+
+# entries start with "KCONFIG" will be applied to kernel.
+config  KCONFIG_WIFI_MT7628
+    bool
+    default y
+
+# ---------------- 1st card ----------------
+config  KCONFIG_FIRST_IF_MT7628
+    bool
+    select KCONFIG_WIFI_MT7628
+    default y
+config  KCONFIG_RT_FIRST_CARD
+    string
+    depends on KCONFIG_FIRST_IF_MT7628
+    default "7628"
+config  KCONFIG_RT_FIRST_IF_RF_OFFSET
+    hex
+    depends on KCONFIG_FIRST_IF_MT7628
+    default 0x0

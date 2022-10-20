@@ -1,0 +1,7 @@
+config wifi_sche wifi_sche
+	option enabled '0'
+	option weeks   '127'
+	option start_hour '0'
+	option start_minute '0'
+	option end_hour '0'
+	option end_minute '0'

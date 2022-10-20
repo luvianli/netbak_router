@@ -1,0 +1,86 @@
+diff -uNr a/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/common/cmm_info.c b/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/common/cmm_info.c
+--- a/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/common/cmm_info.c	2019-04-26 14:33:08.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/common/cmm_info.c	2020-08-17 19:29:56.176622522 +0800
+@@ -2995,8 +2995,13 @@
+ 	INT         Rssi = 0;
+ 	UINT        Rssi_Quality = 0;
+ 	NDIS_802_11_NETWORK_TYPE    wireless_mode;
+-	CHAR		Ssid[MAX_LEN_OF_SSID +1];
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	CHAR		Ssid[MAX_LEN_OF_SSID + 1] = {0},ssid_buf[64] = {0};
++	RTMP_STRING SecurityStr[32] = {0},SecurityStr_buf[64] = {0};
++#else
++	CHAR		Ssid[MAX_LEN_OF_SSID + 1];
+ 	RTMP_STRING SecurityStr[32] = {0};
++#endif
+ 	NDIS_802_11_ENCRYPTION_STATUS	ap_cipher = Ndis802_11EncryptionDisabled;
+ 	NDIS_802_11_AUTHENTICATION_MODE	ap_auth_mode = Ndis802_11AuthModeOpen;
+ #ifdef AIRPLAY_SUPPORT	
+@@ -3004,11 +3009,19 @@
+ #endif /* AIRPLAY_SUPPORT */	
+ 
+ 		/*Channel*/
+-		sprintf(msg+strlen(msg),"%-4d", pBss->Channel);
+-
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	sprintf(msg+strlen(msg),"Channel:%-4d", pBss->Channel);
++#else
++	sprintf(msg + strlen(msg), "%-4d", pBss->Channel);
++#endif
+ 
+ 		/*SSID*/
+ 	NdisZeroMemory(Ssid, (MAX_LEN_OF_SSID +1));
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	NdisMoveMemory(Ssid, pBss->Ssid, pBss->SsidLen);
++	sprintf(ssid_buf,"SSID:\"%s\"", Ssid);
++	sprintf(msg+strlen(msg),"%-40s", ssid_buf);
++#else
+ 	if (RTMPCheckStrPrintAble((PCHAR)pBss->Ssid, pBss->SsidLen))
+ 		NdisMoveMemory(Ssid, pBss->Ssid, pBss->SsidLen);
+ 	else
+@@ -3032,9 +3045,13 @@
+     else
+     	sprintf(msg+strlen(msg),"%-4s", "N");
+ #endif /* AIRPLAY_SUPPORT */
+-
++#endif /*CONFIG_HUAYI_PLATFORM_SUPPORT*/
+ 		/*BSSID*/
+-		sprintf(msg+strlen(msg),"%02x:%02x:%02x:%02x:%02x:%02x   ",
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT) 
++		sprintf(msg + strlen(msg), "BSSID:%02x:%02x:%02x:%02x:%02x:%02x   ",
++#else
++		sprintf(msg + strlen(msg), "%02x:%02x:%02x:%02x:%02x:%02x	",
++#endif
+ 			pBss->Bssid[0],
+ 			pBss->Bssid[1],
+ 			pBss->Bssid[2],
+@@ -3132,9 +3149,12 @@
+ 		else
+ 			sprintf(SecurityStr, "%s/%s", GetAuthMode((CHAR)ap_auth_mode), GetEncryptType((CHAR)ap_cipher));
+ 	}
+-
+-	sprintf(msg+strlen(msg), "%-23s", SecurityStr);
+-
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	sprintf(SecurityStr_buf,"Encryption:\"%s\"", SecurityStr);
++	sprintf(msg+strlen(msg), "%-36s", SecurityStr_buf);
++#else
++	sprintf(msg + strlen(msg),"%-23s", SecurityStr);
++#endif
+ 		/* Rssi*/
+ 		Rssi = (INT)pBss->Rssi;
+ 		if (Rssi >= -50)
+@@ -3145,8 +3165,11 @@
+ 			Rssi_Quality = (UINT)(((Rssi + 90) * 26)/10);
+ 		else    /* < -84 dbm*/
+ 			Rssi_Quality = 0;
+-		sprintf(msg+strlen(msg),"%-9d", Rssi_Quality);
+-
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++		sprintf(msg+strlen(msg),"Signal:%-9d", Rssi_Quality);
++#else
++		sprintf(msg + strlen(msg), "%-9d", Rssi_Quality);
++#endif
+ 		/* Wireless Mode*/
+ 		wireless_mode = NetworkTypeInUseSanity(pBss);
+ 		if (wireless_mode == Ndis802_11FH ||

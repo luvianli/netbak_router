@@ -1,0 +1,13 @@
+.config
+.config.old
+build_dir/*
+staging_dir/*
+bin/*
+tmp/*
+huayi/images/*
+package/mtk/ui/luci-mtk/luci-base/src/template_lmo.o
+package/mtk/ui/luci-mtk/luci-base/src/po2lmo.o
+huayi/*.log
+target/linux/ramips/mt76*/config-3.10
+target/linux/ramips/patches/131-huayi-xplatform-huayi-dns-trap.patch
+.git

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+#echo 31-huayi-mode-change,$ACTION,$INTERFACE,$DEVICE > /dev/console
+
+thinap=`uci -q get thinap.global.enable`
+opmode=`uci -q get system.mode.opmode`
+
+[ "$thinap" = "1" ] && exit 0
+
+[ "$INTERFACE" != "lan" ] && exit 0
+
+[ ifup = "$ACTION" ] && {
+	[ $opmode = "2" ] && {
+		`/etc/init.d/huayi_udhcpd restart`
+		exit 0
+	} 
+	`/etc/init.d/huayi_udhcpd stop`
+}
+
+exit 0

@@ -1,0 +1,18 @@
+#!/bin/sh
+# Copyright (C) 2006 OpenWrt.org
+if [ "$PRODUCT" ="3f0/3f17/100" ]
+then
+case "$ACTION" in
+	add)
+	/etc/init.d/p910nd stop
+	echo "`date`: HP LaserJet P1505 added" >> /tmp/hp-1505
+	/etc/init.d/p910nd start >> /tmp/hp-1505
+	echo "Done." >> /tmp/hp-1505
+	;;
+	remove)
+	echo "`date`: HP LaserJet P1505 removed" >> /tmp/hp-1505
+	/etc/init.d/p910nd stop >> /tmp/hp-1505
+	echo "Done." >> /tmp/hp-1505
+	;;
+esac
+fi

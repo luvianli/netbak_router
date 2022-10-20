@@ -1,0 +1,76 @@
+diff -ur linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_cfg.c linux-3.10.108_patch/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_cfg.c
+--- linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_cfg.c	2021-05-11 10:42:04.070094323 +0800
++++ linux-3.10.108_patch/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_cfg.c	2021-05-10 19:47:51.000000000 +0800
+@@ -1219,6 +1219,19 @@
+ 		if ((value = strchr(this_char, '=')) != NULL)
+ 			*value++ = 0;
+ 
++/* spacific */
++		if(strcmp(this_char,"hy_vendor")==0){
++			RTMP_SPIN_LOCK(&pAd->hy_vendor_ie_lock);
++			memset(pAd->hy_vendor,0,sizeof(pAd->hy_vendor));
++			if(value && (strlen(value)<=HY_VENDOR_MAX_LEN))
++				strcpy(pAd->hy_vendor,value);
++			else
++				printk("hy_vendor length must be 0 ~ %d byte\n",HY_VENDOR_MAX_LEN);
++			RTMP_SPIN_UNLOCK(&pAd->hy_vendor_ie_lock);
++			
++			continue;
++		}
++/* end spacific */ 
+ 		if (!value
+ #ifdef WSC_AP_SUPPORT
+             && (
+diff -ur linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_connect.c linux-3.10.108_patch/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_connect.c
+--- linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_connect.c	2019-04-26 14:33:08.000000000 +0800
++++ linux-3.10.108_patch/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/ap/ap_connect.c	2021-05-10 19:18:25.000000000 +0800
+@@ -1381,6 +1381,25 @@
+ 	FrameLen += TmpLen;
+ 
+ }
++/* spacific */
++	if(strlen(pAd->hy_vendor))
++	{
++		ULONG TmpLen;
++		UCHAR hySpecificIe[HY_VENDOR_MAX_LEN+5] = {IE_VENDOR_SPECIFIC, HY_VENDOR_MAX_LEN+3, 0x90, 0x91, 0x64};
++	//	printk("%s[%d]~~~~~~~ \n",__FUNCTION__,__LINE__); 
++		RTMP_SPIN_LOCK(&pAd->hy_vendor_ie_lock);
++		memset(&hySpecificIe[5],0,sizeof(hySpecificIe)-5);
++		sprintf(&hySpecificIe[5],pAd->hy_vendor);
++		
++		MakeOutgoingFrame(pBeaconFrame+FrameLen, &TmpLen,
++						sizeof(hySpecificIe),	hySpecificIe,
++							END_OF_ARGS);
++		FrameLen += TmpLen;
++		RTMP_SPIN_UNLOCK(&pAd->hy_vendor_ie_lock);
++
++	}
++/*end spacific */
++
+ 
+ #ifdef AIRPLAY_SUPPORT
+ 	if (AIRPLAY_ON(pAd))
+diff -ur linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/include/rtmp.h linux-3.10.108_patch/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/include/rtmp.h
+--- linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/include/rtmp.h	2019-04-26 14:33:08.000000000 +0800
++++ linux-3.10.108_patch/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/include/rtmp.h	2021-05-10 18:53:06.000000000 +0800
+@@ -177,7 +177,7 @@
+ #define MAX_MCS_SET 16		/* From MCS 0 ~ MCS 15 */
+ #endif /* DOT11N_SS3_SUPPORT */
+ 
+-
++#define HY_VENDOR_MAX_LEN 20
+ #define MAX_TXPOWER_ARRAY_SIZE	5
+ 
+ #define MAX_EEPROM_BUFFER_SIZE	1024
+@@ -4497,7 +4497,10 @@
+ struct _RTMP_ADAPTER {
+ 	VOID *OS_Cookie;	/* save specific structure relative to OS */
+ 	PNET_DEV net_dev;
+-
++/* spacific */
++	UCHAR hy_vendor[HY_VENDOR_MAX_LEN];
++	NDIS_SPIN_LOCK hy_vendor_ie_lock;
++/* end spacific */	
+ #ifdef RTMP_MAC_PCI
+ /*****************************************************************************************/
+ /*      PCI related parameters                                                           								  */

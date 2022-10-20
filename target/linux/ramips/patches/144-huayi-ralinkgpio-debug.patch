@@ -1,0 +1,19 @@
+--- a/drivers/char/ralink_gpio.c	2021-12-28 19:58:23.234801360 +0800
++++ b/drivers/char/ralink_gpio.c	2021-12-28 19:56:03.579467500 +0800
+@@ -240,7 +240,7 @@
+ 		ralink_gpio_led_stat[led.gpio].offs = 0;
+ 		ralink_gpio_led_stat[led.gpio].resting = 0;
+ 		ralink_gpio_led_stat[led.gpio].times = 0;
+-
++#if RALINK_LED_DEBUG
+ 		printk("led=%d, on=%d, off=%d, blinks,=%d, reset=%d, time=%d\n",
+ 				ralink_gpio_led_data[led.gpio].gpio,
+ 				ralink_gpio_led_data[led.gpio].on,
+@@ -248,6 +248,7 @@
+ 				ralink_gpio_led_data[led.gpio].blinks,
+ 				ralink_gpio_led_data[led.gpio].rests,
+ 				ralink_gpio_led_data[led.gpio].times);
++#endif
+ 		//set gpio direction to 'out'
+ #if defined (RALINK_GPIO_HAS_2722)
+ 		if (led.gpio <= 21) {

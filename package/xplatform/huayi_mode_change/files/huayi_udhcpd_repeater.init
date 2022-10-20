@@ -1,0 +1,93 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+UDHCPD_LEASES=/var/udhcpd.leases
+UDHCPD_CONF=/var/etc/udhcpd.conf
+
+genarate_huayi_udhcpd_config() {
+	ipaddr=`uci -q get network.lan.ipaddr`
+	if [ ! -d "/var/etc" ]; then
+	  mkdir /var/etc
+	fi
+	touch $UDHCPD_LEASES
+	echo  start `echo $ipaddr | cut -d . -f 1,2,3`.100 > $UDHCPD_CONF
+	echo  end `echo $ipaddr | cut -d . -f 1,2,3`.131 >> $UDHCPD_CONF
+	echo  interface br-lan >> $UDHCPD_CONF
+	echo  max_leases 16 >> $UDHCPD_CONF
+	echo  option subnet 255.255.255.0 >> $UDHCPD_CONF
+	echo  option dns $ipaddr >> $UDHCPD_CONF
+	echo  option router $ipaddr >> $UDHCPD_CONF
+	echo  option lease 30 >> $UDHCPD_CONF
+	echo  lease_file $UDHCPD_LEASES >> $UDHCPD_CONF
+}
+
+genarate_huayi_udhcpd_repeater_config() {
+	ipaddr=`uci -q -c /proc/huayi/ get status_network.lan.ip_address`
+	netmask=`uci -q -c /proc/huayi/ get status_network.lan.netmask`
+	gateway=`uci -q -c /proc/huayi/ get status_network.lan.gateway`
+	if [ ! -d "/var/etc" ]; then
+	  mkdir /var/etc
+	fi
+	touch $UDHCPD_LEASES
+	echo  start `echo $ipaddr | cut -d . -f 1,2,3`.100 > $UDHCPD_CONF
+	echo  end `echo $ipaddr | cut -d . -f 1,2,3`.131 >> $UDHCPD_CONF
+	echo  netmask $netmask >> $UDHCPD_CONF
+	echo  interface br-lan >> $UDHCPD_CONF
+	echo  max_leases 16 >> $UDHCPD_CONF
+	echo  option subnet $netmask >> $UDHCPD_CONF
+	echo  option dns $gateway >> $UDHCPD_CONF
+	echo  option router $gateway >> $UDHCPD_CONF
+	echo  option lease 30 >> $UDHCPD_CONF
+	echo  lease_file $UDHCPD_LEASES >> $UDHCPD_CONF
+}
+
+start() {
+	opmode=`uci -q get system.mode.opmode`
+	proto=`uci -q get network.lan.proto`
+	thinap=`uci -q get thinap.global.enable`
+	fix_dhcp=`uci -q get huayi_udhcpd.dhcp.fix_enable`
+	lan_ipaddr=`uci -q -c /proc/huayi/ get status_network.lan.ip_address`
+	rep_24g_status=`uci -q -c /proc/huayi/ get status_system.sys.rep_24g_status`
+	rep_58g_status=`uci -q -c /proc/huayi/ get status_system.sys.rep_58g_status`
+
+	[ $opmode = "0" ] && [ $opmode = "3" ] && exit 0
+	
+	[ "$thinap" = "1" ] && exit 0
+
+	if [ $rep_24g_status -eq 0 -a $rep_58g_status -eq 0 ]; then
+		genarate_huayi_udhcpd_config
+	else
+		if [ $fix_dhcp -eq 1 ]; then
+			genarate_huayi_udhcpd_repeater_config
+			udhcpd $UDHCPD_CONF
+			exit 0
+		else
+			genarate_huayi_udhcpd_config
+		fi
+	fi
+
+	[ $proto = "static" ] && [ $opmode = "2" ] && {
+		[ $rep_24g_status = "0" ] && [ $rep_58g_status = "0" ] && {
+			udhcpd $UDHCPD_CONF
+		}	
+	}
+
+	[ $proto != "dhcp" ] && exit 0
+	
+	[ $lan_ipaddr != "0.0.0.0" ] && exit 0
+	
+	udhcpd $UDHCPD_CONF
+}
+
+stop() {
+	pid=`pgrep udhcpd`
+	[ -n "$pid" ] && {
+		kill $pid
+	}
+}
+
+restart() {
+	stop
+	start
+}

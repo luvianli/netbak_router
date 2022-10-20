@@ -1,0 +1,63 @@
+config mode	mode
+	option opmode '0'  # 0 router mode 1 APmode 2 repeater mode 3 wisp mode
+	option wan_type 'mobile'
+	option simhotplug '1'
+
+config system system
+	option hostname	ROUTE
+	option timezone	CST-8
+	option log_size '64'
+
+config timeserver ntp
+	list server	cn.ntp.org.cn
+	list server	hk.ntp.org.cn
+	list server	us.ntp.org.cn
+	option enabled 1
+	option enable_server 0
+
+config global 'global'
+	option huayi_cmd_debug '0'
+	option first_boot	'1'
+	option language 'cn'
+	list support_language 'cn'
+	list support_language 'en'
+
+config login login
+	option http_user admin
+	option http_pass '21232f297a57a5a743894a0e4a801fc3'
+
+config syslog syslog
+	option enabled '0'
+	
+config sche_reboot sche_reboot
+	option sche_reboot_mode		'0'		#0 off  1:rec time 2:special time
+	option rectime 	'1800'
+	option weeks	'0'
+	option hour		'0'		#0 - 23
+	option minute	'0'
+	
+config wifi_sche wifi_sche
+	option enabled '0'
+	option weeks   '0'
+	option start_hour '0'
+	option start_minute '0'
+	option end_hour '0'
+	option end_minute '0'
+
+config upgrade upgrade
+	option check_model 4G1200-H002-HY06
+config server server
+	option sn '989733342123'
+	option interval 120000
+	option urldomain 'http://device.10086group.com/admin/ylapi/uploadData'
+	option firmwarurl ''
+	option firmwaremd5 ''
+	option clientlog   '0'
+	
+config simcard simcard
+	option switchSim '0'
+	option autoSlot '0'
+	option cloud_cmd_flag '0'
+	option dev_in_to_ext_flag '0'
+	option enlog   '0'
+	

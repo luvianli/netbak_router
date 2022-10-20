@@ -1,0 +1,25 @@
+#!/bin/sh 
+#argv[0] = script;
+#argv[1] = ifname;
+#argv[2] = devnam;
+#argv[3] = strspeed;
+#argv[4] = strlocal;
+#argv[5] = strremote;
+#argv[6] = ipparam;
+
+peer=`cat /tmp/vpn_status | awk '{print $6}' | grep $PEERNAME`
+
+[ -n "$peer" ] && {
+	kill $PPPD_PID
+	exit 0
+
+}
+
+uptime=`uci -c /proc/huayi/ get status_system.sys.uptime`
+echo l2tp $PPPD_PID $1 $5 $6 $PEERNAME $uptime >> /tmp/vpn_status 
+huayi-reset vpn_server_route
+
+# iptables -w -A huayi_ppp_output_filter -i $1 -j ACCEPT
+iptables -w -A huayi_ppp_input_filter -i $1 -j ACCEPT
+iptables -w -A huayi_ppp_forward_filter -i $1 -j ACCEPT
+# iptables -w -A huayi_ppp_forward_filter -o $1 -j ACCEPT

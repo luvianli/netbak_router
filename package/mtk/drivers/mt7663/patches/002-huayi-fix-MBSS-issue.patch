@@ -1,0 +1,26 @@
+--- linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/mlme.c	2020-01-13 11:06:16.490169544 +0800
++++ linux-3.10.108/drivers/net/wireless/mtk/mt7663/mt_wifi/embedded/common/mlme.c	2020-01-13 10:40:19.958082000 +0800
+@@ -5120,7 +5120,10 @@
+ 				}
+ 			}
+ 
+-			if ((ApBssIdx_find == FALSE) &&
++			if (
++				#if defined(CONFIG_AP_SUPPORT) && defined(MBSS_SUPPORT)
++				(ApBssIdx_find == FALSE) &&
++				#endif /*add by huayi 20200113*/
+ 				preCheckMsgTypeSubset(pAd, pFrame, &Machine, &MsgType)) {
+ 				/* ap case and apcli case*/
+ 				if (bToApCli == TRUE) {
+@@ -5164,7 +5167,10 @@
+ 				break;
+ 			}
+ 
+-			if ((ApBssIdx_find == FALSE) &&
++			if (
++				#if defined(CONFIG_AP_SUPPORT) && defined(MBSS_SUPPORT)
++				(ApBssIdx_find == FALSE) &&
++				#endif /*add by huayi 20200113*/
+ 				bToApCli) {
+ 				if (ApCliMsgTypeSubst(pAd, pFrame, &Machine, &MsgType)) {
+ 					/* apcli and repeater case */

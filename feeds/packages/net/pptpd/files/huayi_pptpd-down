@@ -1,0 +1,15 @@
+#!/bin/sh 
+#argv[0] = script;
+#argv[1] = ifname;
+#argv[2] = devnam;
+#argv[3] = strspeed;
+#argv[4] = strlocal;
+#argv[5] = strremote;
+#argv[6] = ipparam;
+
+sed -i '/'''$1'''/d' /tmp/vpn_status
+
+#iptables -D huayi_ppp_output_filter -i $1 -j ACCEPT
+iptables -w -D huayi_ppp_input_filter -i $1 -j ACCEPT
+iptables -w -D huayi_ppp_forward_filter -i $1 -j ACCEPT
+#iptables -D huayi_ppp_forward_filter -o $1 -j ACCEPT

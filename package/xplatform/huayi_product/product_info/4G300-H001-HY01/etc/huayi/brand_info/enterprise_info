@@ -1,0 +1,12 @@
+config about about_soft
+	option product_name		'4G300-H001-HY01'
+	option product_model	'4G300-H001-HY01'
+	option product_desc		'300M 4G Wireless Router'
+	option company_name		'HUAYI'
+	option webui_version	'V1.0'
+	option enterprise_oid	'12358'
+	option company_website	'www.huayi.com'
+	option company_contacts	'huayi@huayi.com'
+	option company_address	'shenzhen'
+	option domain_name		'setup.huayi.net'
+	option company_copyright	'Copyright © 2022 HUAYI All rights reserved.'

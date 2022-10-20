@@ -1,0 +1,11 @@
+--- a/drivers/net/usb/usbnet.c	2021-01-28 19:33:02.463207587 +0800
++++ b/drivers/net/usb/usbnet.c	2021-01-28 19:32:35.047207879 +0800
+@@ -1523,7 +1523,7 @@
+ 	dev->interrupt_count = 0;
+ 
+ 	dev->net = net;
+-	strcpy (net->name, "usb%d");
++	strcpy (net->name, "eth%d");
+ 	memcpy (net->dev_addr, node_id, sizeof node_id);
+ 
+ 	/* rx and tx sides can use different message sizes;

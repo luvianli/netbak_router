@@ -1,0 +1,335 @@
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/cmm_info.c	2019-02-22 17:01:55.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/cmm_info.c	2020-08-03 21:02:09.789193100 +0800
+@@ -2795,8 +2795,13 @@
+ 	INT         Rssi = 0;
+ 	UINT        Rssi_Quality = 0;
+ 	NDIS_802_11_NETWORK_TYPE    wireless_mode;
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	CHAR		Ssid[2*MAX_LEN_OF_SSID + 2],ssid_buf[2*MAX_LEN_OF_SSID + 2 +8];
++	RTMP_STRING SecurityStr[32] = {0},SecurityStr_buf[32 + 13] = {0};
++#else
+ 	CHAR		Ssid[2*MAX_LEN_OF_SSID + 2];
+ 	RTMP_STRING SecurityStr[32] = {0};
++#endif	
+ 	NDIS_802_11_ENCRYPTION_STATUS	ap_cipher = Ndis802_11EncryptionDisabled;
+ 	NDIS_802_11_AUTHENTICATION_MODE	ap_auth_mode = Ndis802_11AuthModeOpen;
+ #ifdef AIRPLAY_SUPPORT	
+@@ -2804,11 +2809,18 @@
+ #endif /* AIRPLAY_SUPPORT */
+ 
+ 		/*Channel*/
+-		sprintf(msg+strlen(msg),"%-4d", pBss->Channel);
+-
+-
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	sprintf(msg+strlen(msg),"Channel:%-4d", pBss->Channel);
++#else
++	sprintf(msg + strlen(msg), "%-4d", pBss->Channel);
++#endif
+ 		/*SSID*/
+ 	NdisZeroMemory(Ssid, (MAX_LEN_OF_SSID +1));
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	NdisMoveMemory(Ssid, pBss->Ssid, pBss->SsidLen);
++	sprintf(ssid_buf,"SSID:\"%s\"", Ssid);
++	sprintf(msg+strlen(msg),"%-65s", ssid_buf);
++#else
+ 	if (RTMPCheckStrPrintAble((PCHAR)pBss->Ssid, pBss->SsidLen))
+ 		NdisMoveMemory(Ssid, pBss->Ssid, pBss->SsidLen);
+ 	else
+@@ -2831,9 +2843,14 @@
+     else
+     	sprintf(msg+strlen(msg),"%-4s", "N");
+ #endif /* AIRPLAY_SUPPORT */		
+-		
++#endif /*CONFIG_HUAYI_PLATFORM_SUPPORT*/
++
+ 		/*BSSID*/
+-		sprintf(msg+strlen(msg),"%02x:%02x:%02x:%02x:%02x:%02x   ", 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT) 
++			sprintf(msg + strlen(msg), "BSSID:%02x:%02x:%02x:%02x:%02x:%02x   ",
++#else
++			sprintf(msg + strlen(msg), "%02x:%02x:%02x:%02x:%02x:%02x	",
++#endif
+ 			pBss->Bssid[0], 
+ 			pBss->Bssid[1],
+ 			pBss->Bssid[2], 
+@@ -2937,9 +2954,12 @@
+ 			snprintf(SecurityStr, sizeof(SecurityStr), "%s/%s", 
+ 			GetAuthMode((CHAR)ap_auth_mode), GetEncryptType((CHAR)ap_cipher));
+ 	}
+-	
+-	sprintf(msg+strlen(msg), "%-23s", SecurityStr);
+-
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	sprintf(SecurityStr_buf,"Encryption:\"%s\"", SecurityStr);
++	sprintf(msg+strlen(msg), "%-28s", SecurityStr_buf);
++#else
++	sprintf(msg + strlen(msg),"%-23s", SecurityStr);
++#endif
+ 		/* Rssi*/
+ 		Rssi = (INT)pBss->Rssi;
+ 		if (Rssi >= -50)
+@@ -2950,8 +2970,11 @@
+ 			Rssi_Quality = (UINT)(((Rssi + 90) * 26)/10);
+ 		else    /* < -84 dbm*/
+ 			Rssi_Quality = 0;
+-		sprintf(msg+strlen(msg),"%-9d", Rssi_Quality);
+-		
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++		sprintf(msg+strlen(msg),"Signal:%-9d", Rssi_Quality);
++#else
++		sprintf(msg + strlen(msg), "%-9d", Rssi_Quality);
++#endif
+ 		/* Wireless Mode*/
+ 		wireless_mode = NetworkTypeInUseSanity(pBss);
+ 		if (wireless_mode == Ndis802_11FH ||
+@@ -8168,6 +8191,10 @@
+ #endif /* SINGLE_SKU */
+ 
+ #ifdef APCLI_SUPPORT
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++ extern int sta_2g_connect_status;
++ extern char sta_2g_key[64];
++#endif
+  INT RTMPIoctlConnStatus(RTMP_ADAPTER *pAd, RTMP_STRING *arg)
+ {
+  
+@@ -8184,8 +8211,9 @@
+  		return FALSE;
+  
+  	ifIndex = pObj->ioctl_if;
+- 	
++#if !defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
+  	DBGPRINT(RT_DEBUG_OFF, ("=============================================================\n"));
++#endif
+  	if((pAd->ApCfg.ApCliTab[ifIndex].CtrlCurrState == APCLI_CTRL_CONNECTED)
+  		&& (pAd->ApCfg.ApCliTab[ifIndex].SsidLen != 0))
+  	{
+@@ -8198,9 +8226,14 @@
+ 				&& (pEntry->Sst == SST_ASSOC)
+ 				&& (tr_entry->PortSecured == WPA_802_1X_PORT_SECURED))
+  				{
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++					bConnect=TRUE;
++					sta_2g_connect_status = 1;
++#else
+ 					DBGPRINT(RT_DEBUG_OFF, ("ApCli%d Connected AP : %02X:%02X:%02X:%02X:%02X:%02X   SSID:%s\n",
+ 							ifIndex, PRINT_MAC(pEntry->Addr), pAd->ApCfg.ApCliTab[ifIndex].Ssid));
+ 					bConnect=TRUE;
++#endif
+ #ifdef MWDS
+ 					if(pAd->ApCfg.ApCliTab[ifIndex].MlmeAux.bSupportMWDS)
+ 						DBGPRINT(RT_DEBUG_OFF, ("MWDSCap : YES\n"));
+@@ -8211,14 +8244,24 @@
+  		}
+ 
+ 		if (!bConnect)
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++			sta_2g_connect_status = 0;
++#else
+ 			DBGPRINT(RT_DEBUG_OFF, ("ApCli%d Connected AP : Disconnect\n",ifIndex));
++#endif
+  	}
+  	else
+  	{
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++		sta_2g_connect_status = 0;
++#else
+  		DBGPRINT(RT_DEBUG_OFF, ("ApCli%d Connected AP : Disconnect\n",ifIndex));
++#endif
+  	}
++#if !defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
+  	DBGPRINT(RT_DEBUG_OFF, ("=============================================================\n"));
+-     	DBGPRINT(RT_DEBUG_TRACE, ("<==RTMPIoctlConnStatus\n"));
++    DBGPRINT(RT_DEBUG_TRACE, ("<==RTMPIoctlConnStatus\n"));
++#endif
+  	return TRUE;
+ }
+ #endif/*APCLI_SUPPORT*/
+ 
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/wsc.c	2019-02-22 17:01:51.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/common/wsc.c	2020-08-03 20:43:01.664793300 +0800
+@@ -7508,6 +7508,11 @@
+ 	DBGPRINT(RT_DEBUG_OFF, ("IF(apcli%d) %s::(EncrypType=%d)\n", CurApIdx, __func__, wdev->WepStatus));
+ }
+ 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++extern char sta_2g_key[64];
++extern char sta_2g_encryption[64];
++#endif
++
+ void    WscWriteConfToApCliCfg(
+     IN  PRTMP_ADAPTER   pAd,
+     IN  PWSC_CTRL       pWscControl,
+@@ -7516,7 +7521,10 @@
+ {
+ 	UCHAR			CurApIdx = BSS0;
+ 	APCLI_STRUCT	*pApCliTab;
+-	
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	CHAR authtype_tmp[64];
++	CHAR encrtype_tmp[64];
++#endif
+ 	DBGPRINT(RT_DEBUG_TRACE, ("-----> WscWriteConfToApCliCfg\n"));
+     
+ 	CurApIdx = (pWscControl->EntryIfIdx & 0x0F);
+@@ -7568,6 +7576,31 @@
+ 										(PUCHAR)pApCliTab->Ssid, pApCliTab->SsidLen, 
+ 										pApCliTab->PMK);
+ 	                    DBGPRINT(RT_DEBUG_TRACE, ("WpaPskLen = %d\n", pWscControl->WpaPskLen));
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++						NdisZeroMemory(sta_2g_key, 64);
++						NdisMoveMemory(sta_2g_key, pWscControl->WpaPsk, pWscControl->WpaPskLen);
++						NdisZeroMemory(authtype_tmp, 64);
++						if(pCredential->AuthType == WSC_AUTHTYPE_WPAPSK)
++						{
++							NdisCopyMemory(authtype_tmp, "WPAPSK", strlen("WPAPSK"));
++						}
++						else if(pCredential->AuthType == WSC_AUTHTYPE_WPA2PSK)
++						{
++							NdisCopyMemory(authtype_tmp, "WPA2PSK", strlen("WPA2PSK"));
++						}
++						NdisZeroMemory(encrtype_tmp, 64);
++						if(pCredential->EncrType == WSC_ENCRTYPE_TKIP)
++						{
++							NdisCopyMemory(encrtype_tmp, "TKIP", strlen("TKIP"));
++						}
++						else if(pCredential->EncrType == WSC_ENCRTYPE_AES)
++						{
++							NdisCopyMemory(encrtype_tmp, "AES", strlen("AES"));
++						}
++						NdisZeroMemory(sta_2g_encryption, 64);
++						snprintf(sta_2g_encryption, 64, "%s/%s", authtype_tmp, encrtype_tmp);
++#endif
++
+ 	                }
+ 	                else
+ 	                {
+@@ -7619,6 +7652,14 @@
+ 				}
+ 			}
+ 		}
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++		else
++		{
++			NdisZeroMemory(sta_2g_key, 64);
++			NdisZeroMemory(sta_2g_encryption, 64);
++			NdisMoveMemory(sta_2g_encryption, "OPEN", strlen("OPEN"));
++		}
++#endif
+ 	}
+ 
+ 	if (pWscControl->WscProfile.ProfileCnt > 1)
+
+--- a/drivers/net/wireless/mtk/mt7603/mt7603_wifi/os/linux/pci_main_dev.c	2019-02-22 17:01:39.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7603/mt7603_wifi/os/linux/pci_main_dev.c	2020-08-03 20:29:24.780913000 +0800
+@@ -452,6 +452,68 @@
+ #endif
+ };
+ 
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++int sta_2g_connect_status = 0;
++char sta_2g_key[64] = {0};
++char sta_2g_encryption[64] = {0};
++static int status_sta_proc(struct seq_file *s, void *v)
++{	
++	seq_printf(s, "%d\n", sta_2g_connect_status);
++	return 0;
++}
++
++static int sta_conn_status_open(struct inode *inode, struct file *file)
++{	
++	return(single_open(file,status_sta_proc, NULL));
++}
++
++static const struct file_operations proc_sta_connstatus_operations = 
++{	
++	.open		= sta_conn_status_open,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= seq_release,
++};
++
++static int key_sta_proc(struct seq_file *s, void *v)
++{
++	seq_printf(s, "%s\n", sta_2g_key);
++	return 0;
++}
++
++static int sta_key_open(struct inode *inode, struct file *file)
++{	
++	return(single_open(file,key_sta_proc, NULL));
++}
++
++static const struct file_operations proc_sta_key_operations = 
++{
++	.open		= sta_key_open, 
++	.read		= seq_read,
++	.llseek 	= seq_lseek,
++	.release	= seq_release,
++};
++
++static int encryption_sta_proc(struct seq_file *s, void *v)
++{
++	seq_printf(s, "%s\n", sta_2g_encryption);
++	return 0;
++}
++
++static int sta_encryption_open(struct inode *inode, struct file *file)
++{	
++	return(single_open(file,encryption_sta_proc, NULL));
++}
++
++static const struct file_operations proc_sta_encryption_operations = 
++{
++	.open		= sta_encryption_open, 
++	.read		= seq_read,
++	.llseek 	= seq_lseek,
++	.release	= seq_release,
++};
++#endif
++
+ 
+ /*
+ 	Driver module load/unload function
+@@ -459,6 +521,26 @@
+ int __init rt_pci_init_module(void)
+ {
+ 	DBGPRINT(RT_DEBUG_ERROR, ("register %s\n", RTMP_DRV_NAME));
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	/*sta_connect_status*/
++	if(!proc_create("sta_2g_connStatus", 0, NULL, &proc_sta_connstatus_operations))
++	{	
++		return 0;
++	}
++
++	/*sta_connect_key*/
++	if(!proc_create("sta_2g_key", 0, NULL, &proc_sta_key_operations))
++	{	
++		return 0;
++	}
++
++	/*sta_connect_encryption*/
++	if(!proc_create("sta_2g_encryption", 0, NULL, &proc_sta_encryption_operations))
++	{	
++		return 0;
++	}
++#endif
++	
+ /*
+ 	DBGPRINT(RT_DEBUG_ERROR, ("DriverVersion: 2.7.0.2-Beta-121007\n"
+ 								"\tBBP:120824\n"
+@@ -477,6 +559,13 @@
+ 
+ void __exit rt_pci_cleanup_module(void)
+ {
++#if defined(CONFIG_HUAYI_PLATFORM_SUPPORT)
++	remove_proc_entry("sta_2g_connStatus",NULL);
++
++	remove_proc_entry("sta_2g_key",NULL);
++
++	remove_proc_entry("sta_2g_encryption",NULL);
++#endif
+     pci_unregister_driver(&rt_pci_driver);
+ }
+ 

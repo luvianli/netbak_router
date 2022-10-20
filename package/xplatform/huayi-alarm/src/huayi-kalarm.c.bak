@@ -1,0 +1,2334 @@
+/*=========================================================================*
+ * FileName: cms-kalarm.c
+ * Author: hpluo
+ * Description: Alarm Kernel Module
+ * Version: 1
+ *    Notify if there are events via cms-events
+ * Modified History:
+ *=========================================================================*/
+
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/version.h>
+#include <linux/fs.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+
+#include <cms-universal/cms_universal.h>
+#include <cms-universal/cms_types.h>
+#include <cms-universal/cms_events.h>
+#include <cms-universal/cms_dal.h>
+#include "cms-kalarm.h"
+
+
+MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("kAlarm Module");
+MODULE_AUTHOR("huayi");
+
+extern struct timezone sys_tz;
+static int V = 0; /* 0: donot print debug info(1. update status no support.. 2. notification)
+                   * otherwise: print those two debug info
+                   */
+module_param(V, int, S_IRUGO);
+/*====================
+ * Member Declarations
+ *====================*/
+
+static struct cms_kalarm s_kalarm;
+
+static char s_alarm_syslog[256];
+static void kalarm_alarm_tosyslog(const struct cms_notification *e, char* syslog) {
+    switch (e->notification_id) {
+    case CNOTE_STA_ASSOCIATION:
+        snprintf(syslog, 256, "[%s:%d] %02x:%02x:%02x:%02x:%02x:%02x [%s:%d] [%d %d %d %d]",
+                 e->info.sta_association.device_id,
+                 e->info.sta_association.vap_id,
+                 e->info.sta_association.client_macaddr[0],
+                 e->info.sta_association.client_macaddr[1],
+                 e->info.sta_association.client_macaddr[2],
+                 e->info.sta_association.client_macaddr[3],
+                 e->info.sta_association.client_macaddr[4],
+                 e->info.sta_association.client_macaddr[5],
+                 CMS_NOTE_ASSOSTAT_TOSTR(e->info.sta_association.status),
+                 e->info.sta_association.reason_code,
+                 e->info.sta_association.auth_mode,
+                 e->info.sta_association.channel,
+                 e->info.sta_association.rssi,
+                 e->info.sta_association.qos);
+        break;
+    case CNOTE_CPU_USAGE_TOO_HIGH:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x cpu_usage:%u",
+                 e->info.cpu_usage_too_high.ap_macaddr[0],
+                 e->info.cpu_usage_too_high.ap_macaddr[1],
+                 e->info.cpu_usage_too_high.ap_macaddr[2],
+                 e->info.cpu_usage_too_high.ap_macaddr[3],
+                 e->info.cpu_usage_too_high.ap_macaddr[4],
+                 e->info.cpu_usage_too_high.ap_macaddr[5],
+                 e->info.cpu_usage_too_high.cpu_usage);
+        break;
+    case CNOTE_CPU_USAGE_TOO_HIGH_RECOV:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x cpu_usage:%u",
+                 e->info.cpu_usage_too_high_recov.ap_macaddr[0],
+                 e->info.cpu_usage_too_high_recov.ap_macaddr[1],
+                 e->info.cpu_usage_too_high_recov.ap_macaddr[2],
+                 e->info.cpu_usage_too_high_recov.ap_macaddr[3],
+                 e->info.cpu_usage_too_high_recov.ap_macaddr[4],
+                 e->info.cpu_usage_too_high_recov.ap_macaddr[5],
+                 e->info.cpu_usage_too_high_recov.cpu_usage);
+        break;
+    case CNOTE_MEM_USAGE_TOO_HIGH:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x -u mem_usage:%u",
+                 e->info.mem_usage_too_high.ap_macaddr[0],
+                 e->info.mem_usage_too_high.ap_macaddr[1],
+                 e->info.mem_usage_too_high.ap_macaddr[2],
+                 e->info.mem_usage_too_high.ap_macaddr[3],
+                 e->info.mem_usage_too_high.ap_macaddr[4],
+                 e->info.mem_usage_too_high.ap_macaddr[5],
+                 e->info.mem_usage_too_high.mem_usage);
+        break;
+    case CNOTE_MEM_USAGE_TOO_HIGH_RECOV:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x mem_usage:%u",
+                 e->info.mem_usage_too_high_recov.ap_macaddr[0],
+                 e->info.mem_usage_too_high_recov.ap_macaddr[1],
+                 e->info.mem_usage_too_high_recov.ap_macaddr[2],
+                 e->info.mem_usage_too_high_recov.ap_macaddr[3],
+                 e->info.mem_usage_too_high_recov.ap_macaddr[4],
+                 e->info.mem_usage_too_high_recov.ap_macaddr[5],
+                 e->info.mem_usage_too_high_recov.mem_usage);
+        break;
+    case CNOTE_AP_STA_FULL:
+        snprintf(syslog, 256, "max_asso_client:%d reason:%s",
+                 e->info.ap_sta_full.max_asso_client,
+                 e->info.ap_sta_full.reason);
+        break;
+    case CNOTE_AP_STA_FULL_RECOVER:
+        snprintf(syslog, 256, "max_asso_client:%d reason:%s",
+                 e->info.ap_sta_full_recover.max_asso_client,
+                 e->info.ap_sta_full_recover.reason);
+        break;
+    case CNOTE_SAFE_MODE_ON:
+        snprintf(syslog, 256, "reason:%s",
+                 e->info.safe_mode.reason);
+        break;
+    case CNOTE_SAFE_MODE_OFF:
+        snprintf(syslog, 256, "reason:%s",
+                 e->info.safe_mode.reason);
+        break;
+    case CNOTE_SYS_OVERHEAT:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x temperature:%u threshold:%u",
+                 e->info.sys_overheat.ap_macaddr[0],
+                 e->info.sys_overheat.ap_macaddr[1],
+                 e->info.sys_overheat.ap_macaddr[2],
+                 e->info.sys_overheat.ap_macaddr[3],
+                 e->info.sys_overheat.ap_macaddr[4],
+                 e->info.sys_overheat.ap_macaddr[5],
+                 e->info.sys_overheat.temperature,
+                 e->info.sys_overheat.threshold);
+        break;
+    case CNOTE_SYS_OVERHEAT_RECOV:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x temperature:%u threshold:%u",
+                 e->info.sys_overheat.ap_macaddr[0],
+                 e->info.sys_overheat.ap_macaddr[1],
+                 e->info.sys_overheat.ap_macaddr[2],
+                 e->info.sys_overheat.ap_macaddr[3],
+                 e->info.sys_overheat.ap_macaddr[4],
+                 e->info.sys_overheat.ap_macaddr[5],
+                 e->info.sys_overheat.temperature,
+                 e->info.sys_overheat.threshold);
+        break;
+    case CNOTE_BRIDGE_LOW_SS:
+        snprintf(syslog, 256, "master_bssid:%02x:%02x:%02x:%02x:%02x:%02x slave_bssid:%02x:%02x:%02x:%02x:%02x:%02x rssi:%d",
+                 e->info.bridge_low_ss.bssid_master[0],
+                 e->info.bridge_low_ss.bssid_master[1],
+                 e->info.bridge_low_ss.bssid_master[2],
+                 e->info.bridge_low_ss.bssid_master[3],
+                 e->info.bridge_low_ss.bssid_master[4],
+                 e->info.bridge_low_ss.bssid_master[5],
+                 e->info.bridge_low_ss.bssid_slave[0],
+                 e->info.bridge_low_ss.bssid_slave[1],
+                 e->info.bridge_low_ss.bssid_slave[2],
+                 e->info.bridge_low_ss.bssid_slave[3],
+                 e->info.bridge_low_ss.bssid_slave[4],
+                 e->info.bridge_low_ss.bssid_slave[5],
+                 e->info.bridge_low_ss.rssi);
+        break;
+    case CNOTE_BRIDGE_LOW_SS_RECOV:
+        snprintf(syslog, 256, "master_bssid:%02x:%02x:%02x:%02x:%02x:%02x slave_bssid:%02x:%02x:%02x:%02x:%02x:%02x rssi:%d",
+                 e->info.bridge_low_ss.bssid_master[0],
+                 e->info.bridge_low_ss.bssid_master[1],
+                 e->info.bridge_low_ss.bssid_master[2],
+                 e->info.bridge_low_ss.bssid_master[3],
+                 e->info.bridge_low_ss.bssid_master[4],
+                 e->info.bridge_low_ss.bssid_master[5],
+                 e->info.bridge_low_ss.bssid_slave[0],
+                 e->info.bridge_low_ss.bssid_slave[1],
+                 e->info.bridge_low_ss.bssid_slave[2],
+                 e->info.bridge_low_ss.bssid_slave[3],
+                 e->info.bridge_low_ss.bssid_slave[4],
+                 e->info.bridge_low_ss.bssid_slave[5],
+                 e->info.bridge_low_ss.rssi);
+        break;
+    case CNOTE_RADIO_DOWN:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x device_id:%s reason:%s",
+                 e->info.radio_down.ap_macaddr[0],
+                 e->info.radio_down.ap_macaddr[1],
+                 e->info.radio_down.ap_macaddr[2],
+                 e->info.radio_down.ap_macaddr[3],
+                 e->info.radio_down.ap_macaddr[4],
+                 e->info.radio_down.ap_macaddr[5],
+                 e->info.radio_down.device_id,
+                 e->info.radio_down.reason);
+        break;
+    case CNOTE_RADIO_DOWN_RECOV:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x device_id:%s reason:%s",
+                 e->info.radio_down_recov.ap_macaddr[0],
+                 e->info.radio_down_recov.ap_macaddr[1],
+                 e->info.radio_down_recov.ap_macaddr[2],
+                 e->info.radio_down_recov.ap_macaddr[3],
+                 e->info.radio_down_recov.ap_macaddr[4],
+                 e->info.radio_down_recov.ap_macaddr[5],
+                 e->info.radio_down_recov.device_id,
+                 e->info.radio_down_recov.reason);
+        break;
+    case CNOTE_AP_BEACON_STUCK:
+    case CNOTE_AP_BEACON_STUCK_CLEAR:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x device_id:%s reason:%s",
+                 e->info.ap_bstuck.ap_macaddr[0],
+                 e->info.ap_bstuck.ap_macaddr[1],
+                 e->info.ap_bstuck.ap_macaddr[2],
+                 e->info.ap_bstuck.ap_macaddr[3],
+                 e->info.ap_bstuck.ap_macaddr[4],
+                 e->info.ap_bstuck.ap_macaddr[5],
+                 e->info.ap_bstuck.device_id,
+                 e->info.ap_bstuck.reason);
+        break;
+    case CNOTE_AP_TXBUF_LEAK:
+    case CNOTE_AP_TXBUF_LEAK_CLEAR:
+        snprintf(syslog, 256, "ap_macaddr:%02x:%02x:%02x:%02x:%02x:%02x device_id:%s reason:%s",
+                 e->info.ap_txbuf_leak.ap_macaddr[0],
+                 e->info.ap_txbuf_leak.ap_macaddr[1],
+                 e->info.ap_txbuf_leak.ap_macaddr[2],
+                 e->info.ap_txbuf_leak.ap_macaddr[3],
+                 e->info.ap_txbuf_leak.ap_macaddr[4],
+                 e->info.ap_txbuf_leak.ap_macaddr[5],
+                 e->info.ap_txbuf_leak.device_id,
+                 e->info.ap_txbuf_leak.reason);
+        break;
+    default:
+        snprintf(syslog, 256, "-");
+        break;
+    }
+    return;
+}
+
+static void kalarm_syslog(const struct cms_notification *e) {
+    switch (e->notification_id) {
+    case CNOTE_STA_ASSOCIATION:
+        ALARM_LOG(CMSLOG_INFO, "Asso - %s\n", s_alarm_syslog);
+        break;
+    }
+    return;
+}
+
+static int kalarm_update_alarm(const struct cms_notification *e) {
+    struct list_head *ptr, *n;
+    struct cms_kalarm_alarm *entry;
+
+    switch (e->notification_id) {
+    case CNOTE_CPU_USAGE_TOO_HIGH:
+    case CNOTE_MEM_USAGE_TOO_HIGH:
+    case CNOTE_AP_STA_FULL:
+    case CNOTE_SAFE_MODE_ON:
+    case CNOTE_SYS_OVERHEAT:
+    case CNOTE_BRIDGE_LOW_SS:
+        /* raise alarm - system level */
+        list_for_each(ptr, &s_kalarm.list_alarm) {
+            entry = list_entry(ptr, struct cms_kalarm_alarm, list);
+            if (e->notification_id == entry->alarm.notification_id) {
+                // alarm already raised
+                KALARM_LOG(CMSLOG_INFO, "alarm already raised(%d)\n",
+                           e->notification_id);
+                return 0;
+            }
+        }
+        entry = CMS_MALLOC(sizeof(struct cms_kalarm_alarm));
+        BCOPY((void*)e,(void*)&entry->alarm,sizeof(struct cms_notification));
+        entry->alarm_id = s_kalarm.curr_alarm_id;
+        s_kalarm.curr_alarm_id++;
+        s_kalarm.active++;
+        list_add_tail(&entry->list, &s_kalarm.list_alarm);
+        ALARM_LOG(CMSLOG_INFO, "Alarm Raise - %s(%d) - %s\n",
+                  CMS_NOTE_ID_TOSTR(e->notification_id), e->notification_id, s_alarm_syslog);
+        break;
+    case CNOTE_RADIO_DOWN:
+    case CNOTE_AP_BEACON_STUCK:
+    case CNOTE_AP_TXBUF_LEAK:
+#if 0 // sammyc120919 - not support interference alarms
+    case CNOTE_AP_CO_INTERF_DETECTED:
+    case CNOTE_AP_NEIGHBOR_INTERF_DETECTED:
+    case CNOTE_OTHER_DEV_INTERF_DETECTED:
+    case CNOTE_STA_INTERF_DETECTED:
+#endif
+        /* raise alarm - device level */
+        list_for_each(ptr, &s_kalarm.list_alarm) {
+            entry = list_entry(ptr, struct cms_kalarm_alarm, list);
+            if (e->notification_id == entry->alarm.notification_id &&
+                strcmp(e->info.device.device_id, entry->alarm.info.device.device_id) == 0) {
+                // alarm already raised
+                KALARM_LOG(CMSLOG_INFO, "alarm already raised(%d) device(%s)\n",
+                           e->notification_id, e->info.device.device_id);
+                return 0;
+            }
+        }
+        entry = CMS_MALLOC(sizeof(struct cms_kalarm_alarm));
+        BCOPY((void*)e, (void*)&entry->alarm, sizeof(struct cms_notification));
+        entry->alarm_id = s_kalarm.curr_alarm_id;
+        snprintf(entry->alarm.info.device.device_id, CNOTE_MAX_DEVICE_ID,
+                 "%s", e->info.device.device_id);
+        s_kalarm.curr_alarm_id++;
+        s_kalarm.active++;
+        list_add_tail(&entry->list, &s_kalarm.list_alarm);
+        ALARM_LOG(CMSLOG_INFO, "Alarm Raise - %s(%d) - %s\n",
+                  CMS_NOTE_ID_TOSTR(e->notification_id), e->notification_id, s_alarm_syslog);
+        break;
+    case CNOTE_CPU_USAGE_TOO_HIGH_RECOV:
+    case CNOTE_MEM_USAGE_TOO_HIGH_RECOV:
+    case CNOTE_AP_STA_FULL_RECOVER:
+    case CNOTE_SAFE_MODE_OFF:
+    case CNOTE_SYS_OVERHEAT_RECOV:
+    case CNOTE_BRIDGE_LOW_SS_RECOV:
+        /* clear alarm - system level */
+        list_for_each_safe(ptr, n, &s_kalarm.list_alarm) {
+            entry = list_entry(ptr, struct cms_kalarm_alarm, list);
+            // +1 match the raise event
+            if (e->notification_id == (entry->alarm.notification_id+1)) {
+                // alarm found
+                s_kalarm.active--;
+                list_del(&entry->list);
+                CMS_FREE(entry);
+                ALARM_LOG(CMSLOG_INFO, "Alarm Clear - %s(%d) - %s\n",
+                          CMS_NOTE_ID_TOSTR(e->notification_id), e->notification_id, s_alarm_syslog);
+                break;
+            }
+        }
+        if (ptr == &s_kalarm.list_alarm) {
+            // alarm already cleared
+            KALARM_LOG(CMSLOG_INFO, "alarm already cleared(%d)\n",
+                       e->notification_id);
+            return 0;
+        }
+        break;
+    case CNOTE_RADIO_DOWN_RECOV:
+    case CNOTE_AP_BEACON_STUCK_CLEAR:
+    case CNOTE_AP_TXBUF_LEAK_CLEAR:
+#if 0 // sammyc120919 - not support interference alarms
+    case CNOTE_AP_CO_INTERF_CLEAR:
+    case CNOTE_AP_NEIGHBOR_INTERF_CLEAR:
+    case CNOTE_OTHER_DEV_INTERF_CLEAR:
+    case CNOTE_STA_INTERF_CLEAR:
+#endif
+        /* clear alarm - device level */
+        list_for_each_safe(ptr, n, &s_kalarm.list_alarm) {
+            entry = list_entry(ptr, struct cms_kalarm_alarm, list);
+            // +1 match the raise event
+            if (e->notification_id == (entry->alarm.notification_id+1) &&
+                strcmp(e->info.device.device_id, entry->alarm.info.device.device_id) == 0) {
+                // alarm found
+                s_kalarm.active--;
+                list_del(&entry->list);
+                CMS_FREE(entry);
+                ALARM_LOG(CMSLOG_INFO, "Alarm Clear - %s(%d) - %s\n",
+                          CMS_NOTE_ID_TOSTR(e->notification_id), e->notification_id, s_alarm_syslog);
+                break;
+            }
+        }
+        if (ptr == &s_kalarm.list_alarm) {
+            // alarm already cleared
+            KALARM_LOG(CMSLOG_INFO, "alarm already cleared(%d)\n",
+                       e->notification_id);
+            return 0;
+        }
+        break;
+    default:
+        if (V) {
+            KALARM_LOG(CMSLOG_DEBUG, "update status not supported for %d(%s)\n",
+                    e->notification_id, CMS_NOTE_ID_TOCMD(e->notification_id));
+        }
+        break;
+    }
+    return 0;
+}
+
+static DAL_STATUS kalarm_raise_notification(struct cms_notification e) {
+    int len;
+
+    switch (e.notification_id) {
+    case CNOTE_STA_ASSOCIATION:
+        e.type = CNOTE_TYPE_STA;
+        e.status = 0;
+        break;
+    case CNOTE_AP_FLASH_WRITE_FAIL:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_AP_MT_WORK_MODE_CHG:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_AP_OFFLINE:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 1;
+        break;
+    case CNOTE_AP_ONLINE:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_AP_SW_UPDATE_SUCC:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_AP_SW_UPDATE_FAIL:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_CONFIGURATION_UPDATE:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_CONFIGURATION_ERROR:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_HEARTBEAT:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_IP_ADDR_CHG:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_SSID_KEY_CONFLICT:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_SYS_COLD_START:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_SYS_WARM_START:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_SYS_REBOOT:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_CPU_USAGE_TOO_HIGH_RECOV:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 1;
+        break;
+    case CNOTE_CPU_USAGE_TOO_HIGH:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_MEM_USAGE_TOO_HIGH_RECOV:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 1;
+        break;
+    case CNOTE_MEM_USAGE_TOO_HIGH:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_NTP_TIMESYNC_FAIL:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_SAFE_MODE_ON:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_SAFE_MODE_OFF:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 1;
+        break;
+    case CNOTE_SYS_OVERHEAT:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_SYS_OVERHEAT_RECOV:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 1;
+        break;
+    case CNOTE_BRIDGE_HEARTBEAT:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_BRIDGE_LOW_SS:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_BRIDGE_LOW_SS_RECOV:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 1;
+        break;
+    case CNOTE_BRIDGE_CONNECTED:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_BRIDGE_DISCONNECTED:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_ADDRESS_REDIRECTION_ATTACK:
+        e.type = CNOTE_TYPE_WAPI;
+        e.status = 0;
+        break;
+    case CNOTE_LOW_SAFE_LEVEL_ATTACK:
+        e.type = CNOTE_TYPE_WAPI;
+        e.status = 0;
+        break;
+    case CNOTE_STA_REPITITIVE_ATTACK:
+        e.type = CNOTE_TYPE_WAPI;
+        e.status = 0;
+        break;
+    case CNOTE_TAMPER_ATTACK:
+        e.type = CNOTE_TYPE_WAPI;
+        e.status = 0;
+        break;
+    case CNOTE_USER_WITH_INVALID_CERT_INBREAK_NETWORK:
+        e.type = CNOTE_TYPE_WAPI;
+        e.status = 0;
+        break;
+    case CNOTE_DETECT_ROGUE:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_AP_CHANNEL_CHG:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_RADIO_DOWN_RECOV:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+    case CNOTE_RADIO_DOWN:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_AP_STA_FULL_RECOVER:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+    case CNOTE_AP_STA_FULL:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_AP_CO_INTERF_CLEAR:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+    case CNOTE_AP_CO_INTERF_DETECTED:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_AP_NEIGHBOR_INTERF_CLEAR:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+    case CNOTE_AP_NEIGHBOR_INTERF_DETECTED:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_OTHER_DEV_INTERF_CLEAR:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+    case CNOTE_OTHER_DEV_INTERF_DETECTED:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_STA_INTERF_CLEAR:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+    case CNOTE_STA_INTERF_DETECTED:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_CHANNEL_SCAN_COMPLETED:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_WIRELESS_INSTRUSION_DETECTED:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_STA_UPLINK_BW_OVERRUN:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_STA_UPLINK_BW_OVERRUN_RECOV:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+    case CNOTE_STA_DNLINK_BW_OVERRUN:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_STA_DNLINK_BW_OVERRUN_RECOV:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+    case CNOTE_AP_THINAP_KEEP_ALIVE:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+    case CNOTE_AP_BEACON_STUCK:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_AP_BEACON_STUCK_CLEAR:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+    case CNOTE_AP_TXBUF_LEAK:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 0;
+        break;
+    case CNOTE_AP_TXBUF_LEAK_CLEAR:
+        e.type = CNOTE_TYPE_WIRELESS;
+        e.status = 1;
+        break;
+	case CNOTE_BUTTON_PRESS:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+	case CNOTE_BUTTON_RELEASE:
+        e.type = CNOTE_TYPE_SYSTEM;
+        e.status = 0;
+        break;
+	case CNOTE_AP_LOCATION_BEGIN:
+		e.type = CNOTE_TYPE_SYSTEM;
+		e.status = 0;
+		break;
+	case CNOTE_AP_LOCATION_END:
+		e.type = CNOTE_TYPE_SYSTEM;
+		e.status = 0;
+		break;
+    default:
+        // not supported notification_id
+        KALARM_LOG(CMSLOG_EMERG, "notification ID %d (%s) not supported\n",
+                   e.notification_id, CMS_NOTE_ID_TOCMD(e.notification_id));
+        return DAL_ERROR;
+    }
+
+    kalarm_alarm_tosyslog(&e, s_alarm_syslog);
+
+    kalarm_syslog(&e);
+
+    // update alarm status
+    kalarm_update_alarm(&e);
+    if (V) {
+        KALARM_LOG(CMSLOG_NOTICE, "notification %d(%s)\n",
+               e.notification_id, CMS_NOTE_ID_TOSTR(e.notification_id));
+    }
+
+    len = cms_events_send(s_kalarm.event_handle,
+                           CMS_EVENTS_NOTE, (char*)&e, sizeof(e));
+    if (len != sizeof(e)) {
+        KALARM_LOG("sending size(%d) does not match the event size(%u)\n",
+                   len, sizeof(e));
+    }
+    return DAL_OK;
+}
+
+static ssize_t kalarm_proc_write(struct file *file, const char *buffer,
+                                 size_t count, loff_t *data) {
+    int ret;
+    char str[CMS_PROC_MAX_BUFFER];
+    struct cms_notification e;
+    char *pEnd;
+    char *pStr;
+    int nid;
+    struct timex txc;
+
+    BZERO((void*)&e, sizeof(struct cms_notification));
+    do_gettimeofday(&(txc.time));
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,32)
+    e.time = txc.time.tv_sec;
+#else
+    e.time = txc.time.tv_sec - (sys_tz.tz_minuteswest * 60);
+#endif
+
+    ret = cms_proc_write_string(file, buffer, count, str);
+    nid = simple_strtol(str, &pEnd, 10);
+    pStr = strsep(&pEnd, "\n");
+    pEnd = pStr;
+    switch(nid) {
+    case CNOTE_AP_MT_WORK_MODE_CHG:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_mt_work_mode_chg.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_mt_work_mode_chg.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'p':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_mt_work_mode_chg.pre_monitor_mode));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_mt_work_mode_chg.cur_monitor_mode));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_OFFLINE:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_offline.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_ONLINE:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_online.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_SW_UPDATE_SUCC:
+        // no parameters
+        break;
+    case CNOTE_AP_SW_UPDATE_FAIL:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'v':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_sw_update_fail.current_fw_ver, CNOTE_MAX_VERSION, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'u':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_sw_update_fail.update_fw_ver, CNOTE_MAX_VERSION, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'f':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_sw_update_fail.filename, CNOTE_MAX_FILENAME, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'r':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_sw_update_fail.fail_reason, CNOTE_MAX_REASON, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_CONFIGURATION_UPDATE:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.configuration_update.config, CNOTE_MAX_CONFIG, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_CONFIGURATION_ERROR:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.configuration_error.config, CNOTE_MAX_CONFIG, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_HEARTBEAT:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'i':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    e.info.heartbeat.ip_addr = A_INET_ADDR(pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_IP_ADDR_CHG:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'p':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    e.info.ip_addr_chg.pre_ip_addr = A_INET_ADDR(pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    e.info.ip_addr_chg.cur_ip_addr = A_INET_ADDR(pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        //printk("cur "NIPQUAD_FMT"\n",NIPQUAD(e.info.ip_addr_chg.cur_ip_addr));
+        //printk("pre "NIPQUAD_FMT"\n",NIPQUAD(e.info.ip_addr_chg.pre_ip_addr));
+        break;
+    case CNOTE_SSID_KEY_CONFLICT:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ssid_key_conflict.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ssid_key_conflict.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'v':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ssid_key_conflict.vap_id1));
+                    if (e.info.ssid_key_conflict.vap_id1 < 0) {
+                        e.info.ssid_key_conflict.vap_id1 = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'w':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ssid_key_conflict.vap_id2));
+                    if (e.info.ssid_key_conflict.vap_id2 < 0) {
+                        e.info.ssid_key_conflict.vap_id2 = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'b':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ssid_key_conflict.bssid1, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ssid_key_conflict.bssid2, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_SYS_COLD_START:
+        // no parameters
+        break;
+    case CNOTE_SYS_WARM_START:
+        // no parameters
+        break;
+    case CNOTE_SYS_REBOOT:
+        // no parameters
+        break;
+    case CNOTE_CPU_USAGE_TOO_HIGH:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.cpu_usage_too_high.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'u':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.cpu_usage_too_high.cpu_usage));
+                    if (e.info.cpu_usage_too_high.cpu_usage > 100) {
+                        e.info.cpu_usage_too_high.cpu_usage = 100;
+                    } else if (e.info.cpu_usage_too_high.cpu_usage < 0) {
+                        e.info.cpu_usage_too_high.cpu_usage = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_CPU_USAGE_TOO_HIGH_RECOV:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.cpu_usage_too_high_recov.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'u':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.cpu_usage_too_high_recov.cpu_usage));
+                    if (e.info.cpu_usage_too_high_recov.cpu_usage > 100) {
+                        e.info.cpu_usage_too_high_recov.cpu_usage = 100;
+                    } else if (e.info.cpu_usage_too_high_recov.cpu_usage < 0) {
+                        e.info.cpu_usage_too_high_recov.cpu_usage = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_MEM_USAGE_TOO_HIGH:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.mem_usage_too_high.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'u':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.mem_usage_too_high.mem_usage));
+                    if (e.info.mem_usage_too_high.mem_usage > 100) {
+                        e.info.mem_usage_too_high.mem_usage = 100;
+                    } else if (e.info.mem_usage_too_high.mem_usage < 0) {
+                        e.info.mem_usage_too_high.mem_usage = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_MEM_USAGE_TOO_HIGH_RECOV:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.mem_usage_too_high_recov.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'u':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.mem_usage_too_high_recov.mem_usage));
+                    if (e.info.mem_usage_too_high_recov.mem_usage > 100) {
+                        e.info.mem_usage_too_high_recov.mem_usage = 100;
+                    } else if (e.info.mem_usage_too_high_recov.mem_usage < 0) {
+                        e.info.mem_usage_too_high_recov.mem_usage = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_NTP_TIMESYNC_FAIL:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ntp_timesync_fail.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_SAFE_MODE_ON:
+    case CNOTE_SAFE_MODE_OFF:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'r':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.safe_mode.reason, CNOTE_MAX_REASON, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_SYS_OVERHEAT:
+    case CNOTE_SYS_OVERHEAT_RECOV:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.sys_overheat.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'v':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%u", &(e.info.sys_overheat.temperature));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 't':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%u", &(e.info.sys_overheat.threshold));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_BRIDGE_HEARTBEAT:
+    case CNOTE_BRIDGE_CONNECTED:
+    case CNOTE_BRIDGE_DISCONNECTED:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.bridge_heartbeat.bssid_master, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 's':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.bridge_heartbeat.bssid_slave, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_BRIDGE_LOW_SS:
+    case CNOTE_BRIDGE_LOW_SS_RECOV:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.bridge_low_ss.bssid_master, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 's':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.bridge_low_ss.bssid_slave, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'r':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhd", &(e.info.bridge_low_ss.rssi));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_CHANNEL_CHG:
+        e.info.ap_channel_chg.change_mode = CNOTE_MANUAL;
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_channel_chg.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_channel_chg.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'w':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_channel_chg.wireless_mode, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_channel_chg.curr_channel));
+                    if (e.info.ap_channel_chg.curr_channel < 0) {
+                        e.info.ap_channel_chg.curr_channel = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'p':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_channel_chg.prev_channel));
+                    if (e.info.ap_channel_chg.prev_channel < 0) {
+                        e.info.ap_channel_chg.prev_channel = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_RADIO_DOWN:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.radio_down.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.radio_down.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'r':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.radio_down.reason, CNOTE_MAX_REASON, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_RADIO_DOWN_RECOV:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.radio_down_recov.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.radio_down_recov.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'r':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.radio_down_recov.reason, CNOTE_MAX_REASON, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_STA_FULL:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%d", &(e.info.ap_sta_full.max_asso_client));
+                    if (e.info.ap_sta_full.max_asso_client < 0) {
+                        e.info.ap_sta_full.max_asso_client = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'r':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_sta_full.reason, CNOTE_MAX_REASON, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_STA_FULL_RECOVER:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%d", &(e.info.ap_sta_full_recover.max_asso_client));
+                    if (e.info.ap_sta_full_recover.max_asso_client < 0) {
+                        e.info.ap_sta_full_recover.max_asso_client = 0;
+                    }
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'r':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_sta_full_recover.reason, CNOTE_MAX_REASON, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_CO_INTERF_DETECTED:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_co_interf_detected.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_co_interf_detected.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_co_interf_detected.channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'b':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_co_interf_detected.bssid, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_CO_INTERF_CLEAR:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_co_interf_clear.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_co_interf_clear.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_co_interf_clear.channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'b':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_co_interf_clear.bssid, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_NEIGHBOR_INTERF_DETECTED:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_neighbor_interf_detected.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_neighbor_interf_detected.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_neighbor_interf_detected.self_channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'i':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_neighbor_interf_detected.other_channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'b':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_neighbor_interf_detected.bssid, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_AP_NEIGHBOR_INTERF_CLEAR:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_neighbor_interf_clear.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.ap_neighbor_interf_clear.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_neighbor_interf_clear.self_channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'i':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.ap_neighbor_interf_clear.other_channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'b':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.ap_neighbor_interf_clear.bssid, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_OTHER_DEV_INTERF_DETECTED:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.other_dev_interf_detected.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.other_dev_interf_detected.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.other_dev_interf_detected.channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_OTHER_DEV_INTERF_CLEAR:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.other_dev_interf_clear.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.other_dev_interf_clear.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.other_dev_interf_clear.channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_STA_INTERF_DETECTED:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.sta_interf_detected.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.sta_interf_detected.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.sta_interf_detected.channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 's':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.sta_interf_detected.client_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_STA_INTERF_CLEAR:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.sta_interf_clear.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.sta_interf_clear.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'c':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%hhu", &(e.info.sta_interf_clear.channel));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 's':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.sta_interf_clear.client_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_CHANNEL_SCAN_COMPLETED:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+            switch (*pStr) {
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.channel_scan_completed.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_WIRELESS_INSTRUSION_DETECTED:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.wireless_instrusion_detected.ap_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'd':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.wireless_instrusion_detected.device_id, CNOTE_MAX_DEVICE_ID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+		   case 'v':
+	           pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.wireless_instrusion_detected.bssid, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+			case 's':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.wireless_instrusion_detected.attack_mac,pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 't':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%d", &(e.info.wireless_instrusion_detected.detect_type));
+                    pStr = strsep(&pEnd, " ");
+                }
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+    case CNOTE_STA_UPLINK_BW_OVERRUN:
+    case CNOTE_STA_UPLINK_BW_OVERRUN_RECOV:
+    case CNOTE_STA_DNLINK_BW_OVERRUN:
+    case CNOTE_STA_DNLINK_BW_OVERRUN_RECOV:
+        pStr = strsep(&pEnd, " ");
+        while (pStr != NULL) {
+            if (*pStr != '-') {
+                pStr = strsep(&pEnd, " ");
+                continue;
+            }
+            pStr++;
+
+            switch (*pStr) {
+            case 'm':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.sta_bandwidth_overrun.client_macaddr, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'b':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    A_MACADDR_FROMSTR((A_MACADDR*)e.info.sta_bandwidth_overrun.bssid, pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 's':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    snprintf(e.info.sta_bandwidth_overrun.ssid, CNOTE_MAX_SSID, "%s", pStr);
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 'v':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%u", &(e.info.sta_bandwidth_overrun.throughput));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            case 't':
+                pStr = strsep(&pEnd, " ");
+                if (pStr != NULL) {
+                    sscanf(pStr, "%u", &(e.info.sta_bandwidth_overrun.threshold));
+                    pStr = strsep(&pEnd, " ");
+                }
+                break;
+            default:
+                pStr = strsep(&pEnd, " ");
+                break;
+            }
+        }
+        break;
+		case CNOTE_AP_THINAP_KEEP_ALIVE:
+		case CNOTE_BUTTON_PRESS:
+		case CNOTE_BUTTON_RELEASE:
+		case CNOTE_AP_LOCATION_BEGIN:
+		case CNOTE_AP_LOCATION_END:
+        // no parameters
+        break;
+    default:
+        KALARM_LOG("non-supported notification %d (userspace)\n", nid);
+        return ret;
+    }
+    e.notification_id = nid;
+    kalarm_raise_notification(e);
+    return ret;
+}
+
+static void *kalarm_seq_start(struct seq_file *seq, loff_t *pos)
+{
+    if (*pos == 0) {
+        return SEQ_START_TOKEN;
+    }
+
+    if (*pos < CNOTE_MAX_ID) {
+        return pos;
+    }
+    return NULL;
+}
+static void *kalarm_seq_next(struct seq_file *s, void *v, loff_t *pos)
+{
+    if (v == SEQ_START_TOKEN) {
+        return pos;
+    }
+    ++*pos;
+    if (*pos < CNOTE_MAX_ID) {
+        return pos;
+    }
+    return NULL;
+}
+static void kalarm_seq_stop(struct seq_file *s, void *v)
+{
+	/* nothing to do (release), we use pos directly */
+}
+static int kalarm_seq_show(struct seq_file *s, void *v)
+{
+    loff_t *pos;
+
+    if (v == SEQ_START_TOKEN) {
+        // print header here
+        return 0;
+    }
+
+    pos = (loff_t *) v;
+    seq_printf(s, "%lld:%s:%s:%s\n", *pos,
+               CMS_NOTE_ID_TOCMD(*pos),
+               CMS_NOTE_ID_TOUSAGE(*pos),
+               CMS_NOTE_ID_TOSTR(*pos));
+    return 0;
+}
+
+static struct seq_operations kalarm_seq_ops = {
+    .start = kalarm_seq_start,
+    .next = kalarm_seq_next,
+    .stop = kalarm_seq_stop,
+    .show = kalarm_seq_show
+};
+
+int kalarm_proc_open(struct inode *inode, struct file *file)
+{
+    return seq_open(file, &kalarm_seq_ops);
+}
+
+static struct file_operations kalarm_proc_fops = {
+    .owner = THIS_MODULE,
+    .open = kalarm_proc_open,
+    .read = seq_read,
+    .write = kalarm_proc_write,
+    .llseek = seq_lseek,
+    .release = seq_release
+};
+
+static void* seq_next_status_alarm(struct seq_file *s, void *v, loff_t *pos);
+static void* seq_start_status_alarm(struct seq_file *s, loff_t *pos) {
+    if (*pos == 0) {
+        s->private = (void*)&(s_kalarm.list_alarm);
+        return s->private;
+    }
+    return seq_next_status_alarm(s, NULL, pos);
+}
+
+static void* seq_next_status_alarm(struct seq_file *s, void *v, loff_t *pos) {
+    struct list_head *ptr = (struct list_head*)s->private;
+
+    if (ptr == NULL) {
+        KALARM_LOG(CMSLOG_ERR,"invalid ptr in status_alarm next\n");
+        return NULL;
+    }
+    if (ptr->next == &(s_kalarm.list_alarm)) {
+        // no next
+        return NULL;
+    }
+    s->private = (void*)ptr->next;
+    return s->private;
+}
+
+static void seq_stop_status_alarm(struct seq_file *s, void *v) {
+}
+
+static int seq_show_status_alarm(struct seq_file *s, void *v) {
+#define MAC_FMT "%02x:%02x:%02x:%02x:%02x:%02x"
+#define MAC_ARG(x) \
+((u8*)(x))[0],((u8*)(x))[1],\
+((u8*)(x))[2],((u8*)(x))[3],\
+((u8*)(x))[4],((u8*)(x))[5]
+
+    struct cms_kalarm_alarm *entry;
+    struct list_head *ptr = (struct list_head*)s->private;
+
+    // from seq_start_status_alarm, print general
+    if (ptr == &(s_kalarm.list_alarm)) {
+        seq_printf(s, "config 'general' 'general'\n");
+        seq_printf(s, "        option 'active' '%d'\n", s_kalarm.active);
+        seq_printf(s, "\n");
+        return 0;
+    }
+
+    if (ptr == NULL) {
+        KALARM_LOG(CMSLOG_ERR,"invalid ptr in status_alarm show\n");
+        return 1;
+    }
+    entry = list_entry(ptr, struct cms_kalarm_alarm, list);
+    if (entry == NULL) {
+        KALARM_LOG(CMSLOG_ERR,"cannot get list data in status_alarm show\n");
+        return 1;
+    }
+
+    seq_printf(s, "config 'alarm' 'alarm_%d'\n", entry->alarm_id);
+    seq_printf(s, "        option 'id' '%d'\n", entry->alarm_id);
+    seq_printf(s, "        option 'nid' '%d'\n", entry->alarm.notification_id);
+    seq_printf(s, "        option 'description' '%s(%d)'\n",
+               CMS_NOTE_ID_TOSTR(entry->alarm.notification_id),
+               entry->alarm.notification_id);
+    seq_printf(s, "        option 'type' '%d'\n", entry->alarm.type);
+    seq_printf(s, "        option 'timestamp' '%ld'\n", entry->alarm.time);
+    seq_printf(s, "        option 'status' '%lld'\n", entry->alarm.status);
+    seq_printf(s, "        option 'cause' '%s'\n", entry->alarm.reason);
+
+    switch (entry->alarm.notification_id) {
+    case CNOTE_CPU_USAGE_TOO_HIGH:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.cpu_usage_too_high.ap_macaddr));
+        seq_printf(s, "        option 'cpu_usage' '%d'\n",
+                   entry->alarm.info.cpu_usage_too_high.cpu_usage);
+        break;
+    case CNOTE_MEM_USAGE_TOO_HIGH:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.mem_usage_too_high.ap_macaddr));
+        seq_printf(s, "        option 'mem_usage' '%d'\n",
+                   entry->alarm.info.mem_usage_too_high.mem_usage);
+        break;
+    case CNOTE_SAFE_MODE_ON:
+        seq_printf(s, "        option 'reason' '%s\n",
+                   entry->alarm.info.safe_mode.reason);
+        break;
+    case CNOTE_RADIO_DOWN:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.radio_down.ap_macaddr));
+        seq_printf(s, "        option 'device_id' '%s'\n",
+                   entry->alarm.info.radio_down.device_id);
+        seq_printf(s, "        option 'reason' '%s'\n",
+                   entry->alarm.info.radio_down.reason);
+        break;
+    case CNOTE_AP_STA_FULL:
+        seq_printf(s, "        option 'max_asso_client' '%d'\n",
+                   entry->alarm.info.ap_sta_full.max_asso_client);
+        seq_printf(s, "        option 'reason' '%s'\n",
+                   entry->alarm.info.ap_sta_full.reason);
+        break;
+    case CNOTE_SYS_OVERHEAT:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.sys_overheat.ap_macaddr));
+        seq_printf(s, "        option 'temperature' '%d'\n",
+                   entry->alarm.info.sys_overheat.temperature);
+        seq_printf(s, "        option 'threshold' '%d'\n",
+                   entry->alarm.info.sys_overheat.threshold);
+        break;
+    case CNOTE_BRIDGE_LOW_SS:
+        seq_printf(s, "        option 'bssid_master' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.bridge_low_ss.bssid_master));
+        seq_printf(s, "        option 'bssid_slave' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.bridge_low_ss.bssid_slave));
+        seq_printf(s, "        option 'rssi' '%d'\n",
+                   entry->alarm.info.bridge_low_ss.rssi);
+        break;
+    case CNOTE_AP_CO_INTERF_DETECTED:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.ap_co_interf_detected.ap_macaddr));
+        seq_printf(s, "        option 'device_id' '%s'\n",
+                   entry->alarm.info.ap_co_interf_detected.device_id);
+        seq_printf(s, "        option 'channel' '%d'\n",
+                   entry->alarm.info.ap_co_interf_detected.channel);
+        seq_printf(s, "        option 'bssid' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.ap_co_interf_detected.bssid));
+        break;
+    case CNOTE_AP_NEIGHBOR_INTERF_DETECTED:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.ap_neighbor_interf_detected.ap_macaddr));
+        seq_printf(s, "        option 'device_id' '%s'\n",
+                   entry->alarm.info.ap_neighbor_interf_detected.device_id);
+        seq_printf(s, "        option 'self_channel' '%d'\n",
+                   entry->alarm.info.ap_neighbor_interf_detected.self_channel);
+        seq_printf(s, "        option 'other_channel' '%d'\n",
+                   entry->alarm.info.ap_neighbor_interf_detected.other_channel);
+        seq_printf(s, "        option 'bssid' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.ap_neighbor_interf_detected.bssid));
+        break;
+    case CNOTE_OTHER_DEV_INTERF_DETECTED:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.other_dev_interf_detected.ap_macaddr));
+        seq_printf(s, "        option 'device_id' '%s'\n",
+                   entry->alarm.info.other_dev_interf_detected.device_id);
+        seq_printf(s, "        option 'channel' '%d'\n",
+                   entry->alarm.info.other_dev_interf_detected.channel);
+        break;
+    case CNOTE_STA_INTERF_DETECTED:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.sta_interf_detected.ap_macaddr));
+        seq_printf(s, "        option 'device_id' '%s'\n",
+                   entry->alarm.info.sta_interf_detected.device_id);
+        seq_printf(s, "        option 'channel' '%d'\n",
+                   entry->alarm.info.sta_interf_detected.channel);
+        seq_printf(s, "        option 'client_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.sta_interf_detected.client_macaddr));
+        break;
+    case CNOTE_STA_UPLINK_BW_OVERRUN:
+    case CNOTE_STA_UPLINK_BW_OVERRUN_RECOV:
+    case CNOTE_STA_DNLINK_BW_OVERRUN:
+    case CNOTE_STA_DNLINK_BW_OVERRUN_RECOV:
+        seq_printf(s, "        option 'client_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.sta_bandwidth_overrun.client_macaddr));
+        seq_printf(s, "        option 'bssid' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.sta_bandwidth_overrun.bssid));
+        seq_printf(s, "        option 'ssid' '%s'\n",
+                   entry->alarm.info.sta_bandwidth_overrun.ssid);
+        seq_printf(s, "        option 'throughput' '%d'\n",
+                   entry->alarm.info.sta_bandwidth_overrun.throughput);
+        seq_printf(s, "        option 'threshold' '%d'\n",
+                   entry->alarm.info.sta_bandwidth_overrun.threshold);
+        break;
+    case CNOTE_AP_BEACON_STUCK:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.ap_bstuck.ap_macaddr));
+        seq_printf(s, "        option 'device_id' '%s'\n",
+                   entry->alarm.info.ap_bstuck.device_id);
+        seq_printf(s, "        option 'reason' '%s'\n",
+                   entry->alarm.info.ap_bstuck.reason);
+        break;
+    case CNOTE_AP_TXBUF_LEAK:
+        seq_printf(s, "        option 'ap_macaddr' '"MAC_FMT"'\n",
+                   MAC_ARG(entry->alarm.info.ap_txbuf_leak.ap_macaddr));
+        seq_printf(s, "        option 'device_id' '%s'\n",
+                   entry->alarm.info.ap_txbuf_leak.device_id);
+        seq_printf(s, "        option 'reason' '%s'\n",
+                   entry->alarm.info.ap_txbuf_leak.reason);
+        break;
+    default:
+        KALARM_LOG("unsupported alarm in status_alarm show %d\n",
+                   entry->alarm.notification_id);
+        return 1;  // return error
+    }
+    seq_printf(s, "\n");
+
+    // buffer full, move iterator backward
+    if (s->count == s->size) {
+        s->private = ptr->prev;
+    }
+    return 0;
+#undef MAC_FMT
+#undef MAC_ARG
+}
+
+static struct seq_operations seq_ops_status_alarm = {
+    .start = seq_start_status_alarm,
+    .next  = seq_next_status_alarm,
+    .stop  = seq_stop_status_alarm,
+    .show  = seq_show_status_alarm
+};
+
+static int fops_open_status_alarm(struct inode *inode, struct file *file) {
+    return seq_open(file, &seq_ops_status_alarm);
+}
+
+static struct file_operations proc_fops_status_alarm = {
+    .owner = THIS_MODULE,
+    .open = fops_open_status_alarm,
+    .read = seq_read,
+    .llseek = seq_lseek,
+    .release = seq_release
+};
+
+static struct dal_kalarm_hooks kalarm_hooks = {
+    .raise_notification = kalarm_raise_notification,
+};
+
+static int kalarm_events_cb(char* buf, uint32_t len) {
+    // not using
+    return 1;
+}
+
+static void kalarm_init(void) {
+    CMS_EVENTS_TYPE eid[1] = {CMS_EVENTS_NOTE};
+
+	// alarm list
+    s_kalarm.curr_alarm_id = 0;
+    s_kalarm.active = 0;
+    INIT_LIST_HEAD(&s_kalarm.list_alarm);
+    // proc
+    s_kalarm.proc_kalarm = proc_create(CMS_MODULE_KALARM,
+                                       CMS_PROC_PERM, cms_proc,
+                                       &kalarm_proc_fops);
+    if (s_kalarm.proc_kalarm == NULL) {
+        KALARM_LOG(CMSLOG_CRIT, "Initialize /proc/%s/%s failed\n",
+                   CMS_PROC_ROOT, CMS_MODULE_KALARM);
+        return;
+    }
+
+    s_kalarm.proc_status = create_proc_entry(CMS_KALARM_PROC_STATUS,
+                                      CMS_PROC_PERM, cms_status_proc);
+    if (s_kalarm.proc_status == NULL) {
+        KALARM_LOG(CMSLOG_CRIT, "Initialize /proc/%s/%s/%s failed\n",
+                   CMS_PROC_ROOT, CMS_PROC_STATUS, CMS_KALARM_PROC_STATUS);
+        return;
+    }
+    s_kalarm.proc_status->proc_fops = &proc_fops_status_alarm;
+
+
+    // event hook
+    s_kalarm.event_handle = cms_events_create(kalarm_events_cb);
+    cms_events_add(eid, 1, s_kalarm.event_handle);
+    dal_attach_kalarm_hooks(&kalarm_hooks);
+    return;
+}
+
+static void kalarm_deinit(void) {
+    struct cms_kalarm_alarm* entry;
+
+    // event hook
+    CMS_EVENTS_TYPE eid[1] = {CMS_EVENTS_NOTE};
+    cms_events_del(eid, 1, s_kalarm.event_handle);
+    cms_events_destroy(s_kalarm.event_handle);
+    dal_detach_kalarm_hooks();
+
+    // proc
+    if (s_kalarm.proc_status != NULL) {
+        remove_proc_entry(CMS_KALARM_PROC_STATUS, cms_status_proc);
+        s_kalarm.proc_status = NULL;
+    }
+    if (s_kalarm.proc_kalarm != NULL) {
+        remove_proc_entry(CMS_MODULE_KALARM, cms_proc);
+        s_kalarm.proc_kalarm = NULL;
+    }
+
+    // alarm list
+    while (!list_empty(&(s_kalarm.list_alarm))) {
+        entry = list_entry(s_kalarm.list_alarm.next,
+                           struct cms_kalarm_alarm, list);
+        list_del(s_kalarm.list_alarm.next);
+        CMS_FREE(entry);
+    }
+
+    return;
+}
+
+static int __init module_kalarm_init(void)
+{
+    KALARM_LOG(CMSLOG_EMERG, "Alarm Module Init\n");
+    kalarm_init();
+    return 0;
+}
+module_init(module_kalarm_init);
+
+static void __exit module_kalarm_exit(void)
+{
+    KALARM_LOG(CMSLOG_EMERG, "Alarm Module Exit\n");
+    kalarm_deinit();
+    return;
+}
+module_exit(module_kalarm_exit);
+

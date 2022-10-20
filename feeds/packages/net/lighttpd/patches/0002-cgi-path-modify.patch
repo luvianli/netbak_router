@@ -1,0 +1,12 @@
+--- a/doc/config/conf.d/cgi.conf	2017-01-14 13:05:16.000000000 +0800
++++ b/doc/config/conf.d/cgi.conf	2020-11-19 15:21:29.241418749 +0800
+@@ -13,7 +13,7 @@
+ ## For PHP don't forget to set cgi.fix_pathinfo = 1 in the php.ini.
+ ##
+ cgi.assign                 = ( ".pl"  => "/usr/bin/perl",
+-                               ".cgi" => "/usr/bin/perl",
++                               ".cgi" => "",
+                                ".rb"  => "/usr/bin/ruby",
+                                ".erb" => "/usr/bin/eruby",
+                                ".py"  => "/usr/bin/python" )
+				

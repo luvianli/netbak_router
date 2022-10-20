@@ -1,0 +1,46 @@
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/common/mlme.c
+===================================================================
+--- linux-3.10.108.orig/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/common/mlme.c	2019-07-31 11:22:03.944723426 +0800
++++ linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/common/mlme.c	2019-07-31 11:24:15.835527076 +0800
+@@ -723,6 +723,7 @@
+  */
+ VOID MlmeHandler(RTMP_ADAPTER *pAd) 
+ {
++	UINT32 process_cnt = 0;
+ 	MLME_QUEUE_ELEM *Elem = NULL;
+ #ifdef APCLI_SUPPORT
+ 	SHORT apcliIfIndex;
+@@ -767,6 +768,13 @@
+ 		}	
+ #endif /* CONFIG_ATE */
+ 
++		/* For worst case, avoid process mlme.queue too long which cause RCU_sched stall */
++		process_cnt++;
++		if((!in_interrupt())&&(process_cnt >= (MAX_LEN_OF_MLME_QUEUE>>1))) {
++			process_cnt = 0;
++			OS_SCHEDULE();
++		}
++
+ 		/*From message type, determine which state machine I should drive*/
+ 
+ 		Elem = NULL;
+Index: linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/include/os/rt_linux.h
+===================================================================
+--- linux-3.10.108.orig/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/include/os/rt_linux.h	2019-07-31 11:17:04.446444047 +0800
++++ linux-3.10.108/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/include/os/rt_linux.h	2019-07-31 11:24:28.221515062 +0800
+@@ -557,6 +557,15 @@
+ 	}while(0)
+ #endif
+ 
++#ifdef LINUX
++#define OS_SCHEDULE() 	\
++{ 							\
++	schedule(); 			\
++}
++#else
++#define OS_SCHEDULE()	
++#endif	
++
+ /***********************************************************************************
+  *	OS Memory Access related data structure and definitions
+  ***********************************************************************************/

@@ -1,0 +1,16 @@
+/sbin/block hotplug
+if [ -x /usr/bin/ntfs-3g ];then
+	mkdir -p /mnt/$DEVICENAME
+	/usr/bin/ntfs-3g -o umask=002 /dev/$DEVICENAME /mnt/$DEVICENAME
+	if [ -d "/dev/$DEVICENAME" && -d "/mnt/$DEVICENAME" ];then       
+		/sbin/uci set usb_config.ftp_service.drive_path=/dev/$DEVICENAME
+		/sbin/uci set usb_config.ftp_service.mnt_path=/mnt/$DEVICENAME
+		/sbin/uci set usb_config.ftp_service.is_usb=1
+		/sbin/uci commit           
+		if [ -e "/etc/vsftpd.conf" ];then
+			if []
+			sed -i "s/anon_root=.*/anon_root=\/mnt\/$DEVICENAME/g" /etc/vsftpd.conf
+		fi
+	fi
+fi
+

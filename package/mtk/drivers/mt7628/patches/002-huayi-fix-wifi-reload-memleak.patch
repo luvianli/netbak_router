@@ -1,0 +1,52 @@
+--- a/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/mcu/andes_core.c	2019-04-26 14:33:08.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/mcu/andes_core.c	2020-08-20 17:04:00.888346000 +0800
+@@ -479,7 +479,7 @@
+ 	RTMP_SPIN_LOCK_IRQSAVE(lock, &flags);
+ 	DlListForEachSafe(msg, msg_tmp, list, struct cmd_msg, list) {
+ 		_AndesUnlinkCmdMsg(msg, list);
+-		AndesFreeCmdMsg(msg);
++		AndesForceFreeCmdMsg(msg);
+ 	}
+ 	DlListInit(list);
+ 	RTMP_SPIN_UNLOCK_IRQRESTORE(lock, &flags);
+--- a/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/mcu/andes_mt.c	2019-04-26 14:33:08.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/mcu/andes_mt.c	2020-08-20 17:13:38.589127700 +0800
+@@ -95,7 +95,7 @@
+ 
+    	/* Increase TX_CTX_IDX, but write to register later.*/
+ 	INC_RING_INDEX(pAd->CtrlRing.TxCpuIdx, MGMT_RING_SIZE);
+-
++	msg->net_pkt = NULL;
+ 	if (msg->need_wait)
+ 		AndesQueueTailCmdMsg(&ctl->ackq, msg, wait_ack);
+ 	else
+--- a/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/common/cmm_mac_pci.c	2019-04-26 14:33:08.000000000 +0800
++++ b/drivers/net/wireless/mtk/mt7628/mt7628_wifi/embedded/common/cmm_mac_pci.c	2020-08-20 17:09:12.563729400 +0800
+@@ -122,7 +122,8 @@
+ 		
+ 		RTMP_IO_READ32(pAd, pCtrlRing->hw_didx_addr, &pCtrlRing->TxDmaIdx);
+ 
+-		while (pCtrlRing->TxSwFreeIdx!= pCtrlRing->TxDmaIdx)
++		//while (pCtrlRing->TxSwFreeIdx!= pCtrlRing->TxDmaIdx)
++		while (pCtrlRing->TxSwFreeIdx!= pCtrlRing->TxCpuIdx)
+ 		{
+ #ifdef RT_BIG_ENDIAN
+ 	        pDestTxD = (TXD_STRUC *) (pCtrlRing->Cell[pCtrlRing->TxSwFreeIdx].AllocVa);
+@@ -144,7 +145,7 @@
+ 			if (pPacket)
+ 			{
+ 				PCI_UNMAP_SINGLE(pAd, pTxD->SDPtr0, pTxD->SDLen0, RTMP_PCI_DMA_TODEVICE);
+-				//RELEASE_NDIS_PACKET(pAd, pPacket, NDIS_STATUS_SUCCESS);
++				RELEASE_NDIS_PACKET(pAd, pPacket, NDIS_STATUS_SUCCESS);
+ 			}
+ 			pCtrlRing->Cell[pCtrlRing->TxSwFreeIdx].pNdisPacket = NULL;
+ 
+@@ -152,7 +153,7 @@
+ 			if (pPacket)
+ 			{
+ 				PCI_UNMAP_SINGLE(pAd, pTxD->SDPtr1, pTxD->SDLen1, RTMP_PCI_DMA_TODEVICE);
+-				//RELEASE_NDIS_PACKET(pAd, pPacket, NDIS_STATUS_SUCCESS);
++				RELEASE_NDIS_PACKET(pAd, pPacket, NDIS_STATUS_SUCCESS);
+ 			}
+ 			pCtrlRing->Cell[pCtrlRing->TxSwFreeIdx].pNextNdisPacket = NULL;
+ 			INC_RING_INDEX(pCtrlRing->TxSwFreeIdx, MGMT_RING_SIZE);

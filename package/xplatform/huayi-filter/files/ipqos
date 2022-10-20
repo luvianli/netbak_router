@@ -1,0 +1,211 @@
+#!/bin/sh /etc/rc.common
+
+START=91
+STOP=91
+
+USE_PROCD=1
+
+LAN_IFNAME="br-lan"
+
+IPQOS_CHAIN=huayi_ipqos_chain
+
+validate_qos_section()
+{
+	uci_validate_section huayi_qos qos "${1}" \
+		'start_ip:ip4addr' \
+		'end_ip:ip4addr' \
+		'up_bw:string' \
+		'down_bw:string' \
+		'id:uinteger'
+}
+
+init_iptables_rule()
+{
+	echo "init iptables rule"
+	iptables -t mangle -N ${IPQOS_CHAIN} >/dev/null 2>&1
+	iptables -t mangle -A POSTROUTING  -j ${IPQOS_CHAIN} >/dev/null 2>&1
+}
+
+clean_iptables_rule()
+{
+	iptables -t mangle -F ${IPQOS_CHAIN} >/dev/null 2>&1
+	iptables -t mangle -X ${IPQOS_CHAIN} >/dev/null 2>&1
+	iptables -t mangle -D POSTROUTING -j ${IPQOS_CHAIN} >/dev/null 2>&1
+}
+
+
+
+clean_tc_rule()
+{
+	tc qdisc del dev $LAN_IFNAME root >/dev/null 2>&1
+	
+	portid=2;
+	port_num=6;
+	while [ $portid -lt $port_num ]
+	do
+		tc qdisc del dev eth0."$portid" root >/dev/null 2>&1
+		portid=$(( $portid + 1 ))
+	done
+}
+
+init_tc_rule()
+{
+	tc qdisc add dev $LAN_IFNAME root handle 1:0 htb default 99 >/dev/null 2>&1
+	
+	portid=2;
+	port_num=6;
+	while [ $portid -lt $port_num ]
+	do
+		tc qdisc add dev eth0."$portid" root handle 1:0 htb default 99 >/dev/null 2>&1
+		portid=$(( $portid + 1 ))
+	done
+}
+
+add_ip_qos_rule()
+{
+	ip_range=$1"-"$2
+	up_rate=$3		
+	down_rate=$4
+	id=$5
+	test -z "$ip_range" && {
+		echo "ip range is null"
+		return 1 
+	}
+	test -z "$up_rate" && {
+		echo "up rate is null"
+		return 1 
+	}
+	test -z "$down_rate" && {
+		echo "down rate is null"
+		return 1
+	}
+	test -z "$id" && {
+		echo "id is null"
+		return 1
+	}
+	[ $id -eq 0 ] && return 1
+	[ $up_rate -eq 0 ] && return 1
+	[ $down_rate -eq 0 ] && return 1
+	
+	iptables -t mangle -A $IPQOS_CHAIN -p tcp --tcp-flags SYN,RST,ACK SYN -j RETURN
+	#iptables -t mangle -A $IPQOS_CHAIN -p tcp --dport 443 -m length --length :256 -j RETURN
+	#iptables -t mangle -A $IPQOS_CHAIN -p tcp --sport 443 -m length --length :256 -j RETURN
+    iptables -t mangle -A $IPQOS_CHAIN -m length --length :256 -j RETURN
+	iptables -t mangle -A $IPQOS_CHAIN -m  iprange --src-range $ip_range -j MARK --or-mark $id
+	iptables -t mangle -A $IPQOS_CHAIN -m  iprange --dst-range $ip_range -j MARK --or-mark $id
+
+	tc class add dev ${LAN_IFNAME} parent 1:0 classid 1:$id htb rate ${down_rate}Mbit ceil ${down_rate}Mbit prio 2 burst 150k
+	tc filter add dev ${LAN_IFNAME} parent 1:0 prio 10 handle $id/0xff fw classid 1:$id 
+
+	portid=2;
+	port_num=6;
+	while [ $portid -lt $port_num ]
+	do
+		tc class add dev eth0."$portid" parent 1:0 classid 1:$id htb rate ${up_rate}Mbit  ceil ${down_rate}Mbit prio 2 burst 150k
+		tc filter add dev eth0."$portid" parent 1:0 prio 10 handle $id/0xff fw classid 1:$id
+		portid=$(( $portid + 1 ))
+	done
+	
+	
+	return 0
+}
+
+qos_config()
+{
+	local cfg="$1"
+	
+	local start_ip end_ip up_bw down_bw id
+	
+	validate_qos_section "${1}" || {
+		echo "validation failed"
+		return 1
+	}
+	
+	add_ip_qos_rule $start_ip $end_ip $up_bw $down_bw $id
+}
+
+#192.168.0.3,192.168.0.200,1000,1000,6,
+load_ip_qos_rules()
+{
+	config_load huayi_qos
+	config_get mode "qos" "qos_mode"
+	echo "#### mode = $mode"
+	
+	if [ $mode -eq 0 ];then
+		echo "qos is disabled"
+		return
+	fi
+
+	if [ $mode -eq 1 ];then
+		echo "ip qos is diabled"
+		return
+	fi
+	
+	config_foreach qos_config iplimit
+}
+
+show_tc_rule()
+{
+	echo "----------------lan tc rules--------------------"
+	tc -s -d class ls dev $LAN_IFNAME 
+
+	echo "----------------wan tc rules--------------------"
+	portid=2;
+	port_num=6;
+	while [ $portid -lt $port_num ]
+	do
+		tc -s -d class ls dev eth0."$portid" 
+		portid=$(( $portid + 1 ))
+	done
+}
+
+clean_qos()
+{
+	if [ x"iptables" == x"$2" ];then
+		echo "clean iptables rule"
+		clean_iptables_rule
+	elif [ x"tc" == x"$2" ];then
+		echo "clean tc rule"
+		clean_tc_rule
+	else
+		echo "clean rules"
+		clean_iptables_rule
+		clean_tc_rule
+	fi
+}
+
+reload_service() {
+
+	config_load huayi_qos
+	config_get mode "qos" "qos_mode"
+	echo "#### mode = $mode"
+	
+	if [ $mode -eq 0 ];then
+		echo "qos is disabled"
+		return
+	fi
+
+	if [ $mode -eq 1 ];then
+		echo "ip qos is diabled"
+		return
+	fi
+	
+	init_iptables_rule
+	init_tc_rule
+	load_ip_qos_rules
+	return 0
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "huayi_qos"
+	procd_add_validation validate_qos_section
+}
+
+start_service() {
+	reload_service
+}
+
+stop_service() {
+	clean_qos
+}

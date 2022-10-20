@@ -1,0 +1,22 @@
+#!/bin/sh
+#argv[0] = script;
+#argv[1] = ifname;
+#argv[2] = NULL;
+#argv[3] = unknown;
+#argv[4] = ipparm;
+#argv[5] = server_localip;
+
+route_type=`uci -q get ppl2tp.pptp.route_type`
+
+[ "$route_type" -eq 0 ] && {
+	#route add -net 192.168.7.0 netmask 255.255.255.0 gw 192.168.0.1 dev pptp-vpn
+	route add -net `echo $5 | cut -d . -f 1,2,3`.0 netmask 255.255.255.0 gw $4 dev $1
+}
+
+huayi-reset vpn_route
+
+iptables -w -A huayi_ppp_input_filter -i $1 -j ACCEPT
+iptables -w -A huayi_ppp_forward_filter -i $1 -j ACCEPT
+##update link status
+huayi_cmd set system pptp_link 1
+huayi_cmd set system pptp_ip $4

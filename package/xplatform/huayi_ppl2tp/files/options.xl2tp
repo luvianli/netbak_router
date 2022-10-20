@@ -1,0 +1,23 @@
+#
+noauth
+debug
+dump
+ifname xl2tp-vpn
+logfd 2
+logfile /var/log/xl2tp.log
+noccp
+novj
+novjccomp
+nopcomp
+noaccomp
+remotename xl2tp
+unit 0
+nodeflate
+nobsdcomp
+usepeerdns
+lcp-echo-failure 3
+lcp-echo-interval 15
+ipcp-accept-remote
+ip-up-script /etc/ppp/xl2tp-up
+ip-down-script /etc/ppp/xl2tp-down
+persist

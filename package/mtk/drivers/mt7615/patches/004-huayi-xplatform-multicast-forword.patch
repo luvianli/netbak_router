@@ -1,0 +1,168 @@
+diff -uNr a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/ap/ap_cfg.c b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/ap/ap_cfg.c
+--- a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/ap/ap_cfg.c	2020-09-24 11:11:08.619817306 +0800
++++ b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/ap/ap_cfg.c	2020-09-24 11:19:30.033655707 +0800
+@@ -1407,6 +1407,7 @@
+ #endif /* UAPSD_SUPPORT */
+ #ifdef IGMP_SNOOP_SUPPORT
+ 	{"IgmpSnEnable",				Set_IgmpSn_Enable_Proc},
++	{"IgmpForword",				Set_IgmpSn_Forword_Proc},
+ 	{"IgmpAdd",					Set_IgmpSn_AddEntry_Proc},
+ 	{"IgmpDel",					Set_IgmpSn_DelEntry_Proc},
+ #ifdef IGMP_TVM_SUPPORT
+diff -uNr a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/ap/ap_data.c b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/ap/ap_data.c
+--- a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/ap/ap_data.c	2020-09-24 11:11:08.619817306 +0800
++++ b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/ap/ap_data.c	2020-09-24 11:19:51.874477305 +0800
+@@ -615,7 +615,12 @@
+ 		wdev_ops->detect_wmm_traffic(pAd, wdev, user_prio, FLG_IS_OUTPUT);
+ 	else {
+ #ifdef IGMP_SNOOP_SUPPORT
+-		if (wdev->IgmpSnoopEnable) {
++		if (wdev->IgmpSnoopEnable || pAd->ApCfg.IgmpForword == 0) {
++			if (pAd->ApCfg.IgmpForword == 0)
++			{
++				RELEASE_NDIS_PACKET(pAd, pkt, NDIS_STATUS_FAILURE);
++	            return NDIS_STATUS_FAILURE;
++			}
+ 			if (IgmpPktInfoQuery(pAd, pkt_va, pkt, wdev,
+ 						&InIgmpGroup, &pGroupEntry) != NDIS_STATUS_SUCCESS)
+ 				return NDIS_STATUS_FAILURE;
+@@ -3854,14 +3859,19 @@
+ #ifdef IGMP_SNOOP_SUPPORT
+ 
+ 	if ((IS_ENTRY_CLIENT(pEntry) || IS_ENTRY_WDS(pEntry))
+-		&& (wdev->IgmpSnoopEnable)
++		&& ((wdev->IgmpSnoopEnable) || (pAd->ApCfg.IgmpForword == 0))
+ 		&& IS_MULTICAST_MAC_ADDR(pRxBlk->Addr3)) {
+ 		PUCHAR pDA = pRxBlk->Addr3;
+ 		PUCHAR pSA = pRxBlk->Addr2;
+ 		PUCHAR pData = pRxBlk->pData + 12;
+ 		UINT16 protoType = OS_NTOHS(*((UINT16 *)(pData)));
+ 
+-
++		if (pAd->ApCfg.IgmpForword == 0)
++		{
++			RELEASE_NDIS_PACKET(pAd, pRxBlk->pRxPacket, NDIS_STATUS_FAILURE);
++			pRxBlk->pRxPacket = NULL;
++			return FALSE;
++		}
+ 
+ 		if (protoType == ETH_P_IP)
+ 			IGMPSnooping(pAd, pDA, pSA, pData, pEntry, pRxBlk->wcid);
+@@ -4137,14 +4147,18 @@
+ #ifdef IGMP_SNOOP_SUPPORT
+ 
+ 		if ((IS_ENTRY_CLIENT(pEntry) || IS_ENTRY_WDS(pEntry))
+-			&& (wdev->IgmpSnoopEnable)
++			&& ((wdev->IgmpSnoopEnable) || (pAd->ApCfg.IgmpForword == 0))
+ 			&& IS_MULTICAST_MAC_ADDR(pRxBlk->Addr3)) {
+ 			PUCHAR pDA = pRxBlk->Addr3;
+ 			PUCHAR pSA = pRxBlk->Addr2;
+ 			PUCHAR pData = NdisEqualMemory(SNAP_802_1H, pRxBlk->pData, 6) ? (pRxBlk->pData + 6) : pRxBlk->pData;
+ 			UINT16 protoType = OS_NTOHS(*((UINT16 *)(pData)));
+ 
+-
++			if (pAd->ApCfg.IgmpForword == 0)
++			{
++				RELEASE_NDIS_PACKET(pAd, pRxBlk->pRxPacket, NDIS_STATUS_FAILURE);
++				return FALSE;
++			}
+ 
+ 			if (protoType == ETH_P_IP)
+ 				IGMPSnooping(pAd, pDA, pSA, pData, pEntry, pRxBlk->wcid);
+diff -uNr a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/cmm_profile.c b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/cmm_profile.c
+--- a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/cmm_profile.c	2020-09-24 11:11:08.287817310 +0800
++++ b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/cmm_profile.c	2020-09-24 11:20:01.744008601 +0800
+@@ -5727,6 +5727,8 @@
+ #ifdef IGMP_SNOOP_SUPPORT
+ 			/* Igmp Snooping information*/
+ 			rtmp_read_igmp_snoop_from_file(pAd, tmpbuf, pBuffer);
++
++			rtmp_read_igmp_forword_from_file(pAd, tmpbuf, pBuffer);
+ #endif /* IGMP_SNOOP_SUPPORT */
+ #ifdef WDS_SUPPORT
+ 			rtmp_read_wds_from_file(pAd, tmpbuf, pBuffer);
+diff -uNr a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/igmp_snoop.c b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/igmp_snoop.c
+--- a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/igmp_snoop.c	2020-09-24 11:11:08.263817310 +0800
++++ b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/common/igmp_snoop.c	2020-09-24 11:20:14.527255960 +0800
+@@ -1939,6 +1939,18 @@
+ 	return TRUE;
+ }
+ 
++INT Set_IgmpSn_Forword_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg)
++{
++	UCHAR Enable;
++	
++	Enable = (UINT) simple_strtol(arg, 0, 10);
++
++	pAd->ApCfg.IgmpForword = Enable;
++
++	return TRUE;
++}
++
++
+ INT Set_IgmpSn_AddEntry_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg)
+ {
+ 	INT i;
+@@ -2168,6 +2180,27 @@
+ 	}
+ }
+ 
++void rtmp_read_igmp_forword_from_file(
++	IN  PRTMP_ADAPTER pAd,
++	RTMP_STRING *tmpbuf,
++	RTMP_STRING *buffer)
++{
++	INT		i = 0;
++	INT		band_idx = 0;
++	RTMP_STRING	*macptr = NULL;
++	
++	/*IgmpForword */
++	if (RTMPGetKeyParameter("IgmpForword", tmpbuf, 128, buffer, TRUE)) 
++	{
++		if ((strncmp(tmpbuf, "0", 1) == 0))
++			pAd->ApCfg.IgmpForword = 0;
++		else if ((strncmp(tmpbuf, "1", 1) == 0))
++			pAd->ApCfg.IgmpForword = 1;
++        else
++			pAd->ApCfg.IgmpForword = 0;
++	}
++}
++
+ #ifdef A4_CONN
+ /* Indicate Whether specified member is present on MWDS link */
+ BOOLEAN isMemberOnMWDSLink(VOID *prMemberEntry)
+diff -uNr a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/include/igmp_snoop.h b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/include/igmp_snoop.h
+--- a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/include/igmp_snoop.h	2020-09-24 11:11:08.055817312 +0800
++++ b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/include/igmp_snoop.h	2020-09-24 11:20:24.939265914 +0800
+@@ -198,6 +198,8 @@
+ 
+ INT Set_IgmpSn_Enable_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg);
+ 
++INT Set_IgmpSn_Forword_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg);
++
+ INT Set_IgmpSn_AddEntry_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg);
+ 
+ INT Set_IgmpSn_DelEntry_Proc(RTMP_ADAPTER *pAd, RTMP_STRING *arg);
+@@ -208,6 +210,11 @@
+ 	IN  PRTMP_ADAPTER pAd,
+ 	RTMP_STRING *tmpbuf,
+ 	RTMP_STRING *buffer);
++
++void rtmp_read_igmp_forword_from_file(
++	IN  PRTMP_ADAPTER pAd,
++	RTMP_STRING *tmpbuf,
++	RTMP_STRING *buffer);
+ 
+ NDIS_STATUS IgmpPktInfoQuery(
+ 	IN PRTMP_ADAPTER pAd,
+diff -uNr a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/include/rtmp.h b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/include/rtmp.h
+--- a/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/include/rtmp.h	2020-09-24 11:11:08.063817312 +0800
++++ b/drivers/net/wireless/mtk/mt7615/mt_wifi/embedded/include/rtmp.h	2020-09-24 11:20:34.071794515 +0800
+@@ -4329,6 +4329,7 @@
+ 
+ #ifdef IGMP_SNOOP_SUPPORT
+ 	BOOLEAN IgmpSnoopEnable[DBDC_BAND_NUM];	/* 0: disable, 1: enable. */
++	UINT32	IgmpForword;
+ #ifdef IGMP_TVM_SUPPORT
+ 	UCHAR IsTVModeEnable[DBDC_BAND_NUM]; /* Valid for both AP and Apcli wdev */
+ 	UCHAR TVModeType[DBDC_BAND_NUM]; /* 0:Disable, 1:Enable, or 2:Auto, Valid only for AP wdev*/

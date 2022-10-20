@@ -1,0 +1,17 @@
+config HUAYI_CGI_INSTALL_PATH
+	string "huayi cgi binary install path"
+	depends on PACKAGE_huayi_cgi
+	default "/etc/nginx/cgi-bin/"
+	help
+	  configure a path for huayi cgi install
+	  
+config HUAYI_CGI_COOKIE_SUPPORT
+	bool	"Huayi Cookie Support"
+	depends on PACKAGE_huayi_cgi
+	default y
+
+config HUAYI_CGI_WIZARD_SUPPORT
+	bool	"Huayi Quick Setting Support"
+	depends on PACKAGE_huayi_cgi
+	default n
+	

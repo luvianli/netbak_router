@@ -1,0 +1,57 @@
+diff -uNr a/drivers/char/ralink_gpio.c b/drivers/char/ralink_gpio.c
+--- a/drivers/char/ralink_gpio.c	2020-12-08 20:50:56.125991168 +0800
++++ b/drivers/char/ralink_gpio.c	2020-12-08 20:51:40.480609194 +0800
+@@ -2558,8 +2558,17 @@
+ #if defined (CONFIG_RALINK_MT7620)
+ 	gpiomode &= ~0x2000;  //clear bit[13] WLAN_LED
+ #endif
++#if defined (CONFIG_RALINK_MT7628) && defined (CONFIG_HUAYI_JTAG_GPIO_MODE)
++	gpiomode &= ~0xC0;
++#endif
+ 	gpiomode |= RALINK_GPIOMODE_DFT;
+ 	*(volatile u32 *)(RALINK_REG_GPIOMODE) = cpu_to_le32(gpiomode);
++	
++#if defined (CONFIG_RALINK_MT7628) && defined (CONFIG_HUAYI_JTAG_GPIO_MODE)
++	gpiomode = le32_to_cpu(*(volatile u32 *)(RALINK_REG_GPIOMODE2));
++	gpiomode |= RALINK_GPIOMODE2_DFT;
++	*(volatile u32 *)(RALINK_REG_GPIOMODE2) = cpu_to_le32(gpiomode);
++#endif
+ 
+ 	//enable gpio interrupt
+ 	*(volatile u32 *)(RALINK_REG_INTENA) = cpu_to_le32(RALINK_INTCTL_PIO);
+@@ -2589,6 +2598,9 @@
+ 
+ 	//config these pins to normal mode
+ 	*(volatile u32 *)(RALINK_REG_GPIOMODE) &= ~RALINK_GPIOMODE_DFT;
++#if defined (CONFIG_RALINK_MT7628) && defined (CONFIG_HUAYI_JTAG_GPIO_MODE)
++	*(volatile u32 *)(RALINK_REG_GPIOMODE2) &= ~RALINK_GPIOMODE2_DFT;
++#endif
+ 	//disable gpio interrupt
+ 	*(volatile u32 *)(RALINK_REG_INTDIS) = cpu_to_le32(RALINK_INTCTL_PIO);
+ #ifdef CONFIG_RALINK_GPIO_LED
+diff -uNr a/drivers/char/ralink_gpio.h b/drivers/char/ralink_gpio.h
+--- a/drivers/char/ralink_gpio.h	2020-12-08 20:50:56.121991168 +0800
++++ b/drivers/char/ralink_gpio.h	2020-12-08 20:51:55.291411792 +0800
+@@ -488,7 +488,7 @@
+ #define RALINK_GPIOMODE_I2C		0x100000
+ #define RALINK_GPIOMODE_EPHY		0x40000
+ #define RALINK_GPIOMODE_P0LED		0x100000
+-#define RALINK_GPIOMODE_WLED		0x400000
++#define RALINK_GPIOMODE_WLED		0x1
+ #define RALINK_GPIOMODE_UART2		0x1000000
+ #define RALINK_GPIOMODE_UART3		0x4000000
+ #define RALINK_GPIOMODE_PWM0		0x10000000
+@@ -509,7 +509,13 @@
+ #elif defined (CONFIG_RALINK_MT7620)
+ #define RALINK_GPIOMODE_DFT		(RALINK_GPIOMODE_I2C)
+ #elif defined (CONFIG_RALINK_MT7628)
++#if defined (CONFIG_HUAYI_JTAG_GPIO_MODE)
++#define RALINK_GPIOMODE_DFT		(RALINK_GPIOMODE_UART2 | RALINK_GPIOMODE_UART3) | (RALINK_GPIOMODE_SPI_CS1) | (RALINK_GPIOMODE_WDT) | (RALINK_GPIOMODE_I2S)
++#define RALINK_GPIOMODE2_DFT	(RALINK_GPIOMODE_WLED)
++#else
+ #define RALINK_GPIOMODE_DFT		(RALINK_GPIOMODE_UART2 | RALINK_GPIOMODE_UART3) | (RALINK_GPIOMODE_SPI_CS1) | (RALINK_GPIOMODE_WDT) 
++#define RALINK_GPIOMODE2_DFT	(0)
++#endif
+ #else
+ #define RALINK_GPIOMODE_DFT             (RALINK_GPIOMODE_UARTF)
+ #endif

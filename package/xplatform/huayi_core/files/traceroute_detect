@@ -1,0 +1,13 @@
+#!/bin/sh
+
+tracert_detect=`uci get -c /proc/huayi status_system.sys.tracert_detect`
+
+if [ $tracert_detect -eq 1 ]
+then
+exit 1
+fi
+
+huayi_cmd set system tracert_detect 1
+traceroute $@
+huayi_cmd set system tracert_detect 2
+
