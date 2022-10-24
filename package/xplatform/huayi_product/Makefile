@@ -53,6 +53,24 @@ else
 	$(CP) ./local_web/$(CONFIG_HUAYI_PRODUCT_MODEL)/* $(PKG_BUILD_DIR)/newui_mtk3.6/build
 endif
 endif
+else ifeq ($(CONFIG_NETBAK_ROUTER_WEB),y)
+ifeq ($(CONFIG_HUAYI_WEB_RELEASE),y)
+	@echo huayi product release web code clone from version tag
+	cd $(PKG_BUILD_DIR)/ && git clone -b $(CONFIG_HUAYI_PRODUCT_MODEL)-$(HUAYI_VERSION)  git@192.168.99.188:rex/netbak_router_web.git \
+	&& cd netbak_router_web/ && yarn && gulp config --pro $(CONFIG_HUAYI_PRODUCT_MODEL) \
+	&& gulp build
+else
+ifeq ($(CONFIG_HUAYI_WEB_DEVELOPMENT),y)
+	@echo huayi product release web code clone from master branch
+	cd $(PKG_BUILD_DIR)/ && git clone git@192.168.99.188:rex/netbak_router_web.git \
+	&& cd netbak_router_web/ && yarn && gulp config --pro $(CONFIG_HUAYI_PRODUCT_MODEL) \
+	&& gulp build
+else
+	@echo huayi product use local web files instead of get from git
+	mkdir -p $(PKG_BUILD_DIR)/netbak_router_web/build
+	$(CP) ./local_web/$(CONFIG_HUAYI_PRODUCT_MODEL)/* $(PKG_BUILD_DIR)/netbak_router_web/build
+endif
+endif
 else
 ifeq ($(CONFIG_HUAYI_WEB_RELEASE),y)
 	@echo huayi product release web code clone from version tag
@@ -83,6 +101,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/www/
 ifeq ($(CONFIG_NEWUI_MTK3.6),y)
 	$(CP) $(PKG_BUILD_DIR)/newui_mtk3.6/build/* $(1)/www/
+else ifeq ($(CONFIG_NETBAK_ROUTER_WEB),y)
+	$(CP) $(PKG_BUILD_DIR)/netbak_router_web/build/* $(1)/www/
 else
 	$(CP) $(PKG_BUILD_DIR)/huayi_web_mtk3.6/build/* $(1)/www/
 endif

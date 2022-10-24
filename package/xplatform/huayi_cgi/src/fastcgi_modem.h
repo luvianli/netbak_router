@@ -10,6 +10,10 @@
 #define WAN_TYPE_4G_MOBILE							"mobile"
 #define WAN_TYPE_ETH_WIRED							"wired"
 #define WAN_TYPE_WIRED_PRIOROTY						"prior"
+#define WAN_TYPE_WIRED_PRIOROTY						"prior"
+#define WAN_TYPE_REP4G_PRIOROTY						"rep4g"
+#define WAN_TYPE_REP								"rep"
+
 
 typedef enum
 {

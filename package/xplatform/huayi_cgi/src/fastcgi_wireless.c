@@ -1549,8 +1549,11 @@ int set_wifi_scan_start(cJSON *request_root, cJSON *response_root,int *lock_time
 		return FCGI_RESP_CODE_DATA_MISS;	
 	}	
 
-	
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	sprintf(huayi_cmd,"huayi-reset scan parameter %d",WIFI_ALL_SCAN);
+#else
+	sprintf(huayi_cmd,"huayi-reset scan parameter %d",WIFI_24G_SCAN);
+#endif
 
 	system(huayi_cmd);
 

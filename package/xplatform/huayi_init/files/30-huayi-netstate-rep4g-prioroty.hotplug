@@ -1,0 +1,167 @@
+#!/bin/sh
+
+[ "$INTERFACE" = "loopback" -o "$INTERFACE" = "wan6" -o "$INTERFACE" = "wan_6" ] && return
+
+echo 30-huayi-netstate,$ACTION,$INTERFACE,$DEVICE > /dev/console
+
+case $INTERFACE in
+	wan4g | \
+	wan)
+		section="wan"
+		;;
+	lan)
+		section="lan"
+		;;
+	*)
+		exit 1
+		;;
+esac
+
+[ ifup = "$ACTION" ] && {
+	local proto=`uci get -c /etc/config network.$section.proto`
+	local wan_type=`uci get -c /etc/config system.mode.wan_type`
+
+	if [ "$wan_type" == "rep4g" ]; then
+		case $INTERFACE in
+			wan)
+				huayi_cmd set blend wisp_device $DEVICE
+				;;
+			wan4g)
+				huayi_cmd set blend cpe_device $DEVICE
+				;;
+			lan)
+				huayi_cmd set network "$section"_device $DEVICE
+				;;
+			*)
+				;;
+		esac
+	else
+		huayi_cmd set network "$section"_device $DEVICE
+	fi
+	[ $proto == "static" ] && {
+		local ipaddr=`uci get -c /etc/config network.$INTERFACE.ipaddr`
+		local netmask=`uci get -c /etc/config network.$INTERFACE.netmask`
+		local gateway=`uci get -c /etc/config network.$INTERFACE.gateway`
+		local dns1=`uci get -c /etc/config network.$INTERFACE.dns | awk '{print $1}'`
+		local dns2=`uci get -c /etc/config network.$INTERFACE.dns | awk '{print $2}'`
+
+
+		if [ "$wan_type" == "rep4g" ]; then
+			case $INTERFACE in
+				wan4g)
+					#4g模式没有静态模式，暂时不需添加
+					#huayi_cmd set blend wired_gateway "$gw"
+					;;
+				wan)
+					[ -n "$ipaddr" ] &&{
+						huayi_cmd set blend wisp_ipv4 $ipaddr
+					}
+					
+					[ -n "$netmask" ] &&{
+						huayi_cmd set blend wisp_netmask $netmask
+					}
+					
+					[ -n "$gateway" ] &&{
+						huayi_cmd set blend wisp_gateway $gateway
+					}
+					
+					huayi_cmd set blend wisp_dns_server "0.0.0.0"
+					[ -n "$dns1" ] &&{
+						huayi_cmd set blend wisp_dns_server $dns1
+					}
+					
+					[ -n "$dns2" ] &&{
+						huayi_cmd set blend wisp_dns_server $dns2
+					}
+					;;
+				*)
+					[ -n "$ipaddr" ] &&{
+						huayi_cmd set network "$section"_ipv4 $ipaddr
+					}
+					
+					[ -n "$netmask" ] &&{
+						huayi_cmd set network subnet_mask p $netmask
+						huayi_cmd set network "$section"_netmask $netmask
+					}
+					
+					[ -n "$gateway" ] &&{
+						huayi_cmd set network "$section"_gateway $gateway
+					}
+					
+					huayi_cmd set network "$section"_dns_server "0.0.0.0"
+					[ -n "$dns1" ] &&{
+						huayi_cmd set network "$section"_dns_server $dns1
+					}
+					
+					[ -n "$dns2" ] &&{
+						huayi_cmd set network "$section"_dns_server $dns2
+					}
+					;;
+			esac
+		else
+			[ -n "$ipaddr" ] &&{
+				huayi_cmd set network "$section"_ipv4 $ipaddr
+			}
+			
+			[ -n "$netmask" ] &&{
+				huayi_cmd set network subnet_mask p $netmask
+				huayi_cmd set network "$section"_netmask $netmask
+			}
+			
+			[ -n "$gateway" ] &&{
+				huayi_cmd set network "$section"_gateway $gateway
+			}
+			
+			huayi_cmd set network "$section"_dns_server "0.0.0.0"
+			[ -n "$dns1" ] &&{
+				huayi_cmd set network "$section"_dns_server $dns1
+			}
+			
+			[ -n "$dns2" ] &&{
+				huayi_cmd set network "$section"_dns_server $dns2
+			}
+		fi
+	}
+	
+	[ wan = "$section" ] && {
+#		huayi_cmd set network wan_link 1
+		huayi_cmd set network wan_up 1
+		huayi-reset wanup
+		huayi-reset ddns
+	}
+	if [ "$wan_type" != "rep4g" ]; then
+		huayi-reset static_route
+	fi
+       
+}
+
+[ ifdown = "$ACTION" ] && {
+
+#	huayi_cmd set network "$section"_ipv4  "0.0.0.0"
+	
+#	huayi_cmd set network "$section"_netmask "0.0.0.0"
+	
+	[ wan = "$section" ] && {
+		local proto=`uci get -c /etc/config network.$section.proto`
+		local wan_type=`uci get -c /etc/config system.mode.wan_type`
+
+		if [ "$wan_type" == "rep4g" ]; then
+			if [ "$proto" == "pppoe" ]; then
+				;;
+			else
+				huayi_cmd set network wan_up 0	
+			fi
+		else
+			huayi_cmd set network wan_up 0
+		fi
+		
+	
+#		huayi_cmd set network "$section"_gateway "0.0.0.0"
+	
+#		huayi_cmd set network "$section"_dns_server "0.0.0.0"
+	
+#		huayi_cmd set network "$section"_device ""
+	}	
+	
+}
+

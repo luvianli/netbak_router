@@ -8,7 +8,7 @@
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 #define HUAYI_MODULE_STATUS_MODEM     		"modem"
 #endif
-#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
+#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY) || defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 #define HUAYI_MODULE_STATUS_BLEND     		"blend"
 #endif
 
@@ -139,7 +139,7 @@ typedef struct huayi_status_modem {
 } HUAYI_STATUS_MODEM;
 #endif
 
-#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
+#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY) || defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 typedef struct huayi_status_blend {
 	u_int8_t   	wired_device_id[DAL_MAX_DEVICE_ID];
     u_int32_t  	wired_ipv4_addr;
@@ -164,7 +164,7 @@ typedef struct huayi_runstate {
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	struct huayi_status_modem   modem;
 #endif
-#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
+#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY) || defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	struct huayi_status_blend   blend;
 #endif
 } HUAYI_RUNSTATE_DATA;

@@ -431,6 +431,17 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 			}
 		}
 	}
+#elif defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+	else if(!strcmp(wan_type, WAN_TYPE_REP4G_PRIOROTY))
+	{
+		if (wan_link == 0)
+		{
+			if (sim_state != MODEM_SIN_READY)
+			{
+				wan_up = 0;
+			}
+		}
+	}
 #endif
 	else
 #endif
@@ -2267,7 +2278,7 @@ FCGI_BOOL set_system_wisp_opmode(cJSON *request_root)
 	if(!huayi_json_get_int(request_root,"channel",&channel) || \
 		!huayi_json_get_str(request_root,"bssid",bssid,OPTION_STR_LEN) || \
 		!huayi_json_get_str(request_root,"ssid",ssid,OPTION_STR_LEN) || \
-		!huayi_json_get_str(request_root,"authmode",authmode,OPTION_STR_LEN) || \
+		!huayi_json_get_str(request_root,"auth_mode",authmode,OPTION_STR_LEN) || \
 		!huayi_json_get_str(request_root,"encryption",encryption,OPTION_STR_LEN) || \
 		!huayi_json_get_int(request_root,"ht_extcha",&ht_extcha))
 	{
@@ -2717,6 +2728,32 @@ int do_get_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
 		cJSON_AddStringToObject(result_root,"detect_ip",detectip);
 	}
+#elif defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+	else if(!strcmp(wan_type, WAN_TYPE_REP4G_PRIOROTY))
+	{
+		huayi_uci_get_str(PKG_NETWORK,"wan4g","proto",proto);
+		cJSON_AddStringToObject(result_root,"proto_4g",proto);
+		
+		huayi_uci_get_int(PKG_MODEM, "status","mode", &use_apn);
+		if(1 == use_apn)  
+		{
+			huayi_uci_get_str(PKG_MODEM,"status","validation",auth_type);
+			huayi_uci_get_str(PKG_MODEM,"status","apn",apn_name);
+			huayi_uci_get_str(PKG_MODEM,"status","user4g",username);
+			huayi_uci_get_str(PKG_MODEM,"status","pass4g",password);
+
+			cJSON_AddStringToObject(result_root,"auth_type",auth_type);
+			cJSON_AddStringToObject(result_root,"apn_name",apn_name);
+			cJSON_AddStringToObject(result_root,"apn_usr",username);
+			cJSON_AddStringToObject(result_root,"apn_pwd",password);
+		}
+		cJSON_AddNumberToObject(result_root,"use_apn",use_apn);
+
+		memset(proto, 0, sizeof(proto));
+		huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
+		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
+		cJSON_AddStringToObject(result_root,"detect_ip",detectip);
+	}
 #endif
 	else
 #endif
@@ -2844,6 +2881,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 	int  encry_5g = 0;
 #endif
 	char detectip[OPTION_STR_LEN] = {0};
+	int ret = 0;
 
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
@@ -2897,12 +2935,12 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 	
 	huayi_uci_commit(PKG_WIRELESS);
 #endif
-
+#if !defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
-	
+#endif	
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	if(!huayi_json_get_str(request_root,"wan_type",wan_type,OPTION_STR_LEN))
 	{
@@ -3029,6 +3067,73 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 		}
 	}
 #endif
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+	else if(strcmp(wan_type ,WAN_TYPE_REP4G_PRIOROTY) == 0)
+	{
+		huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
+		//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s","eth1");
+		//system(cmd);
+
+		memset(cmd,0,sizeof(cmd));
+		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+		system(cmd);
+
+		if(!huayi_json_get_int(request_root,"use_apn",&use_apn))
+		{
+			return FCGI_RESP_CODE_DATA_MISS;
+		}
+		if(1 == use_apn)
+		{
+			huayi_json_get_int(request_root,"auth_type",&auth_type);
+			huayi_json_get_str(request_root,"apn_name",apn_name,OPTION_STR_LEN);	
+			huayi_json_get_str(request_root,"apn_usr",username,OPTION_STR_LEN); 
+			huayi_json_get_str(request_root,"apn_pwd",password,OPTION_STR_LEN);
+
+			huayi_uci_set_int(PKG_MODEM,"status","validation",auth_type);
+			huayi_uci_set_str(PKG_MODEM,"status","apn",apn_name);
+			huayi_uci_set_str(PKG_MODEM,"status","user4g",username);
+			huayi_uci_set_str(PKG_MODEM,"status","pass4g",password);
+		}
+		huayi_uci_set_int(PKG_MODEM,"status","mode",use_apn);
+		
+		huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
+
+		huayi_uci_set_str(PKG_NETWORK,"wan","ifname",wan_ifname);
+
+		//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
+		//system(cmd);
+		memset(cmd,0,sizeof(cmd));
+		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend wisp_device %s",wan_ifname);
+		system(cmd);
+
+		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_ifname",lan_ifname);
+		huayi_uci_set_str(PKG_NETWORK,"lan","ifname",lan_ifname);
+
+		ret = set_system_wisp_opmode(request_root);		
+		if(FCGI_TRUE != ret)
+			return ret;
+
+		huayi_json_get_str(request_root,"detect_ip", detectip, OPTION_STR_LEN);
+		if(strlen(detectip)>0)
+		{
+			huayi_uci_set_str(PKG_SYSTEM, "mode", "detect_ip", detectip);
+		}
+	}
+#endif
+	else if(strcmp(wan_type ,WAN_TYPE_REP) == 0)
+	{
+		ret = set_system_wisp_opmode(request_root);		
+		if(FCGI_TRUE != ret)
+			return ret;
+	}
+	else
+#else
+	if(strcmp(wan_type ,WAN_TYPE_REP) == 0)
+	{
+		ret = set_system_wisp_opmode(request_root);		
+		if(FCGI_TRUE != ret)
+			return ret;
+	}
 	else
 #endif
 	{
@@ -3085,6 +3190,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 
 	huayi_uci_commit(PKG_SYSTEM);
 	huayi_uci_commit(PKG_MODEM);
+	huayi_uci_commit(PKG_WIRELESS);
 	
 	if (!strcmp(wan_type, WAN_TYPE_4G_MOBILE))
 	{
@@ -3095,7 +3201,13 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 	{
 		system("huayi-reset lte4g parameter 0");
 	}
+#elif defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+	else if(!strcmp(wan_type, WAN_TYPE_REP4G_PRIOROTY))
+	{
+		system("huayi-reset lte4g parameter 0");
+	}
 #endif
+
 	system("huayi-reset network");
 
 	*lock_time = HUAYI_RELOAD_NETWORK_TIME;

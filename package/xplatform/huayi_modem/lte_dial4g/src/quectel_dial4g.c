@@ -642,6 +642,26 @@ retry_signal:
 				}
 			}else
 #endif
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+			huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
+
+			if (!strcmp(wan_type,"rep4g"))
+			{
+				huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4", wired_ipaddr);
+				snprintf(cmd, CMD_STR_LEN,"echo 'cgpipaddr =  %s   cpe_ipaddr = %s' >> /tmp/test.txt", cgpipaddr, wired_ipaddr);	
+				system(cmd);
+				if(strlen(wired_ipaddr) > 7 && strstr(cgpipaddr, wired_ipaddr) == NULL)
+				{
+					if(2 == ip_count)
+					{
+						system("huayi-reset small4gfunc");
+						ip_count = 0;
+					}
+					ip_count += 1;
+				}
+			}else
+#endif
+
 			{	
 				if(strlen(wan_ipaddr) > 7 && NULL == strstr(cgpipaddr, wan_ipaddr))
 					system("huayi-reset small4gfunc");

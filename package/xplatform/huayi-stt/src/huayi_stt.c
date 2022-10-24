@@ -33,7 +33,7 @@
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("HUAYI STT Module");
-MODULE_AUTHOR("gerry_li");
+MODULE_AUTHOR("xxx");
 
 
 static struct stt s_stt;
@@ -330,7 +330,7 @@ static void* status_network_get(struct dal_net_stats *dev_stats, struct net_devi
 	struct rtnl_link_stats64 netdevstats;
 	struct huayi_runstate *s_runstate = HUAYI_RUNSTATE_GET();
 	
-    if (0==strcmp(dev->name, "eth1") || 0==strcmp(dev->name, "eth0.2")) 
+    if (0==strcmp(dev->name, "eth1") || 0==strcmp(dev->name, "eth0.2") || 0==strcmp(dev->name, "apcli0"))  
 	{
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 		if (0 != strcmp(dev->name, s_runstate->network.wan_device))
@@ -453,7 +453,7 @@ static int status_net_proc(struct seq_file *s, void *v)
 	
 	for_each_netdev(net, dev) {
 		if (strstr(dev->name, "eth1") == NULL && strstr(dev->name, "br-lan") == NULL &&
-			strstr(dev->name, "eth0") == NULL)
+			strstr(dev->name, "eth0") == NULL && strstr(dev->name, "apcli") == NULL)
 		{
 			continue;
 		}
@@ -604,6 +604,64 @@ struct file_operations blend_proc_fops = {
 };
 #endif
 
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+static int status_blend_proc(struct seq_file *s, void *v)
+{
+    struct huayi_runstate *s_runstate = HUAYI_RUNSTATE_GET();
+	int i = 0;
+
+	seq_printf(s, "config 'interface' 'wisp'\n");
+	seq_printf(s, "       option 'device' '%s'\n",s_runstate->blend.wired_device_id);
+	seq_printf(s, "       option 'ipv4'  '"NIPQUAD_FMT"'\n", NIPQUAD(s_runstate->blend.wired_ipv4_addr));
+	seq_printf(s, "       option 'netmask'  '"NIPQUAD_FMT"'\n", NIPQUAD(s_runstate->blend.wired_ipv4_mask));
+	seq_printf(s, "       option 'gateway'  '"NIPQUAD_FMT"'\n", NIPQUAD(s_runstate->blend.wired_gateway));
+	for(i=0; i < CSTATUS_MAX_DNS_SERVER; i++) 
+	{
+        if (s_runstate->blend.wired_dns_server[i] == 0)
+		{
+            break;
+        }
+    	seq_printf(s, "       list 'dns_server' '"NIPQUAD_FMT"'\n",NIPQUAD(s_runstate->blend.wired_dns_server[i]));
+    }
+	seq_printf(s, "       option 'link' '%u'\n", s_runstate->blend.wired_link);
+	seq_printf(s, "\n");
+
+	seq_printf(s, "config 'interface' 'cpe'\n");
+	seq_printf(s, "       option 'device' '%s'\n",s_runstate->blend.cpe_device_id);
+	seq_printf(s, "       option 'ipv4'  '"NIPQUAD_FMT"'\n", NIPQUAD(s_runstate->blend.cpe_ipv4_addr));
+	seq_printf(s, "       option 'netmask'  '"NIPQUAD_FMT"'\n", NIPQUAD(s_runstate->blend.cpe_ipv4_mask));
+	seq_printf(s, "       option 'gateway'  '"NIPQUAD_FMT"'\n", NIPQUAD(s_runstate->blend.cpe_gateway));
+	for(i=0; i < CSTATUS_MAX_DNS_SERVER; i++) 
+	{
+        if (s_runstate->blend.cpe_dns_server[i] == 0)
+		{
+            break;
+        }
+    	seq_printf(s, "       list 'dns_server' '"NIPQUAD_FMT"'\n",NIPQUAD(s_runstate->blend.cpe_dns_server[i]));
+    }
+	seq_printf(s, "       option 'link' '%u'\n", s_runstate->blend.cpe_link);
+	seq_printf(s, "\n");
+	
+    return HUAYI_OK;
+
+}
+
+
+static int blend_single_open(struct inode *inode, struct file *file)
+{
+   return(single_open(file,status_blend_proc, NULL));
+}
+
+struct file_operations blend_proc_fops = {
+        .open           = blend_single_open,
+	 	.write			= NULL,
+        .read           = seq_read,
+        .llseek         = seq_lseek,
+        .release        = single_release,
+};
+#endif
+
+
 HUAYI_STATUS create_stt_proc(void)
 {
     if(huayi_proc == NULL) {
@@ -655,7 +713,7 @@ HUAYI_STATUS create_stt_proc(void)
 /*-------------------- create file status_modem-------------------------------------------*/
 #endif
 
-#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
+#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY) || defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 /*-------------------- create file status_blend-------------------------------------------*/
 		snprintf(s_stt.blend_stats.name, STT_MAX_NAME, "%s", STT_BLEND_STATS);
 		s_stt.blend_stats.proc = proc_create_data(s_stt.blend_stats.name,0, s_stt.proc_dir_stats, &blend_proc_fops, NULL);
@@ -701,7 +759,7 @@ HUAYI_STATUS remove_stt_proc(void)
 	}
 /*--------------------remove file status_modem-------------------------------------------*/
 #endif
-#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
+#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY) || defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 /*--------------------remove file status_blend-------------------------------------------*/
 	if (s_stt.modem_stats.proc != NULL) {
 		remove_proc_entry(s_stt.blend_stats.name, s_stt.proc_dir_stats);

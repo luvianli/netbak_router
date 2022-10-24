@@ -120,6 +120,19 @@ void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *even
 					system("/etc/init.d/huayi_udhcpd stop");
 				}
 			}
+			#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+				huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
+				if(0 == event->status)
+				{
+					system("huayi_cmd set blend wisp_link 0");
+					system("huayi_cmd set network wan_link 0");
+				}
+				else
+				{
+					system("huayi_cmd set blend wisp_link 1");
+					system("huayi_cmd set network wan_link 1");
+				}
+			#endif
 			Agent->repeater_status_24g = event->status;
 			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set system rep_24g_status %d",event->status);	
 			system(cmd);		

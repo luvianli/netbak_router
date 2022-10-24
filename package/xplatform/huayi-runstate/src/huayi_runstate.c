@@ -1583,6 +1583,218 @@ static control_tbl status_blend_control_tbl[] = {
 };
 #endif
 
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+static HUAYI_STATUS statusGet_wired_device(char *buf) {
+    if (buf) {
+        snprintf(buf, CSTATUS_MAX_STRING, "%s", s_runstate.blend.wired_device_id);
+        return HUAYI_OK;
+    }
+    return HUAYI_ERROR;
+}
+
+static HUAYI_STATUS statusSet_wired_device(char *buf) {
+    if (buf) {
+        snprintf(s_runstate.blend.wired_device_id, CSTATUS_MAX_STRING, "%s", buf);
+        return HUAYI_OK;
+    }
+    return HUAYI_ERROR;
+}
+
+static HUAYI_STATUS statusGet_wired_ipv4(char *buf) {
+    sprintf(buf, "'"NIPQUAD_FMT"'", NIPQUAD(s_runstate.blend.wired_ipv4_addr));
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_wired_ipv4(char *buf) {
+   s_runstate.blend.wired_ipv4_addr=A_INET_ADDR(buf);
+   return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusGet_wired_netmask(char *buf) {
+    sprintf(buf, "'"NIPQUAD_FMT"'", NIPQUAD(s_runstate.blend.wired_ipv4_mask));
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_wired_netmask(char *buf) {
+   s_runstate.blend.wired_ipv4_mask=A_INET_ADDR(buf);
+   return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusGet_wired_gateway(char *buf) {
+    sprintf(buf, "'"NIPQUAD_FMT"'", NIPQUAD(s_runstate.blend.wired_gateway));
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_wired_gateway(char *buf) {
+   s_runstate.blend.wired_gateway=A_INET_ADDR(buf);
+   return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusGet_wired_link(int *buf) {
+	*buf = s_runstate.blend.wired_link;
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_wired_link(int buf) {
+   s_runstate.blend.wired_link = buf;
+   return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusGet_wired_dns_server(char *buf) {
+    int i;
+    int p=0;
+    for (i=0; i<CSTATUS_MAX_DNS_SERVER; i++) {
+        if (s_runstate.blend.wired_dns_server[i] == 0) {
+            return HUAYI_OK;
+        }
+        p += sprintf(buf + p, "'"NIPQUAD_FMT"'\n",
+                     NIPQUAD(s_runstate.blend.wired_dns_server[i]));
+    }
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_wired_dns_server(char *buf) {
+    int i;
+    u_int32_t value = A_INET_ADDR(buf);
+	
+    if (value == 0) {
+        BZERO(&s_runstate.blend.wired_dns_server,sizeof(s_runstate.blend.wired_dns_server));
+        return HUAYI_OK;
+    }
+	
+    for (i=0; i<CSTATUS_MAX_DNS_SERVER; i++) {
+        if (s_runstate.blend.wired_dns_server[i] == value) {
+            return HUAYI_OK;
+        } else if (s_runstate.blend.wired_dns_server[i] == 0) {
+            s_runstate.blend.wired_dns_server[i] = value;
+            return HUAYI_OK;
+        }
+    }
+	
+    return HUAYI_ERROR;
+}
+
+
+static HUAYI_STATUS statusGet_cpe_device(char *buf) {
+    if (buf) {
+        snprintf(buf, CSTATUS_MAX_STRING, "%s", s_runstate.blend.cpe_device_id);
+        return HUAYI_OK;
+    }
+    return HUAYI_ERROR;
+}
+
+static HUAYI_STATUS statusSet_cpe_device(char *buf) {
+    if (buf) {
+        snprintf(s_runstate.blend.cpe_device_id, CSTATUS_MAX_STRING, "%s", buf);
+        return HUAYI_OK;
+    }
+    return HUAYI_ERROR;
+}
+
+static HUAYI_STATUS statusGet_cpe_ipv4(char *buf) {
+    sprintf(buf, "'"NIPQUAD_FMT"'", NIPQUAD(s_runstate.blend.cpe_ipv4_addr));
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_cpe_ipv4(char *buf) {
+   s_runstate.blend.cpe_ipv4_addr=A_INET_ADDR(buf);
+   return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusGet_cpe_netmask(char *buf) {
+    sprintf(buf, "'"NIPQUAD_FMT"'", NIPQUAD(s_runstate.blend.cpe_ipv4_mask));
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_cpe_netmask(char *buf) {
+   s_runstate.blend.cpe_ipv4_mask=A_INET_ADDR(buf);
+   return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusGet_cpe_gateway(char *buf) {
+    sprintf(buf, "'"NIPQUAD_FMT"'", NIPQUAD(s_runstate.blend.cpe_gateway));
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_cpe_gateway(char *buf) {
+   s_runstate.blend.cpe_gateway=A_INET_ADDR(buf);
+   return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusGet_cpe_link(int *buf) {
+	*buf = s_runstate.blend.cpe_link;
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_cpe_link(int buf) {
+   s_runstate.blend.cpe_link = buf;
+   return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusGet_cpe_dns_server(char *buf) {
+    int i;
+    int p=0;
+    for (i=0; i<CSTATUS_MAX_DNS_SERVER; i++) {
+        if (s_runstate.blend.cpe_dns_server[i] == 0) {
+            return HUAYI_OK;
+        }
+        p += sprintf(buf + p, "'"NIPQUAD_FMT"'\n",
+                     NIPQUAD(s_runstate.blend.cpe_dns_server[i]));
+    }
+    return HUAYI_OK;
+}
+
+static HUAYI_STATUS statusSet_cpe_dns_server(char *buf) {
+    int i;
+    u_int32_t value = A_INET_ADDR(buf);
+	
+    if (value == 0) {
+        BZERO(&s_runstate.blend.wired_dns_server,sizeof(s_runstate.blend.cpe_dns_server));
+        return HUAYI_OK;
+    }
+	
+    for (i=0; i<CSTATUS_MAX_DNS_SERVER; i++) {
+        if (s_runstate.blend.cpe_dns_server[i] == value) {
+            return HUAYI_OK;
+        } else if (s_runstate.blend.cpe_dns_server[i] == 0) {
+            s_runstate.blend.cpe_dns_server[i] = value;
+            return HUAYI_OK;
+        }
+    }
+	
+    return HUAYI_ERROR;
+}
+
+static control_tbl status_wisp4g_control_tbl[] = {
+	{"wisp_device", TBL_FORMAT_S,
+        g(statusGet_wired_device), s(statusSet_wired_device)},
+	{"wisp_ipv4", TBL_FORMAT_S,
+        g(statusGet_wired_ipv4), s(statusSet_wired_ipv4)},
+    {"wisp_netmask", TBL_FORMAT_S,
+        g(statusGet_wired_netmask), s(statusSet_wired_netmask)},
+    {"wisp_gateway", TBL_FORMAT_S,
+        g(statusGet_wired_gateway), s(statusSet_wired_gateway)},
+    {"wisp_link", TBL_FORMAT_D | TBL_TYPE_INT,
+        g(statusGet_wired_link), s(statusSet_wired_link)},
+    {"wisp_dns_server", TBL_FORMAT_S,
+        g(statusGet_wired_dns_server), s(statusSet_wired_dns_server)},
+
+	{"cpe_device", TBL_FORMAT_S,
+        g(statusGet_cpe_device), s(statusSet_cpe_device)},
+	{"cpe_ipv4", TBL_FORMAT_S,
+        g(statusGet_cpe_ipv4), s(statusSet_cpe_ipv4)},
+    {"cpe_netmask", TBL_FORMAT_S,
+        g(statusGet_cpe_netmask), s(statusSet_cpe_netmask)},
+    {"cpe_gateway", TBL_FORMAT_S,
+        g(statusGet_cpe_gateway), s(statusSet_cpe_gateway)},
+    {"cpe_link", TBL_FORMAT_D | TBL_TYPE_INT,
+        g(statusGet_cpe_link), s(statusSet_cpe_link)},
+    {"cpe_dns_server", TBL_FORMAT_S,
+        g(statusGet_cpe_dns_server), s(statusSet_cpe_dns_server)},
+    {NULL, 0, NULL, NULL}
+};
+#endif
+
 static int HUAYI_STATUS_init(struct huayi_runstate *srunstate) 
 {
 
@@ -1596,6 +1808,10 @@ static int HUAYI_STATUS_init(struct huayi_runstate *srunstate)
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
 	HUAYI_CTRL_ATTACH_TABLE(HUAYI_MODULE_STATUS_BLEND, status_blend_control_tbl);
 #endif
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+		HUAYI_CTRL_ATTACH_TABLE(HUAYI_MODULE_STATUS_BLEND, status_wisp4g_control_tbl);
+#endif
+
     return 0;
 }
 
@@ -1607,7 +1823,7 @@ static int HUAYI_STATUS_exit(struct huayi_runstate *srunstate)
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	HUAYI_CTRL_DETACH_TABLE(HUAYI_MODULE_STATUS_MODEM);
 #endif
-#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
+#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY) || defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	HUAYI_CTRL_DETACH_TABLE(HUAYI_MODULE_STATUS_BLEND);
 #endif
     return 0;

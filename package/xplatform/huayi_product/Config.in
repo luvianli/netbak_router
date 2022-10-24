@@ -3,6 +3,8 @@ choice
 	depends on PACKAGE_huayi_product
 	help
 	  Choose different web types, the download paths are different 
+	config NETBAK_ROUTER_WEB
+		bool "netbak_router_web"
 	config NEWUI_MTK3.6
 		bool "newui_mtk3.6"
 	config HUAYI_WEB_MTK3.6

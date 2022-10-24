@@ -117,20 +117,7 @@ int main(int argc, char *argv[])
 	int ret = 0, count = 0;
 
 	(void) signal(SIGTERM, huayi_4g_init_exit);
-#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
-	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
-	if (0 != strcmp(wan_type, WAN_TYPE_4G) && 0 != strcmp(wan_type, "prior"))
-	{
-		return 0;
-	}
-#else
-	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 
-	if (0 != strcmp(wan_type,WAN_TYPE_4G))
-	{
-		return 0;
-	}
-#endif
 	/*针对这个型号的产品特殊处理，硬件设计模块电路时，启动需要软件连通电路*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(!strcmp(product_model, "4G1200-H002-HY06"))

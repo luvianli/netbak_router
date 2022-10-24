@@ -28,9 +28,10 @@
 #define STT_MODEM_STATS        	"status_modem"
 #endif
 
-#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
+#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY) || defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 #define STT_BLEND_STATS        	"status_blend"
 #endif
+
 
 typedef struct stt_proc_entry {
     struct proc_dir_entry *proc;
@@ -48,7 +49,7 @@ typedef struct stt {
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	STT_PROC_ENTRY modem_stats;
 #endif
-#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
+#if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY) || defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	STT_PROC_ENTRY blend_stats;
 #endif
 } STT;
