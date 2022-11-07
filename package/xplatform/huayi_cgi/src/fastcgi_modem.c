@@ -1426,6 +1426,19 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 		}
 	}
 #endif
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+	else if(!strcmp(wan_type,WAN_TYPE_REP4G_PRIOROTY))
+	{
+		if (wan_link == 0)
+		{
+			/*ÁÙÊ±Ìí¼Ó*/
+			if (sim_state != MODEM_SIN_READY)
+			{
+				wan_up = 0;
+			}
+		}
+	}
+#endif
 	else
 	{
 		if (wan_link == 0)
@@ -1825,6 +1838,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	char username[OPTION_STR_LEN] = {0};
 	char password[OPTION_STR_LEN] = {0};
 	int  use_apn = 0, ret = 0;
+	char pmodel[16] = { 0 };
 	
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
@@ -1855,8 +1869,19 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			huayi_uci_set_str(PKG_NETWORK,"lan","ifname",lan_ifname);
 		}
 			
-		huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
-		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s","eth1");
+		memset(cmd,0,sizeof(cmd));
+		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
+		if((strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
+				&& strncmp("EC200",pmodel, 5) != 0)
+		{
+			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","wwan0");
+			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device wwan0");
+		}
+		else
+		{
+			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
+			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+		}
 		system(cmd);
 
 		if(!huayi_json_get_int(request_root,"use_apn",&use_apn))
@@ -1974,11 +1999,19 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		}
 
 		{
-			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
-			//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s","eth1");
-			//system(cmd);
 			memset(cmd,0,sizeof(cmd));
-			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+			huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
+			if((strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
+				&& strncmp("EC200",pmodel, 5) != 0)
+			{
+				huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","wwan0");
+				snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device wwan0");
+			}
+			else
+			{
+				huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
+				snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+			}
 			system(cmd);
 
 			if(!huayi_json_get_int(request_root,"use_apn",&use_apn))
@@ -2045,11 +2078,21 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		//}
 		//huayi_uci_set_str(PKG_NETWORK,"wan","macaddr",macaddr);
 		
-		huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
-
 		memset(cmd,0,sizeof(cmd));
-		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
+		if((strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
+				&& strncmp("EC200",pmodel, 5) != 0)
+		{
+			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","wwan0");
+			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device wwan0");
+		}
+		else
+		{
+			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
+			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+		}
 		system(cmd);
+		
 		huayi_json_get_str(request_root,"detect_ip", detectip, OPTION_STR_LEN);
 		if(strlen(detectip)>0)
 		{

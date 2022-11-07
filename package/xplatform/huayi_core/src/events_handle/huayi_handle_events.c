@@ -126,12 +126,17 @@ void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *even
 				{
 					system("huayi_cmd set blend wisp_link 0");
 					system("huayi_cmd set network wan_link 0");
+					//system("ifdown wan");
 				}
 				else
 				{
 					system("huayi_cmd set blend wisp_link 1");
 					system("huayi_cmd set network wan_link 1");
 				}
+				//if(Agent->repeater_status_24g == 0 && event->status == 1)  //disconnect ---> connect
+				//{
+				//	system("killall -9 udhcpc");
+				//}
 			#endif
 			Agent->repeater_status_24g = event->status;
 			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set system rep_24g_status %d",event->status);	

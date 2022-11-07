@@ -2,7 +2,7 @@
 
 [ "$INTERFACE" = "loopback" -o "$INTERFACE" = "wan6" -o "$INTERFACE" = "wan_6" ] && return
 
-echo 30-huayi-netstate,$ACTION,$INTERFACE,$DEVICE > /dev/console
+#echo 30-huayi-netstate,$ACTION,$INTERFACE,$DEVICE > /dev/console
 
 case $INTERFACE in
 	wan4g | \

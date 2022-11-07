@@ -56,6 +56,8 @@ start_service() {
 			NET_IFACE="eth1"
 		fi
 		huayi_cmd set modem modemModel 'EC20'
+		uci set network.wan4g.ifname=wwan0
+		uci commit
 	elif [ -n "$quectel_model_3_support" ]; then
 		echo "detect quectel_ECxx modem"
 		#insmod quectel_GobiNet.ko
@@ -83,6 +85,9 @@ start_service() {
 	fi
 
 	if [ "$wan_type" == "prior" ]; then
+		huayi_cmd set blend cpe_link 1
+	fi
+	if [ "$wan_type" == "rep4g" ]; then
 		huayi_cmd set blend cpe_link 1
 	fi
 	huayi_atcmd_server $DEV_ATC &

@@ -391,6 +391,8 @@ int quectel_ECxx_model_handler(struct SMSAgent *Agent)
 			cpin_count++;
 		}
 		
+		init_set_modem_status();
+		
         i_link = net_usb_link(Agent);
 		signal_count=0;
         if ( i_link > 0 )
@@ -432,12 +434,12 @@ int quectel_ECxx_model_handler(struct SMSAgent *Agent)
         if ( Agent->i_signal < 3 ) //0~100
             continue;
 		
-		if (cpin_count > 3)
+		/*if (cpin_count > 3)
 		{
-			system("huayi-reset lte4g parameter 1");
+			system("huayi-reset lte4g");
 			cpin_count = 0;
-		}
-
+		}*/
+		
 		if (quectel_CM_start == 0)
 		{
 			quectel_gobinet_connect();

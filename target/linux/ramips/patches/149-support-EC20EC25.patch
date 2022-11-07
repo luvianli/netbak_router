@@ -1,0 +1,72 @@
+--- a/drivers/net/usb/qmi_wwan.c	2019-04-30 18:13:28.000000000 +0800
++++ b/drivers/net/usb/qmi_wwan.c	2022-10-25 17:00:57.310284675 +0800
+@@ -56,6 +56,27 @@
+ /* default ethernet address used by the modem */
+ static const u8 default_modem_addr[ETH_ALEN] = {0x02, 0x50, 0xf3};
+ 
++ /* This function will also fixup such packets.  */
++struct sk_buff *qmi_wwan_tx_fixup(struct usbnet *dev, struct sk_buff *skb, gfp_t flags)
++{
++	if (dev->udev->descriptor.idVendor != cpu_to_le16(0x2C7C)) 
++		return skb;
++	if (dev->udev->descriptor.idVendor != cpu_to_le16(0x05C6)) 
++		return skb;
++	// Skip Ethernet header from message	
++	if (skb_pull(skb, ETH_HLEN)) {		
++		return skb;	
++	} 
++	else 
++	{
++		dev_err(&dev->intf->dev, "Packet Dropped ");
++	}	// Filter the packet out, release it
++	dev_kfree_skb_any(skb);	
++	
++	return NULL;
++}
++
++
+ /* Make up an ethernet header if the packet doesn't have one.
+  *
+  * A firmware bug common among several devices cause them to send raw
+@@ -332,6 +353,22 @@
+ 		dev->net->dev_addr[0] &= 0xbf;	/* clear "IP" bit */
+ 	}
+ 	dev->net->netdev_ops = &qmi_wwan_netdev_ops;
++#if 1 
++	//Added by Quectel
++	if (dev->udev->descriptor.idVendor == cpu_to_le16(0x2C7C) || 
++		dev->udev->descriptor.idVendor == cpu_to_le16(0x05C6)) 
++	{
++		dev_info(&intf->dev, "Quectel EC25&EC21&EG91&EG95&EG06&EP06&EM06&BG96&AG35 work on RawIP mode\n");
++		dev->net->flags |= IFF_NOARP;
++		usb_control_msg(
++			interface_to_usbdev(intf),
++			usb_sndctrlpipe(interface_to_usbdev(intf), 0),
++			0x22, //USB_CDC_REQ_SET_CONTROL_LINE_STATE
++			0x21, //USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE
++			1, //active CDC DTR
++			intf->cur_altsetting->desc.bInterfaceNumber,NULL, 0, 100);
++	}
++#endif
+ err:
+ 	return status;
+ }
+@@ -416,6 +453,7 @@
+ 	.unbind		= qmi_wwan_unbind,
+ 	.manage_power	= qmi_wwan_manage_power,
+ 	.rx_fixup       = qmi_wwan_rx_fixup,
++	.tx_fixup		= qmi_wwan_tx_fixup,
+ };
+ 
+ #define HUAWEI_VENDOR_ID	0x12D1
+@@ -815,7 +853,9 @@
+ 	{QMI_GOBI_DEVICE(0x1199, 0x901b)},	/* Sierra Wireless MC7770 */
+ 	{QMI_GOBI_DEVICE(0x12d1, 0x14f1)},	/* Sony Gobi 3000 Composite */
+ 	{QMI_GOBI_DEVICE(0x1410, 0xa021)},	/* Foxconn Gobi 3000 Modem device (Novatel E396) */
+-
++	
++	{QMI_FIXED_INTF(0x2C7C, 0x0125, 4) }, /* Quectel EC25 */
++	
+ 	{ }					/* END */
+ };
+ MODULE_DEVICE_TABLE(usb, products);

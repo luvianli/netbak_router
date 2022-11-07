@@ -382,6 +382,7 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	unsigned long long wan_rx_bytes =0;
 	unsigned long long wan_tx_bytes =0;
 	int client_num = 0;
+	char ifname[IPV4_STR_LEN] = {0};
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	char wan_type[OPTION_STR_LEN] = {0};
 	int sim_state = 0;
@@ -509,7 +510,23 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	cJSON_AddStringToObject(wan_obj,"iccid", lte_value);
 #endif
-
+	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ifname", ifname);
+	if(!strcmp(ifname, "apcli0"))
+	{
+		cJSON_AddStringToObject(wan_obj,"net_type", "WISP");
+	}
+	else if(!strcmp(ifname, "eth1") || !strcmp(ifname, "wwan0"))
+	{
+		cJSON_AddStringToObject(wan_obj,"net_type", "4G");
+	}
+	else if(!strcmp(ifname, "eth0.2"))
+	{
+		cJSON_AddStringToObject(wan_obj,"net_type", "Wired");
+	}
+	else
+	{
+		cJSON_AddStringToObject(wan_obj,"net_type", "4G");
+	}
 	cJSON_AddItemToObject(result_root,"wan_infos",wan_obj);
 
 
@@ -2882,7 +2899,8 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 #endif
 	char detectip[OPTION_STR_LEN] = {0};
 	int ret = 0;
-
+	char pmodel[16]={0};
+	
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
@@ -2950,11 +2968,20 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 
 	if (strcmp(wan_type ,WAN_TYPE_4G_MOBILE) == 0)
 	{
-		huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
+		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
+		if((strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
+				&& strncmp("EC200",pmodel, 5) != 0)
+		{
+			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","wwan0");
+			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s","wwan0");
+		}
+		else
+		{
+			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
+			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s","eth1");
+		}
 		huayi_uci_delete_option(PKG_NETWORK,"wan","ifname");
 		huayi_uci_set_str(PKG_NETWORK,"wan4g","proto",proto);
-
-		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s","eth1");
 		system(cmd);
 
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_4g_ifname",lan_ifname);
@@ -2986,12 +3013,19 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 	else if(strcmp(wan_type ,WAN_TYPE_WIRED_PRIOROTY) == 0)
 	{
 		{
-			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
-			//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s","eth1");
-			//system(cmd);
-
 			memset(cmd,0,sizeof(cmd));
-			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+			huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
+			if((strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
+				&& strncmp("EC200",pmodel, 5) != 0)
+			{
+				huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","wwan0");
+				snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device wwan0");
+			}
+			else
+			{
+				huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
+				snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+			}
 			system(cmd);
 
 			if(!huayi_json_get_int(request_root,"use_apn",&use_apn))
@@ -3070,13 +3104,21 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	else if(strcmp(wan_type ,WAN_TYPE_REP4G_PRIOROTY) == 0)
 	{
-		huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
-		//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s","eth1");
-		//system(cmd);
-
 		memset(cmd,0,sizeof(cmd));
-		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
+		if((strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
+				&& strncmp("EC200",pmodel, 5) != 0)
+		{
+			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","wwan0");
+			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device wwan0");
+		}
+		else
+		{
+			huayi_uci_set_str(PKG_NETWORK,"wan4g","ifname","eth1");
+			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
+		}
 		system(cmd);
+
 
 		if(!huayi_json_get_int(request_root,"use_apn",&use_apn))
 		{

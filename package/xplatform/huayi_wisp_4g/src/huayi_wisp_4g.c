@@ -9,6 +9,69 @@ typedef enum{
 	
 }INTERNET_MODE;
 
+int wisp4g_internet_do_ping(const char *host, char *ifname, char *del_gateway)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	char wan_gateway[IPV4_STR_LEN] = {0};
+	char resultbuf[SHORT_STR_LEN] = {0};
+	int i = 0;
+
+	if ((NULL == host) || (strlen(host)<7))
+		goto fail;
+
+	
+	if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
+	{
+		sprintf(cmd,"route del default gw %s",del_gateway);
+		system(cmd);
+		//printf("cmd_str = %s\n",cmd_str);
+		if(strcmp(ifname, "apcli0") == 0)
+		{
+			huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", wan_gateway);
+		}
+		else
+		{
+			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", wan_gateway);
+		}
+		memset(cmd,0,sizeof(cmd));
+		sprintf(cmd,"route -n | grep %s | grep UG | grep %s |wc -l", ifname, wan_gateway);
+		get_cmd_result(cmd, resultbuf, sizeof(resultbuf));
+
+		if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
+		{
+			memset(cmd,0,sizeof(cmd));
+			sprintf(cmd,"route add default gw %s dev %s",wan_gateway,ifname);
+			system(cmd);
+		}
+	}
+	else
+	{
+		goto fail;
+	}
+
+	memset(cmd,0,sizeof(cmd));
+	for(i = 0;i < 3; i++)
+	{
+		if (ifname == NULL)
+		{
+			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
+		}
+		else
+		{
+			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
+		}
+		system(cmd);
+		usleep(500);
+		if ( access(PING_TMPFILE, F_OK) == 0)
+		{
+			unlink(PING_TMPFILE);
+			return 1;
+		}
+	}
+fail:
+	return 0;
+}
+
 
 int main(int argc,char *argv[])
 {
@@ -73,10 +136,14 @@ int main(int argc,char *argv[])
 		memset(wan4g_ipv4, 0, sizeof(wan4g_ipv4));
 		if(wired_link == 1 && cpe_link == 1)//同时在线时，使用有线优先策略
 		{
-			wired_status = internet_do_ping_detect(detectip, wired_device);
+			memset(del_gateway, 0, sizeof(del_gateway));
+			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
+			wired_status = wisp4g_internet_do_ping(detectip, wired_device, del_gateway);
 			if(wired_status == 0)
 			{
-				cpe_status = internet_do_ping_detect(detectip, cpe_device);
+				memset(del_gateway, 0, sizeof(del_gateway));
+				huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
+				cpe_status = wisp4g_internet_do_ping(detectip, cpe_device, del_gateway);
 				if(cpe_status == 0)//使用有线上网方式
 				{
 					sprintf(section,"wisp");

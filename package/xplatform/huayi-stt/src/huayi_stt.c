@@ -330,7 +330,7 @@ static void* status_network_get(struct dal_net_stats *dev_stats, struct net_devi
 	struct rtnl_link_stats64 netdevstats;
 	struct huayi_runstate *s_runstate = HUAYI_RUNSTATE_GET();
 	
-    if (0==strcmp(dev->name, "eth1") || 0==strcmp(dev->name, "eth0.2") || 0==strcmp(dev->name, "apcli0"))  
+    if (0==strcmp(dev->name, "eth1") || 0==strcmp(dev->name, "eth0.2") || 0==strcmp(dev->name, "apcli0") || 0==strcmp(dev->name, "wwan0"))  
 	{
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 		if (0 != strcmp(dev->name, s_runstate->network.wan_device))
@@ -453,7 +453,8 @@ static int status_net_proc(struct seq_file *s, void *v)
 	
 	for_each_netdev(net, dev) {
 		if (strstr(dev->name, "eth1") == NULL && strstr(dev->name, "br-lan") == NULL &&
-			strstr(dev->name, "eth0") == NULL && strstr(dev->name, "apcli") == NULL)
+			strstr(dev->name, "eth0") == NULL && strstr(dev->name, "apcli") == NULL
+			&& strstr(dev->name, "wwan0") == NULL)
 		{
 			continue;
 		}

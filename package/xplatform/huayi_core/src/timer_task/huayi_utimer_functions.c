@@ -121,6 +121,10 @@ void huayi_core_update_network_statistics(struct VcoreAgent *Agent)
 	int tx_bps = 0;
 	long new_time = 0;
 	long sys_interval = 0;
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+	char wan_type[OPTION_STR_LEN] = {0};
+	char ifname[OPTION_STR_LEN] = {0};
+#endif
 
 	struct timeval tv;
     gettimeofday(&tv,NULL);
@@ -132,6 +136,19 @@ void huayi_core_update_network_statistics(struct VcoreAgent *Agent)
 	{
 		huayi_uci_get_long_long(PKG_STATUS_NETWORK,"wan","rx_bytes",&rx_bytes);
 		huayi_uci_get_long_long(PKG_STATUS_NETWORK,"wan","tx_bytes",&tx_bytes);
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
+		huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ifname",ifname);
+		if(!strcmp(wan_type, "rep4g") && !strcmp(ifname, "apcli0"))
+		{
+			memset(cmd_str, 0, sizeof(cmd_str));
+			get_cmd_result("ifconfig ra0 | grep \"RX bytes:\" | awk '{print $2}'", cmd_str, sizeof(cmd_str));
+			rx_bytes = atoi(cmd_str+strlen("bytes:"));
+			memset(cmd_str, 0, sizeof(cmd_str));
+			get_cmd_result("ifconfig ra0 | grep \"TX bytes:\" | awk '{print $6}'", cmd_str, sizeof(cmd_str));
+			tx_bytes = atoi(cmd_str+strlen("bytes:"));
+		}
+#endif
 
 		sys_interval = new_time - Agent->old_time;
 		sys_interval = ((sys_interval == 0) ? 1 : sys_interval);
