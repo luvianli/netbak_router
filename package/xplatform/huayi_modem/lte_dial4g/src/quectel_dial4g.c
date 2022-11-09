@@ -94,17 +94,25 @@ int ECM_init_check_lte_at(void)
 	int qsimstat = 0;
 	char cmd[CMD_STR_LEN] = { 0 };
 	char simhotplug_en[OPTION_STR_LEN] = {0};
+	int ret = 0;
 	
 	while ( LTE_TRUE != atcmd_check() )
 	{
 		sleep(1);
 	}
 	
-	if(LTE_FALSE ==atcmd_set_nat())
+	/*if(LTE_FALSE ==atcmd_set_nat())
 	{
 		system("huayi_AT_cli AT+QCFG='nat',1");
 	}
-	
+	*/
+	/*for ¾ÛºÏÄ£¿é*/
+	ret = AtcmdSendDelay("AT+QCFG='devmode,0'",strlen("AT+QCFG='devmode,0'"),0);
+	if(ret == LTE_FALSE)
+	{
+		system("huayi_AT_cli AT+QCFG='devmode,0'");
+	}
+	/*end*/
 	while (atcmd_get_usbnet(&dialing) == LTE_FALSE && dialing_count < 10 )
 	{
 		sleep(1);
