@@ -5,7 +5,7 @@ HUAYI_DIR:=$(shell pwd)
 SOFT_VERSION:=$(shell cat ../package/base-files/files/etc/openwrt_version)
 
 #build_server_cores:=$(shell cat /proc/cpuinfo | grep processor | wc -l)
-build_server_cores:=1
+build_server_cores:=4
 
 DATE := $(shell date +%F)
 
@@ -80,41 +80,13 @@ all: check_config clean def_config
 	make real_make
 	make release
 
-4G300-H001-HY01:
-	@$(MAKE) $(t) product=$@ product_name=4G300-H001-HY01 Chip=MT7620N hardware=mt7620 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
-
-4G300-H001-HY02:
-	@$(MAKE) $(t) product=$@ product_name=4G300-H001-HY02 Chip=MT7620N hardware=mt7620 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
-	
-WRO300-H001-HY02:
-	@$(MAKE) $(t) product=$@ product_name=WRO300-H001-HY02 Chip=MT7620N hardware=mt7620 FLASH_SIZE=$(SIZE4M) FLASH_DRAM_SIZE=4M64M	COMPANY=HUAYI
-
 4G300-H002-HY03:
 	@$(MAKE) $(t) product=$@ product_name=4G300-H002-HY03 Chip=MT7620N hardware=mt7620 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
-
-4G300-H002-HY04:
-	@$(MAKE) $(t) product=$@ product_name=4G300-H002-HY04 Chip=MT7620N hardware=mt7620 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
-
-4G300-H002-HY05:
-	@$(MAKE) $(t) product=$@ product_name=4G300-H002-HY05 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M  COMPANY=HUAYI
-
-4G300-06:
-	@$(MAKE) $(t) product=$@ product_name=4G300-06 Chip=MT7620N hardware=mt7620 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M  COMPANY=M
-
-4G1200-H002-HY06:
-	@$(MAKE) $(t) product=$@ product_name=4G1200-H002-HY06 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M  COMPANY=HUAYI
 
 4G300-H002-HY07:
 	@$(MAKE) $(t) product=$@ product_name=4G300-H002-HY07 Chip=MT7620N hardware=mt7620 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
 	
 help:
 	@echo "make target   -- target maybe product model"
-	@echo "eg:  make 4G300-H001-HY01 -- for huayi 300M Wireless 7620N Router 4G"
-	@echo "eg:  make 4G300-H001-HY02 -- for zhongyi 300M Wireless 7620N Router 4G, 2 sim card"
-	@echo "eg:  make 4G300-H002-HY03 -- for 7620N Router 4G; Europe 4G Modem, language en, 1 sim card"
-	@echo "eg:  make 4G300-H002-HY04 -- for 7620N Router 4G; language cn, 1 sim card"
-	@echo "eg:  make 4G300-H002-HY05 -- for huayi 300M Wireless     7628DA Router 4G"
-	@echo "eg:  make WRO300-H001-HY02 -- for huayi 300M Wireless 7620N Router"
-	@echo "eg:  make 4G300-06 -- for 7620N Router 4G; language cn, 1 sim card"
-	@echo "eg:  make 4G1200-H002-HY06 -- for huayi 1200M Wireless     7628DA Router 1200M 4G"
-	@echo "eg:  make 4G300-H002-HY07 -- for huayi 300M Wireless     7620A Router 300M 4G ,wisp+4g"
+	@echo "eg:  make 4G300-H002-HY03 -- for 7620N Router 4G, support JuHe modem, support wired link+4g "
+	@echo "eg:  make 4G300-H002-HY07 -- for 7620N Router 300M 4G ,wisp+4g"

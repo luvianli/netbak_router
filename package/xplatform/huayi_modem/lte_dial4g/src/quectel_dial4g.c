@@ -604,7 +604,7 @@ retry_signal:
 		atcmd_get_signal(&Agent->i_signal);
 		if ( Agent->i_signal <= 10 )
 			continue;
-		atcmd_get_qeng(qeng_state);
+		/*atcmd_get_qeng(qeng_state);
 		if(NULL != strstr(qeng_state, "LIMSRV") || NULL != strstr(qeng_state, "SEARCH"))
 		{
 			huayi_uci_get_int(PKG_STATUS_MODEM,"modem","dialresetcount", &dialresetcount);
@@ -614,7 +614,7 @@ retry_signal:
 				system("huayi-reset lte4g parameter 1");
 			}
 		}
-		/*atcmd_get_cgact(&actstate);
+		atcmd_get_cgact(&actstate);
 		if(0 == actstate)
 		{
 			AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);

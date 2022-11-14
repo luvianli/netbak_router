@@ -7,7 +7,7 @@ USE_PROCD=1
 
 APP=`which huayi_dial4g`
 
-DEV_ATC="/dev/ttyUSB0"
+DEV_ATC="/dev/ttyUSB1"
 NET_IFACE="eth1"
 wan_ifname=$(uci get network.wan4g.ifname)
 

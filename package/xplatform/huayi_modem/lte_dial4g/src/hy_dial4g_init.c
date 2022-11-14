@@ -147,6 +147,10 @@ int main(int argc, char *argv[])
 				}
 				count += 1;
 			}
+			else
+			{
+				sleep(1);
+			}
 
 		}
 		else

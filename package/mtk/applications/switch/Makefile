@@ -71,7 +71,11 @@ ifeq ($(CONFIG_P5_RGMII_TO_MT7530_MODE),y)
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/switch_7530 $(1)/usr/bin
 endif
 ifeq ($(CONFIG_TARGET_ramips_mt7620),y)
-	$(INSTALL_BIN) ./files/switch-7620.sh $(1)/lib/network/switch.sh
+	-if [ "$$(CONFIG_HUAYI_WAN_PORT_NUM)" = "4" ]; then \
+		$(INSTALL_BIN) ./files/switch-LLLLW-7620.sh $(1)/lib/network/switch.sh; \
+	else \
+		$(INSTALL_BIN) ./files/switch-7620.sh $(1)/lib/network/switch.sh; \
+	fi
 endif
 ifeq ($(CONFIG_TARGET_ramips_mt7628),y)
 	-if [ "$$(CONFIG_HUAYI_WAN_PORT_NUM)" = "0" ]; then \
