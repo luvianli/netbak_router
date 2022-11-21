@@ -1585,7 +1585,7 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 
 	huayi_uci_set_int(PKG_WIRELESS,W24G_DEV,"ht_extcha",ht_extcha);
 	huayi_uci_get_int(PKG_SYSTEM,"mode","opmode",&old_sys_mode);
-	if(old_sys_mode != HUAYI_ROUTE_MODE)   //AP\REPEATER   ---> wisp MODE
+	if(old_sys_mode != HUAYI_ROUTE_MODE && old_sys_mode != HUAYI_WISP_MODE)   //AP\REPEATER   ---> wisp MODE
 	{	
 		huayi_uci_get_str(PKG_NETWORK,"lan","def_ip",def_lan_ip);
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_lan_ifname",wan_lan_ifname);
