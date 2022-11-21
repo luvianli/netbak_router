@@ -628,6 +628,7 @@ retry_signal:
 			sleep(1);
 			continue;
 		}*/
+#if 0
 		atcmd_get_cgpaddr(cgpipaddr);
 		if(strlen(cgpipaddr) > 7)
 		{
@@ -677,6 +678,7 @@ retry_signal:
 					system("huayi-reset small4gfunc");
 			}
 		}
+#endif
     }
 
 out:	

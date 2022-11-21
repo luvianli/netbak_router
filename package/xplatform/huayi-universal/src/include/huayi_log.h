@@ -99,4 +99,27 @@
 		}\
 	}while(0)
 
+
+#define CON_LOG_SIN 1
+#define CON_LOG(format, args...) \				
+						do{ \
+							if(CON_LOG_SIN) \
+							{\
+								FILE *fp = fopen("/tmp/log/con_log", "a"); \
+								if(fp)\
+								{\
+									fprintf(fp, "%s@%s,%d] " format "\n", \
+									__FILE__, __func__,__LINE__, ##args ); \
+								}\
+								fclose(fp);\
+							} \
+							struct stat buf;\
+							int size=stat("/tmp/log/con_log", &buf);\
+							if(size > 20000)\
+							{\
+								system("rm -fr /tmp/log/con_log");\
+							}\
+						}while(0)
+
+
 #endif /* __HUAYI_LOG_H__ */

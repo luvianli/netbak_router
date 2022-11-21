@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=92
+
+USE_PROCD=1
+PROG=/usr/sbin/huayi_multi_tcp_client
+
+
+start_service() {
+    #procd_open_instance
+	#procd_set_param command "$PROG" 
+	#procd_set_param respawn 0
+	#procd_close_instance
+	/usr/sbin/huayi_multi_tcp_client &
+}
+
+stop_service(){
+	#service_stop "$PROG"
+	killall -9 huayi_multi_tcp_client
+}
