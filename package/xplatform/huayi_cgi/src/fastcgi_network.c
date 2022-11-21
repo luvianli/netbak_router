@@ -3160,6 +3160,8 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 		{
 			huayi_uci_set_str(PKG_SYSTEM, "mode", "detect_ip", detectip);
 		}
+		huayi_uci_set_str(PKG_NETWORK,"wan","proto", "dhcp");
+		huayi_uci_set_str(PKG_NETWORK,"wan4g","proto", "dhcp");
 	}
 #endif
 	else if(strcmp(wan_type ,WAN_TYPE_REP) == 0)
