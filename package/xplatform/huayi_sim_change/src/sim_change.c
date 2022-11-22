@@ -90,7 +90,7 @@ void* sim_change_handle()
 			huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "registStatus", registStatus);
 			if(strcmp(registStatus ,"noModem") == 0)
 			{
-				system("reboot");
+				system("huayi-reset reboot");
 			}
 			goto goon;
 		}

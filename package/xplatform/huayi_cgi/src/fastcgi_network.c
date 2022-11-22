@@ -2663,6 +2663,7 @@ int do_get_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 	char proto[OPTION_STR_LEN] = {0};
 	int sys_mode = 0;
 	char detectip[OPTION_STR_LEN] = {0};
+	int detect_time = 0;
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	char wan_type[OPTION_STR_LEN] = {0};
 	char auth_type[OPTION_STR_LEN] = {0};
@@ -2770,6 +2771,8 @@ int do_get_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 		huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
 		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
 		cJSON_AddStringToObject(result_root,"detect_ip",detectip);
+		huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
+		cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
 	}
 #endif
 	else
@@ -2900,6 +2903,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 	char detectip[OPTION_STR_LEN] = {0};
 	int ret = 0;
 	char pmodel[16]={0};
+	int  detect_time = 0;
 	
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
@@ -3160,6 +3164,8 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 		{
 			huayi_uci_set_str(PKG_SYSTEM, "mode", "detect_ip", detectip);
 		}
+		huayi_json_get_int(request_root,"detect_time", &detect_time);
+		huayi_uci_set_int(PKG_SYSTEM, "mode", "detect_time", detect_time);
 		huayi_uci_set_str(PKG_NETWORK,"wan","proto", "dhcp");
 		huayi_uci_set_str(PKG_NETWORK,"wan4g","proto", "dhcp");
 	}

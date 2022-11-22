@@ -3,6 +3,7 @@ config mode	mode
 	option wan_type 'rep4g'
 	option simchange '0'
 	option detect_ip '114.114.114.114'
+	option detect_time 300
 
 config system system
 	option hostname	ROUTE

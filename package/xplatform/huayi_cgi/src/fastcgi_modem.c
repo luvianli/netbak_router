@@ -1654,6 +1654,7 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	char 	apnpassword[OPTION_STR_LEN] = {0};
 	int  	use_apn = 0;
 	char	detectip[OPTION_STR_LEN] = {0};
+	int     detect_time = 0;
 	
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
@@ -1751,10 +1752,16 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		
 		huayi_uci_get_int(PKG_NETWORK,"wan","cc_mtu",&cc_mtu);
 		cJSON_AddNumberToObject(result_root,"cc_mtu",cc_mtu);
+
+		huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
+		cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
 	}
 #endif
 	else
 	{
+		huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
+		cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
+		
 		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
 		cJSON_AddStringToObject(result_root,"detect_ip",detectip);
 		huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
@@ -1844,6 +1851,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	char macaddr[MAC_STR_LEN] = {0};
 	char hostname[OPTION_STR_LEN] = {0};
 	char detectip[OPTION_STR_LEN] = {0};
+	int  detect_time = 0;
 	char cmd[CMD_STR_LEN] = {0};
 	int cc_mtu = 0;
 	int ppp_mtu =0;
@@ -2125,6 +2133,8 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		{
 			huayi_uci_set_str(PKG_SYSTEM, "mode", "detect_ip", detectip);
 		}
+		huayi_json_get_int(request_root,"detect_time", &detect_time);
+		huayi_uci_set_int(PKG_SYSTEM, "mode", "detect_time", detect_time);
 		ret = set_wisp_mode(request_root);
 		if(FCGI_TRUE != ret)
 			return ret;

@@ -1506,7 +1506,7 @@ int get_sche_reboot_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	int rec_uptime=0;
 	int uptime = 0;
 	int interval = 0;
-	int remaining_time = 0;
+	static int remaining_time = 0;
 	int i = 0;
 	int k = 0;
 	FCGI_BOOL this_week = FCGI_FALSE;

@@ -8,6 +8,42 @@ typedef enum{
 	INTERNET_WIRED,
 	
 }INTERNET_MODE;
+static int delaycount = 1;
+
+
+void get_maxdelay(char *checksignalips, char *ifname)
+{
+	char cmd[TEMP_STR_LEN] = {0};
+	char value[OPTION_STR_LEN] = { 0 };
+	int i = 0, maxdelay = 0;
+
+	huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &maxdelay);
+	for(i = 0; i < 5; i++)
+	{
+		sprintf(cmd, "ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk '{print $7}' > /tmp/pingtmp.txt", checksignalips, ifname);
+		printf("rex =========  cmd = %s\n", cmd);
+		system(cmd);
+		memset(cmd, 0, TEMP_STR_LEN);
+		memset(value, 0, sizeof(value));
+		strcpy(cmd, "cat /tmp/pingtmp.txt | awk -F \" \" '{print $1}'");
+		get_cmd_result(cmd, value, sizeof(value));
+		if(!strstr(value, "ping: unknown host") || !strstr(value, "ping: bad address") ||
+			!strstr(value, "Network is unreachable"))
+		{
+			if(atoi(value) > maxdelay)
+			{
+				delaycount += 1;
+			}
+		}
+		else
+		{
+			delaycount += 1;
+		}
+	}
+
+	return;
+}
+
 
 int wisp4g_internet_do_ping(const char *host, char *ifname, char *del_gateway)
 {
@@ -101,7 +137,9 @@ int main(int argc,char *argv[])
 	int now_int_mode = INTERNET_UNDEFINE;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
-	
+
+
+	delaycount = 1;
 	while(1)
 	{
 		sleep(10);
@@ -134,7 +172,7 @@ int main(int argc,char *argv[])
 			continue;
 		memset(wisp_ipv4, 0, sizeof(wisp_ipv4));
 		memset(wan4g_ipv4, 0, sizeof(wan4g_ipv4));
-		if(wired_link == 1 && cpe_link == 1)//同时在线时，使用有线优先策略
+		if(wired_link == 1 && cpe_link == 1)//同时在线时，使用wisp优先策略
 		{
 			memset(del_gateway, 0, sizeof(del_gateway));
 			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
@@ -144,7 +182,7 @@ int main(int argc,char *argv[])
 				memset(del_gateway, 0, sizeof(del_gateway));
 				huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
 				cpe_status = wisp4g_internet_do_ping(detectip, cpe_device, del_gateway);
-				if(cpe_status == 0)//使用有线上网方式
+				if(cpe_status == 0)//使用wisp上网方式
 				{
 					sprintf(section,"wisp");
 					now_int_mode = INTERNET_WIRED;
@@ -155,12 +193,22 @@ int main(int argc,char *argv[])
 					now_int_mode = INTERNET_4G;
 				}
 			}
-			else//使用有线上网方式
+			else
 			{
-				sprintf(section,"wisp");
-				now_int_mode = INTERNET_WIRED;
+				get_maxdelay(detectip, wired_device);
+				if(delaycount >= 5)
+				{
+					//使用4G上网方式
+					sprintf(section,"cpe");
+					now_int_mode = INTERNET_4G;
+				}
+				else  //使用wisp上网方式
+				{
+					sprintf(section,"wisp");
+					now_int_mode = INTERNET_WIRED;
+				}
+				delaycount = 1;
 			}
-
 		}
 		else if(cpe_link == 1)//使用4G上网方式
 		{	
@@ -170,7 +218,7 @@ int main(int argc,char *argv[])
 			sprintf(section,"cpe");
 			now_int_mode = INTERNET_4G;
 		}
-		else//使用有线上网方式
+		else//使用wisp上网方式
 		{
 			huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "ipv4", wisp_ipv4);
 			if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
@@ -184,7 +232,7 @@ int main(int argc,char *argv[])
 		{
 			memset(cmd_str,0,sizeof(cmd_str));
 			memset(del_gateway,0,sizeof(del_gateway));
-			if(!strncmp(section,"wisp",strlen("wisp")))//有线上网方式，删除4G默认路由
+			if(!strncmp(section,"wisp",strlen("wisp")))//使用wisp上网方式，删除4G默认路由
 			{
 				huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
 			}
