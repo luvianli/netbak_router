@@ -2353,6 +2353,86 @@ int cgi_get_4g_signal(cJSON *request_root, cJSON *response_root,int *lock_time)
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
+int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
+{
+	cJSON 	*result_root =NULL;
+	char *lte_value[OPTION_STR_LEN]={0},checksignalips[OPTION_STR_LEN]={0};
+	int i_ready=0,i_signal=0,is_ok=0;
+	
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+	result_root = cJSON_CreateObject();
+	memset(lte_value,0,sizeof(lte_value));
+	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","iccid",lte_value);
+	cJSON_AddStringToObject(result_root,"iccid",lte_value);
+
+	//memset(lte_value,0,sizeof(lte_value));
+	//strcpy(lte_value,"SN");
+	
+	
+	memset(lte_value,0,sizeof(lte_value));
+	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","imei",lte_value);
+	cJSON_AddStringToObject(result_root,"imei",lte_value);
+	cJSON_AddStringToObject(result_root,"device_sn",lte_value);
+
+//上网方式
+	memset(lte_value,0,sizeof(lte_value));
+	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ifname", lte_value);
+	if(!strcmp(lte_value, "apcli0"))
+	{
+		cJSON_AddStringToObject(result_root,"net_type", "WISP");
+	}
+	else if(!strcmp(lte_value, "eth1") || !strcmp(lte_value, "wwan0"))
+	{
+		cJSON_AddStringToObject(result_root,"net_type", "4G");
+	}
+	else if(!strcmp(lte_value, "eth0.2"))
+	{
+		cJSON_AddStringToObject(result_root,"net_type", "Wired");
+	}
+	else
+	{
+		cJSON_AddStringToObject(result_root,"net_type", "4G");
+	}
+
+
+	//上网是否成功
+	strcpy(checksignalips,"114.114.114.114");
+	memset(lte_value,0,sizeof(lte_value));
+	is_ok = internet_do_ping_detect(checksignalips, NULL);
+	if(is_ok == 1)
+	{
+		get_maxdelay(checksignalips,lte_value);
+		cJSON_AddStringToObject(result_root,"net_delay",lte_value);
+	}
+	else
+	{
+		cJSON_AddStringToObject(result_root,"net_delay", "0");
+	}
+	cJSON_AddNumberToObject(result_root,"intelnet_ok",is_ok);
+	
+	atcmd_get_cpin(&i_ready);
+	if(i_ready == 1)
+	{
+		atcmd_get_signal(&i_signal);
+	}
+	else
+	{
+		i_signal = 0;
+	}
+	cJSON_AddNumberToObject(result_root,"4g_signal",i_signal);
+	
+	memset(lte_value,0,sizeof(lte_value));
+	get_relay_wf(lte_value);
+	cJSON_AddStringToObject(result_root,"wifi_rssi",lte_value);	
+
+	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
+
+	return FCGI_RESP_CODE_SUCCESS;
+}
+
 FCGI_BOOL FastCgiHandleModemFunctionInit(void)
 {	
 	memset(&FastCgiHandleModemFunction,0,sizeof(MAX_MODEM_HYID*sizeof(int)));
@@ -2390,8 +2470,8 @@ FCGI_BOOL FastCgiHandleModemFunctionInit(void)
 	FastCgiHandleModemFunction[HYID_SET_WAN_OR_WAN4G_CONFIG] = cgi_set_wan_or_wan4g_config;
 
 	FastCgiHandleModemFunction[HYID_GET_4G_SIGNAL] = cgi_get_4g_signal;
-	
-	return FCGI_TRUE;
+
+	FastCgiHandleModemFunction[HUID_GET_SIM_MESSAGE] =cgi_get_dev_message;
 }
 
 int main(int argc,char *argv[])

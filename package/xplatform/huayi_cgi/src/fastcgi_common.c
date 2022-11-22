@@ -827,6 +827,46 @@ FCGI_BOOL get_vpn_type_list(cJSON *result_root)
 	return FCGI_TRUE;
 }
 
+void get_maxdelay(char *checksignalips,char *lte_value)
+{
+	char cmd[TEMP_STR_LEN] = {0};
+	char value[OPTION_STR_LEN] = { 0 };
+	
+	sprintf(cmd, "ping -c 1 -W 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}' > /tmp/pingtmp.txt", checksignalips);
+	//printf("rex =========  cmd = %s\n", cmd);
+	system(cmd);
+	memset(cmd, 0, TEMP_STR_LEN);
+	memset(value, 0, sizeof(value));
+	strcpy(cmd, "cat /tmp/pingtmp.txt | awk -F \" \" '{print $1}'");
+	get_cmd_result(cmd, value, sizeof(value));
+	if(!strstr(value, "ping: unknown host") || !strstr(value, "ping: bad address") ||
+		!strstr(value, "Network is unreachable"))
+	{
+		
+		sprintf(lte_value,"%s",value);
+	}
+	else
+	{
+		
+		sprintf(lte_value,"%s","0");
+	}
+
+	return;
+}
+
+void get_relay_wf(char *lte_vaule)
+{
+	char cmd[OPTION_STR_LEN]={0},value[OPTION_STR_LEN]={0};
+	//iwpriv apcli0 stat | grep RSSI | awk '{print $3}'
+	sprintf(cmd,"iwpriv apcli0 stat | grep RSSI | awk '{print $3}'");
+	system(cmd);
+	get_cmd_result(cmd,value,sizeof(value));
+	sprintf(lte_vaule,"%s",value);
+
+	return;
+}
+
+
 #if defined(CONFIG_PACKAGE_HUAYI_IPV6)
 /**
  * If head file  is not existed in your system, you could get information of IPv6 address
