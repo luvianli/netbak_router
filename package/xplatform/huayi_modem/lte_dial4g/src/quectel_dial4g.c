@@ -594,7 +594,7 @@ retry_signal:
 				Agent->lte_led_status = MODEM_NO_CONN;
 			}
 
-			huayi_sms_agent_loop(&Agent);
+			//huayi_sms_agent_loop(&Agent);
             //continue;
 		}
 		else
