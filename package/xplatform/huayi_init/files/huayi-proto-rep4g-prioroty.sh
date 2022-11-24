@@ -80,16 +80,16 @@ _huayi_set_route() {
 			case $interface in
 				wan)
 					huayi_cmd set blend wisp_gateway "$gw"
-					huayi_cmd set network wan_up 1
+					#huayi_cmd set network wan_up 1
 					;;
 				wan4g)
 					huayi_cmd set blend cpe_gateway "$gw"
-					huayi_cmd set network wan_up 1
-					huayi_cmd set cpe_link 1
+					#huayi_cmd set network wan_up 1
+					#huayi_cmd set cpe_link 1
 					;;
 				*)
 					huayi_cmd set network "$section"_gateway "$gw"
-					huayi_cmd set network wan_up 1
+					#huayi_cmd set network wan_up 1
 					;;
 			esac
 		else
