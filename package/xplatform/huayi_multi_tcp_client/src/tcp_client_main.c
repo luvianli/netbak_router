@@ -41,7 +41,7 @@ int read_client(int client_sockfd);
 
 
 
-#define SERVER_IP "192.168.1.1"  //客户端、服务端都在一台主机上，所以直接用本机IP地址
+#define SERVER_IP "192.168.64.1"  //客户端、服务端都在一台主机上，所以直接用本机IP地址
 #define SERVER_PORT 6666
 
 
