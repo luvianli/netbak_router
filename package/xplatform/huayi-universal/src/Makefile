@@ -19,7 +19,7 @@ huayi-u-universal: libhuayi-universal
 .PHONY: huayi-u-universal
 
 libhuayi-universal:
-	$(CC) -shared -s -o libhuayi-universal.so -Wl,-soname,libhuayi-universal.so $(CFLAGS) $(INCLUDES) -fPIC $(LDFLAGS) -lc huayi_lock.c huayi_atcmd.c
+	$(CC) -shared -s -o libhuayi-universal.so -Wl,-soname,libhuayi-universal.so $(CFLAGS) $(INCLUDES) -fPIC $(LDFLAGS) -lc -lcjson huayi_lock.c huayi_atcmd.c
 
 clean:
 	rm -rf *.o *.mod *.so

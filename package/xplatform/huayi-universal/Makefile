@@ -33,7 +33,7 @@ define KernelPackage/$(PKG_NAME)
   SUBMENU:=HUAYI Kernel Modules
   TITLE:=HUAYI UNIVERSAL UTILITIES
   MAINTAINER:= <gerry.li>
-  DEPENDS:=+libc +libgcc
+  DEPENDS:=+libc +libgcc +libcjson
   FILES:=$(PKG_FILES)
   AUTOLOAD:=$(call AutoLoad,0,$(PKG_AUTOLOAD))
 endef
