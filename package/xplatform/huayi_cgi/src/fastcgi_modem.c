@@ -1719,8 +1719,8 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		huayi_uci_get_int(PKG_NETWORK,"wan","cc_mtu",&cc_mtu);
 		cJSON_AddNumberToObject(result_root,"cc_mtu",cc_mtu);
 
-		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
-		cJSON_AddStringToObject(result_root,"detect_ip",detectip);
+		//huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
+		//cJSON_AddStringToObject(result_root,"detect_ip",detectip);
 	}
 #endif
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
@@ -1738,8 +1738,8 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		}
 		
 		cJSON_AddStringToObject(result_root,"hostname",hostname);
-		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
-		cJSON_AddStringToObject(result_root,"detect_ip",detectip);
+		//huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
+		//cJSON_AddStringToObject(result_root,"detect_ip",detectip);
 
 		huayi_uci_get_str(PKG_NETWORK,"wan","macaddr",macaddr);
 		cJSON_AddStringToObject(result_root,"mac_addr",macaddr);
@@ -1753,17 +1753,17 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		huayi_uci_get_int(PKG_NETWORK,"wan","cc_mtu",&cc_mtu);
 		cJSON_AddNumberToObject(result_root,"cc_mtu",cc_mtu);
 
-		huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
-		cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
+		//huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
+		//cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
 	}
 #endif
 	else
 	{
-		huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
-		cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
+		//huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
+		//cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
 		
-		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
-		cJSON_AddStringToObject(result_root,"detect_ip",detectip);
+		//huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
+		//cJSON_AddStringToObject(result_root,"detect_ip",detectip);
 		huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
 		cJSON_AddStringToObject(result_root,"proto",proto);
 	
@@ -1787,6 +1787,12 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		huayi_uci_get_int(PKG_NETWORK,"wan","cc_mtu",&cc_mtu);
 		cJSON_AddNumberToObject(result_root,"cc_mtu",cc_mtu);
 	}
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+	huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
+	cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
+#endif		
+	huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
+	cJSON_AddStringToObject(result_root,"detect_ip",detectip);
 	
 	huayi_uci_get_str(PKG_NETWORK,"wan","ipaddr",ipaddr);
 	cJSON_AddStringToObject(result_root,"ip_addr",ipaddr);
