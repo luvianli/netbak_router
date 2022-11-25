@@ -433,7 +433,12 @@ int main (int argc, char *argv[])
 		}
 		
 #if defined(CONFIG_HUAYI_CGI_COOKIE_SUPPORT)
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+		if(HYID > HYID_DO_LOGIN_AUTH && HYID != HYID_SET_WIFI_SCAN && HYID != HYID_GET_WIFI_SCAN_STATUS && 
+			HYID != HYID_GET_WIFI_SCAN_LIST)
+#else
 		if(HYID > HYID_DO_LOGIN_AUTH)
+#endif
 		{
 			if(FCGI_RESP_CODE_UNAUTHORIZED == check_landing_status())
 			{
@@ -444,7 +449,12 @@ int main (int argc, char *argv[])
 #else
 		char sys_password[OPTION_STR_LEN]={0};
 		char cookie_pass[OPTION_STR_LEN]={0};
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+		if(HYID > HYID_DO_LOGIN_AUTH && HYID != HYID_SET_WIFI_SCAN && HYID != HYID_GET_WIFI_SCAN_STATUS && 
+					HYID != HYID_GET_WIFI_SCAN_LIST)
+#else
 		if(HYID > HYID_DO_LOGIN_AUTH)
+#endif
 		{
 			if(huayi_uci_get_str(PKG_SYSTEM,"login","http_pass",sys_password) && strlen(sys_password) > 0)
 			{

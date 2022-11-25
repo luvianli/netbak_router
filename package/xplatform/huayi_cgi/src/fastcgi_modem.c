@@ -1368,7 +1368,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	char wan_type[OPTION_STR_LEN] = {0};
 	char mobile_type[OPTION_STR_LEN] = {0};
 	char mobile_network[OPTION_STR_LEN] = {0};
-	int  signal = 0;
+	int  signal = 0, signal4g = 0;
 	int  wan_uptime = 0;
 	int  uptime = 0;
 	int  client_num = 0;
@@ -1399,6 +1399,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","signal",&signal);
 	signal = signal/5 - 120;
 
+	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","signal",&signal4g);
 	huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","wan_uptime",&wan_uptime);
 	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","uptime",&uptime);
 
@@ -1417,6 +1418,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
 	else if(!strcmp(wan_type,WAN_TYPE_WIRED_PRIOROTY))
 	{
+		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wan_link);
 		if (wan_link == 0)
 		{
 			if (sim_state != MODEM_SIN_READY)
@@ -1429,6 +1431,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	else if(!strcmp(wan_type,WAN_TYPE_REP4G_PRIOROTY))
 	{
+		huayi_uci_get_int(PKG_STATUS_BLEND, "wisp", "link", &wan_link);
 		if (wan_link == 0)
 		{
 			/*¡Ÿ ±ÃÌº”*/
@@ -1462,6 +1465,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	cJSON_AddStringToObject(result_root,"mobile_type",mobile_type);
 
 	cJSON_AddNumberToObject(result_root,"signal",signal);
+	cJSON_AddNumberToObject(result_root,"signal_4g",signal4g);
 
 	get_active_arp(1,NULL,&client_num);
 	cJSON_AddNumberToObject(result_root,"client_sum",client_num);

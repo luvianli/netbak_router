@@ -1748,6 +1748,7 @@ int get_system_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 #elif defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	else if(!strcmp(wan_type, WAN_TYPE_REP4G_PRIOROTY))
 	{
+		huayi_uci_get_int(PKG_STATUS_BLEND, "wisp", "link", &wan_link);
 		if (wan_link == 0)
 		{
 			if (sim_state != MODEM_SIN_READY)

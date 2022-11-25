@@ -132,7 +132,8 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);	
 		if(strncmp("EC200T",pmodel, 6) == 0 || strncmp("EC200A",pmodel, 6) == 0)
 		{
-			system("huayi_AT_cli AT+QPOWD=1");
+			//system("huayi_AT_cli AT+QPOWD=1");
+			system("huayi_AT_cli AT+CFUN=1,1");
 		}
 		else if(strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
 		{
@@ -154,8 +155,8 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 		} 
 		else
 		{
-			sleep(3);
-			system("/etc/init.d/huayi_dial4_init restart");
+			//sleep(3);
+			system("/etc/init.d/huayi_dial4gcontrol stop");
 		}
 	}
 	else
