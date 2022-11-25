@@ -1434,8 +1434,9 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 		huayi_uci_get_int(PKG_STATUS_BLEND, "wisp", "link", &wan_link);
 		if (wan_link == 0)
 		{
-			/*¡Ÿ ±ÃÌº”*/
-			if (sim_state != MODEM_SIN_READY)
+			huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &sim_state);
+			//if (sim_state != MODEM_SIN_READY)
+			if(sim_state == 0)
 			{
 				wan_up = 0;
 			}
