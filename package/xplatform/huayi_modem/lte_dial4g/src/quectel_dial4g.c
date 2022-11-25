@@ -171,6 +171,7 @@ int init_set_modem_status(void)
 	char mobile_network[OPTION_STR_LEN] = {0};
 	char operator_str[OPTION_STR_LEN] = {0};
 	char cmd[CMD_STR_LEN] = {0};
+	int signal = 0;
 	
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_EC20_imei(lte_value);
@@ -274,7 +275,10 @@ int init_set_modem_status(void)
 	}
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem ci %s",lte_value);
 	system(cmd);
-	
+
+	atcmd_get_signal(&signal);
+	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem signal %d",signal);
+	system(cmd);
 	return 0;
 }
 

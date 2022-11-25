@@ -123,6 +123,18 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 	huayi_json_get_int(input_root, "parameter", &para);
 	if(1 == use_apn || 1 == para) 
 	{
+		huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+		if(!strcmp(product_model, "4G300-H002-HY03"))
+		{
+			sleep(20);
+			system("/etc/init.d/huayi_dial4gcontrol restart");
+		} 
+		else
+		{
+			//sleep(3);
+			system("/etc/init.d/huayi_dial4gcontrol stop");
+		}
+		
 		system("huayi_cmd set network wan_up 0");
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem signal %d", 0);
 		system(cmd);
@@ -147,17 +159,9 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 		{
 			printf("Unidentified modem module!!!\n");
 		}
-		huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-		if(!strcmp(product_model, "4G300-H002-HY03"))
-		{
-			sleep(20);
-			system("/etc/init.d/huayi_dial4gcontrol restart");
-		} 
-		else
-		{
-			//sleep(3);
-			system("/etc/init.d/huayi_dial4gcontrol stop");
-		}
+
+		sleep(25);
+		system("/etc/init.d/huayi_multi_tcp_client restart");
 	}
 	else
 	{

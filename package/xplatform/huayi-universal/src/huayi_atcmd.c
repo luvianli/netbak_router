@@ -18,6 +18,7 @@
 
 #include "huayi_atcmd.h"
 #include "huayi_log.h"
+#include "huayi_uci_fun.h"
 
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 int debug = 0;
@@ -826,6 +827,7 @@ LTE_BOOL Atcmd(char *cmd, int len, int action)
 {
 	int fd,ret = 1;
 	int wait_times = AT_TIMEOUT_SEC*10;
+	int use_apn = 0;
 	
 	ret = lte_lock_file(AT_CMD_LOCK_FILE);
 	if (ret < 0)
@@ -846,8 +848,11 @@ LTE_BOOL Atcmd(char *cmd, int len, int action)
 		lte_unlock_file(AT_CMD_LOCK_FILE);
 		return LTE_FALSE;
 	}
-
-	usleep(10*1000);
+	huayi_uci_get_int(PKG_MODEM,"status","mode",&use_apn);
+	if(use_apn == 1)
+		sleep(5);
+	else		
+		usleep(10*1000);
 	//printf("[%s:%d]\n", __FUNCTION__, __LINE__);
 	fd = open(AT_RESULT_FILE, O_RDONLY);
 	if (fd == -1){

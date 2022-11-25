@@ -41,7 +41,7 @@
 #define MAX_SMS_VALUE_LEN			16
 #define MAX_SMS_MSG_LEN				2048
 
-#define GET_SMS_INTERVAL							6
+#define GET_SMS_INTERVAL							8
 
 #define AT_CMD_MAX_LEN		1024
 
