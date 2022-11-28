@@ -2988,7 +2988,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s","eth1");
 		}
 		huayi_uci_delete_option(PKG_NETWORK,"wan","ifname");
-		huayi_uci_set_str(PKG_NETWORK,"wan4g","proto",proto);
+		huayi_uci_set_str(PKG_NETWORK,"wan4g","proto", "dhcp");
 		system(cmd);
 
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_4g_ifname",lan_ifname);
