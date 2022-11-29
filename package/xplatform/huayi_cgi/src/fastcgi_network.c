@@ -386,6 +386,7 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	char wan_type[OPTION_STR_LEN] = {0};
 	int sim_state = 0;
+	char str_sim_state[OPTION_STR_LEN] = {0};
 	char lte_value[OPTION_STR_LEN] = {0};
 #endif
 
@@ -409,7 +410,8 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
-	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","sim_ready",&sim_state);
+	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","sim_ready", str_sim_state);
+	sim_state = atoi(str_sim_state);
 	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","iccid",lte_value);
 	/*atcmd_get_iccid(lte_value);*/
 	if(strlen(lte_value) < 10) 
@@ -418,8 +420,14 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	}
 	if (!strcmp(wan_type,WAN_TYPE_4G_MOBILE))
 	{
+		wan_up = 1;
 		if (sim_state != MODEM_SIN_READY)
 			wan_up = 0;
+		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &sim_state);
+		if(sim_state == 0)
+		{
+			wan_up = 0;
+		}
 	}
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
 	else if(!strcmp(wan_type,WAN_TYPE_WIRED_PRIOROTY))
