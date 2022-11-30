@@ -16,27 +16,32 @@ void get_maxdelay(char *checksignalips, char *ifname)
 	char cmd[TEMP_STR_LEN] = {0};
 	char value[OPTION_STR_LEN] = { 0 };
 	int i = 0, maxdelay = 0;
+	int timevalue = 0;
 
 	huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &maxdelay);
 	for(i = 0; i < 5; i++)
 	{
 		sprintf(cmd, "ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk '{print $7}' > /tmp/pingtmp.txt", checksignalips, ifname);
-		printf("rex =========  cmd = %s\n", cmd);
 		system(cmd);
+		CON_LOG("cmd = %s\n", cmd);
+		
 		memset(cmd, 0, TEMP_STR_LEN);
 		memset(value, 0, sizeof(value));
 		strcpy(cmd, "cat /tmp/pingtmp.txt | awk -F \" \" '{print $1}'");
 		get_cmd_result(cmd, value, sizeof(value));
-		if(!strstr(value, "ping: unknown host") || !strstr(value, "ping: bad address") ||
-			!strstr(value, "Network is unreachable"))
+		CON_LOG("ping time value  = %s\n", value);
+		timevalue = atoi(value+strlen("time="));
+		if(timevalue != 0)
 		{
-			if(atoi(value) > maxdelay)
+			CON_LOG("ping time value  = %d, maxdelay = %d\n", timevalue, maxdelay);
+			if(timevalue > maxdelay)
 			{
 				delaycount += 1;
 			}
 		}
 		else
 		{
+			CON_LOG("strlen(value) = %d , ping time value  = %s \n", strlen(value), value);
 			delaycount += 1;
 		}
 	}
@@ -257,19 +262,27 @@ int main(int argc,char *argv[])
 				system(cmd_str);
 				//printf("cmd_str = %s\n",cmd_str);
 
-				memset(cmd_str,0,sizeof(cmd_str));
-				sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
-				get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
-
-				if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
-				{
-					memset(cmd_str,0,sizeof(cmd_str));
-					sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
-					system(cmd_str);
-					//printf("add route cmd_str = %s\n",cmd_str);
-				}
+				
+			}
+			else
+			{
+				system("route del default");
+				sleep(1);
+				system("route del default");
 			}
 
+			memset(cmd_str,0,sizeof(cmd_str));
+			sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+
+			if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
+			{
+				memset(cmd_str,0,sizeof(cmd_str));
+				sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
+				system(cmd_str);
+				//printf("add route cmd_str = %s\n",cmd_str);
+			}
+		
 			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
 			//printf("net_ipv4 = %s, wan_ipv4 = %s\n",net_ipv4, wan_ipv4);
 			if(strcmp(wan_ipv4,net_ipv4))
@@ -302,13 +315,19 @@ int main(int argc,char *argv[])
 					system(cmd_str);
 				}
 
-				if(now_int_mode == INTERNET_4G)
-				{
-					system("ifup wan4g");
-				}else if(now_int_mode == INTERNET_WIRED)
-				{
-					system("ifup wan");
-				}
+				//if(now_int_mode == INTERNET_4G)
+				//{
+					//system("ifup wan4g");
+					system("rm -fr /tmp/resolv.conf.auto");
+					system("echo # Interface wan4g >> /tmp/resolv.conf.auto");
+					memset(cmd_str,0,sizeof(cmd_str));
+					snprintf(cmd_str, CMD_STR_LEN, "echo nameserver %s >> /tmp/resolv.conf.auto", wan_gateway);
+					system(cmd_str);
+					system("echo search lan >> /tmp/resolv.conf.auto");
+				//}else if(now_int_mode == INTERNET_WIRED)
+				//{
+					//system("ifup wan");
+				//}
 			}
 
 			old_int_mode = now_int_mode;
