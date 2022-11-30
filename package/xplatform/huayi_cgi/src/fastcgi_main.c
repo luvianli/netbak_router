@@ -428,7 +428,7 @@ int main (int argc, char *argv[])
 		if(HYID < HYID_GET_PRE_LOGIN_CONFIG || HYID >= MAX_HUAYI_HYID)
 		{
 			rest_code = FCGI_RESP_CODE_ILLEGAL_HYID;
-			
+			FASTCGI_LOG(" HYID = %d\n", HYID);
 			goto v_out;
 		}
 		
@@ -495,6 +495,7 @@ int main (int argc, char *argv[])
 			rest_code = FastCgiHandleFunction[HYID](request_root,response_root,&lock_time);
 		}else
 		{
+			FASTCGI_LOG(" HYID = %d\n", HYID);
 			rest_code = FCGI_RESP_CODE_ILLEGAL_HYID;
 		}
 
