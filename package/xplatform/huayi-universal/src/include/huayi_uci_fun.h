@@ -30,6 +30,7 @@ typedef enum{
 #define LONG_BUFF_LEN                                    1024
 #define LONG_LIST_BUFF_LEN                               2048
 #define LONGLONG_BUFF_LEN                                8192
+#define HEART_RES_BUFF_LEN                               20480
 
 #define MAX_SMS_ESCAPE_CHARACTER_LEN				4096
 #define WEB_SINGLE_QUOTES_DELIMIT                   '\''

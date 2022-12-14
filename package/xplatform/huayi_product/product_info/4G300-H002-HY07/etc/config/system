@@ -49,4 +49,7 @@ config wifi_sche wifi_sche
 config upgrade upgrade
 	option check_model 4G300-H002-HY07
 	
+config msg_code msg_code
+	option hyid 0
+	
 	
