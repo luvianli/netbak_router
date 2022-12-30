@@ -318,12 +318,12 @@ int main(int argc,char *argv[])
 				//if(now_int_mode == INTERNET_4G)
 				//{
 					//system("ifup wan4g");
-					system("rm -fr /tmp/resolv.conf.auto");
-					system("echo # Interface wan4g >> /tmp/resolv.conf.auto");
-					memset(cmd_str,0,sizeof(cmd_str));
-					snprintf(cmd_str, CMD_STR_LEN, "echo nameserver %s >> /tmp/resolv.conf.auto", wan_gateway);
-					system(cmd_str);
-					system("echo search lan >> /tmp/resolv.conf.auto");
+				//	system("rm -fr /tmp/resolv.conf.auto");
+				//	system("echo # Interface wan4g >> /tmp/resolv.conf.auto");
+				//	memset(cmd_str,0,sizeof(cmd_str));
+				//	snprintf(cmd_str, CMD_STR_LEN, "echo nameserver %s >> /tmp/resolv.conf.auto", wan_gateway);
+				//	system(cmd_str);
+				//	system("echo search lan >> /tmp/resolv.conf.auto");
 				//}else if(now_int_mode == INTERNET_WIRED)
 				//{
 					//system("ifup wan");
