@@ -130,19 +130,14 @@ int main(int argc,char *argv[])
 	char section[SHORT_STR_LEN] = {0};
 	char del_gateway[IPV4_STR_LEN] = {0};
 	char resultbuf[SHORT_STR_LEN] = {0};
-
 	char wan_type[OPTION_STR_LEN] = {0};
 	char net_ipv4[IPV4_STR_LEN] = {0};
-
 	int wired_status = 0;
 	int cpe_status = 0;
 	int wired_link = 0;
 	int cpe_link = 0;
-	int old_int_mode = INTERNET_UNDEFINE;
-	int now_int_mode = INTERNET_UNDEFINE;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
-
 
 	delaycount = 1;
 	while(1)
@@ -190,12 +185,9 @@ int main(int argc,char *argv[])
 				if(cpe_status == 0)//使用wisp上网方式
 				{
 					sprintf(section,"wisp");
-					now_int_mode = INTERNET_WIRED;
-					old_int_mode = INTERNET_UNDEFINE;
 				}else//使用4G上网方式
 				{
 					sprintf(section,"cpe");
-					now_int_mode = INTERNET_4G;
 				}
 			}
 			else
@@ -205,12 +197,10 @@ int main(int argc,char *argv[])
 				{
 					//使用4G上网方式
 					sprintf(section,"cpe");
-					now_int_mode = INTERNET_4G;
 				}
 				else  //使用wisp上网方式
 				{
 					sprintf(section,"wisp");
-					now_int_mode = INTERNET_WIRED;
 				}
 				delaycount = 1;
 			}
@@ -221,7 +211,6 @@ int main(int argc,char *argv[])
 			if(strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
 				continue;
 			sprintf(section,"cpe");
-			now_int_mode = INTERNET_4G;
 		}
 		else//使用wisp上网方式
 		{
@@ -229,110 +218,108 @@ int main(int argc,char *argv[])
 			if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
 				continue;
 			sprintf(section,"wisp");
-			now_int_mode = INTERNET_WIRED;
 		}
-		//printf("old_int_mode = %d\n",old_int_mode);
-		//printf("now_int_mode = %d\n",now_int_mode);
-		//if(old_int_mode != now_int_mode || )
-		{
-			memset(cmd_str,0,sizeof(cmd_str));
-			memset(del_gateway,0,sizeof(del_gateway));
-			if(!strncmp(section,"wisp",strlen("wisp")))//使用wisp上网方式，删除4G默认路由
-			{
-				huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
-			}
-			else//4G上网方式，删除有线默认路由
-			{
-				huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
-			}
-			//printf("section = %s\n",section);
-			memset(wan_ifname,0,sizeof(wan_ifname));
-			memset(wan_ipv4,0,sizeof(wan_ipv4));
-			memset(wan_netmask,0,sizeof(wan_netmask));
-			memset(wan_gateway,0,sizeof(wan_gateway));
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "device", wan_ifname);
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "ipv4", wan_ipv4);
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "netmask", wan_netmask);
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "gateway", wan_gateway);
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "dns_server",temp_dns);
-			//printf("del_gateway = %s\n",del_gateway);
-			if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
-			{
-				sprintf(cmd_str,"route del default gw %s",del_gateway);
-				system(cmd_str);
-				//printf("cmd_str = %s\n",cmd_str);
 
-				
-			}
-			else
+		memset(cmd_str,0,sizeof(cmd_str));
+		memset(del_gateway,0,sizeof(del_gateway));
+		if(!strncmp(section,"wisp",strlen("wisp")))//使用wisp上网方式，删除4G默认路由
+		{
+			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
+		}
+		else//4G上网方式，删除有线默认路由
+		{
+			huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
+		}
+		//printf("section = %s\n",section);
+		memset(wan_ifname,0,sizeof(wan_ifname));
+		memset(wan_ipv4,0,sizeof(wan_ipv4));
+		memset(wan_netmask,0,sizeof(wan_netmask));
+		memset(wan_gateway,0,sizeof(wan_gateway));
+		huayi_uci_get_str(PKG_STATUS_BLEND, section, "device", wan_ifname);
+		huayi_uci_get_str(PKG_STATUS_BLEND, section, "ipv4", wan_ipv4);
+		huayi_uci_get_str(PKG_STATUS_BLEND, section, "netmask", wan_netmask);
+		huayi_uci_get_str(PKG_STATUS_BLEND, section, "gateway", wan_gateway);
+		huayi_uci_get_str(PKG_STATUS_BLEND, section, "dns_server",temp_dns);
+		//printf("del_gateway = %s\n",del_gateway);
+		if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
+		{
+			sprintf(cmd_str,"route del default gw %s",del_gateway);
+			system(cmd_str);
+			//printf("cmd_str = %s\n",cmd_str);			
+		}
+		else
+		{
+			/*判断当前使用的默认路由是否为0.0.0.0，如果为0.0.0.0，则删除*/
+			memset(cmd_str,0,sizeof(cmd_str));
+			memset(resultbuf, 0, sizeof(resultbuf));
+			strcpy(cmd_str,"route | grep \"default\" | awk {'print $2'}");
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+			if(strstr(resultbuf, "0.0.0.0"))
 			{
 				system("route del default");
 				sleep(1);
 				system("route del default");
 			}
+		}
+
+		memset(cmd_str,0,sizeof(cmd_str));
+		sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
+		get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+
+		if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
+		{
+			memset(cmd_str,0,sizeof(cmd_str));
+			sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
+			system(cmd_str);
+			//printf("add route cmd_str = %s\n",cmd_str);
+		}
+
+		huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
+		//printf("net_ipv4 = %s, wan_ipv4 = %s\n",net_ipv4, wan_ipv4);
+		if(strcmp(wan_ipv4,net_ipv4))  //更新proc下的网络状态信息
+		{	
+			memset(cmd_str,0,sizeof(cmd_str));
+			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
+			system(cmd_str);
 
 			memset(cmd_str,0,sizeof(cmd_str));
-			sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
-			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_ipv4 %s",wan_ipv4);
+			system(cmd_str);
 
-			if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
+			memset(cmd_str,0,sizeof(cmd_str));
+			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_netmask %s",wan_netmask);
+			system(cmd_str);
+
+			memset(cmd_str,0,sizeof(cmd_str));
+			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_gateway %s",wan_gateway);
+			system(cmd_str);
+
+			memset(dns,0,IPV4_STR_LEN);
+			i = 0;
+			//printf("temp_dns = %s\n",temp_dns);
+			while(huayi_get_nth_value(i++, temp_dns, " ", dns, sizeof(dns)))
 			{
+				//printf("dns = %s\n",dns);
 				memset(cmd_str,0,sizeof(cmd_str));
-				sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
+				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_dns_server %s",dns);
+				//printf("cmd_str = %s\n",cmd_str);
 				system(cmd_str);
-				//printf("add route cmd_str = %s\n",cmd_str);
-			}
-		
-			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
-			//printf("net_ipv4 = %s, wan_ipv4 = %s\n",net_ipv4, wan_ipv4);
-			if(strcmp(wan_ipv4,net_ipv4))
-			{	
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
-				system(cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_ipv4 %s",wan_ipv4);
-				system(cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_netmask %s",wan_netmask);
-				system(cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_gateway %s",wan_gateway);
-				system(cmd_str);
-
-				memset(dns,0,IPV4_STR_LEN);
-				i = 0;
-				//printf("temp_dns = %s\n",temp_dns);
-				while(huayi_get_nth_value(i++, temp_dns, " ", dns, sizeof(dns)))
-				{
-					//printf("dns = %s\n",dns);
-					memset(cmd_str,0,sizeof(cmd_str));
-					snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_dns_server %s",dns);
-					//printf("cmd_str = %s\n",cmd_str);
-					system(cmd_str);
-				}
-
-				//if(now_int_mode == INTERNET_4G)
-				//{
-					//system("ifup wan4g");
-				//	system("rm -fr /tmp/resolv.conf.auto");
-				//	system("echo # Interface wan4g >> /tmp/resolv.conf.auto");
-				//	memset(cmd_str,0,sizeof(cmd_str));
-				//	snprintf(cmd_str, CMD_STR_LEN, "echo nameserver %s >> /tmp/resolv.conf.auto", wan_gateway);
-				//	system(cmd_str);
-				//	system("echo search lan >> /tmp/resolv.conf.auto");
-				//}else if(now_int_mode == INTERNET_WIRED)
-				//{
-					//system("ifup wan");
-				//}
 			}
 
-			old_int_mode = now_int_mode;
+			//if(now_int_mode == INTERNET_4G)
+			//{
+				//system("ifup wan4g");
+			//	system("rm -fr /tmp/resolv.conf.auto");
+			//	system("echo # Interface wan4g >> /tmp/resolv.conf.auto");
+			//	memset(cmd_str,0,sizeof(cmd_str));
+			//	snprintf(cmd_str, CMD_STR_LEN, "echo nameserver %s >> /tmp/resolv.conf.auto", wan_gateway);
+			//	system(cmd_str);
+			//	system("echo search lan >> /tmp/resolv.conf.auto");
+			//}else if(now_int_mode == INTERNET_WIRED)
+			//{
+				//system("ifup wan");
+			//}
 		}
-		
 	}
 
 	return 0;
