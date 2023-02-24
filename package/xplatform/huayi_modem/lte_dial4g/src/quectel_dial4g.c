@@ -1,9 +1,9 @@
-#include     <stdio.h>      
-#include     <stdlib.h>     
-#include     <unistd.h>     
-#include     <sys/types.h>  
-#include     <sys/stat.h>   
-#include     <fcntl.h>  
+#include     <stdio.h>
+#include     <stdlib.h>
+#include     <unistd.h>
+#include     <sys/types.h>
+#include     <sys/stat.h>
+#include     <fcntl.h>
 #include     <sys/ioctl.h>
 #include     <net/if.h>
 #include     <sys/socket.h>
@@ -24,15 +24,16 @@ int get_quectel_status(char *mobile_type, int *dial_link)
 MCC: 0, MNC: 0, PS: Detached, DataCap: UNKNOW
 MCC: 460, MNC: 0, PS: Detached, DataCap: UNKNOW
 MCC: 460, MNC: 0, PS: Attached, DataCap: LTE
-*/
+*/
+	CON_LOG("==");
 
 	get_cmd_result("cat /tmp/lte_status", buf, 128);
-	
+
 	if ( strlen(buf) > 1 )
 	{
 		huayi_get_nth_value(2, buf, ',', psBuf, sizeof(psBuf));
 		huayi_get_nth_value(3, buf, ',', dataCapBuf, sizeof(dataCapBuf));
-		
+
 		if ( strstr(psBuf, "Attached")!=NULL )
 			*dial_link=1;
 		else
@@ -49,6 +50,7 @@ MCC: 460, MNC: 0, PS: Attached, DataCap: LTE
 			strcpy(mobile_type,"3G");
 		}
 	}
+	CON_LOG("==");
 
 	return i_mode;
 }
@@ -57,18 +59,21 @@ int init_check_lte_at(void)
 {
 	int dialing = 0;
 	int dialing_count = 0;
-	
+	CON_LOG("==");
+
 	while ( LTE_TRUE != atcmd_check() )
 	{
 		sleep(1);
 	}
-	
+	CON_LOG("==");
+
 	while (atcmd_get_usbnet(&dialing) == LTE_FALSE && dialing_count < 10 )
 	{
 		sleep(1);
 		dialing_count++;
 	}
-	
+	CON_LOG("==");
+
 	if (dialing == ECM)
 	{
 		/*配置网卡接口类型为RmNet*/
@@ -79,10 +84,10 @@ int init_check_lte_at(void)
 		}
 
 		//system("huayi_cmd set modem lteMode 1");
-		system("huayi-reset lte4g parameter 1");    
+		system("huayi-reset lte4g parameter 1");
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -95,18 +100,21 @@ int ECM_init_check_lte_at(void)
 	char cmd[CMD_STR_LEN] = { 0 };
 	char simhotplug_en[OPTION_STR_LEN] = {0};
 	int ret = 0;
-	
+	CON_LOG("==");
+
 	while ( LTE_TRUE != atcmd_check() )
 	{
 		sleep(1);
 	}
-	
+
 	/*if(LTE_FALSE ==atcmd_set_nat())
 	{
 		system("huayi_AT_cli AT+QCFG='nat',1");
 	}
 	*/
-	/*for 聚合模块*/
+	/*for 聚合模块
+	*/
+	CON_LOG("==");
 	ret = AtcmdSendDelay("AT+QCFG='devmode,0'",strlen("AT+QCFG='devmode,0'"),0);
 	if(ret == LTE_FALSE)
 	{
@@ -118,49 +126,58 @@ int ECM_init_check_lte_at(void)
 		sleep(1);
 		dialing_count++;
 	}
-
+	CON_LOG("==");
 	if (dialing != 3)
 	{
 		strcpy(cmd, "at+qcfg=\"usbnet\",3");   //use rndis
 		AtcmdSendDelay(cmd,sizeof(cmd),0);
 		sleep(2);
 	}
-	
+	CON_LOG("==");
+
 	huayi_uci_get_str(PKG_SYSTEM,"mode", "simhotplug", simhotplug_en);
 	if (0 == strcmp(simhotplug_en, "1"))
 	{
 		atcmd_get_qsimdet(&qsimdet);
 		if (qsimdet != 1)//支持热插拔
 		{
+			CON_LOG("==");
 			strcpy(cmd, "at+qsimdet=1,1");
 			AtcmdSendDelay(cmd,sizeof(cmd),0);
 			sleep(2);
+			CON_LOG("==");
 		}
-		
+		CON_LOG("==");
+
 		atcmd_get_qsimstat(&qsimstat);
+		CON_LOG("==");
 		if (qsimstat != 1)//热插拔状态查询
 		{
 			strcpy(cmd, "at+qsimstat=1");
 			AtcmdSendDelay(cmd,sizeof(cmd),0);
 			sleep(2);
 		}
+		CON_LOG("==");
 		/*1 is ECM; 3 is rndis;*/
 		if (dialing != 3 || qsimdet != 1 || qsimstat != 1)//支持热插拔和热插拔状态查询
 		{
 			system("huayi-reset lte4g parameter 1");
 			return -1;
 		}
-	} 
+	}
 	else
 	{
 		/*1 is ECM; 3 is rndis;*/
 		if (dialing != 3)
 		{
+			CON_LOG("==");
 			system("huayi-reset lte4g parameter 1");
+			CON_LOG("==");
 			return -1;
 		}
 	}
-	
+	CON_LOG("==");
+
 	return 0;
 }
 
@@ -172,20 +189,22 @@ int init_set_modem_status(void)
 	char operator_str[OPTION_STR_LEN] = {0};
 	char cmd[CMD_STR_LEN] = {0};
 	int signal = 0;
-	
+	CON_LOG("init_set_modem_status enter");
+
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_EC20_imei(lte_value);
-	if(strlen(lte_value) < 5) 
+	if(strlen(lte_value) < 5)
 	{
 		strcpy(lte_value, "");
 	}
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem imei %s",lte_value);
 	system(cmd);
-
+	CON_LOG("==");
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_imsi(lte_value);
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem imsi %s",lte_value);
 	system(cmd);
+	CON_LOG("==");
 
 	if (strncmp(lte_value,"46000",5) == 0 || strncmp(lte_value,"46002",5) == 0 || strncmp(lte_value,"46004",5) == 0 ||
 		strncmp(lte_value,"46007",5) == 0 || strncmp(lte_value,"46008",5) == 0 || strncmp(lte_value,"46013",5) == 0)
@@ -207,20 +226,24 @@ int init_set_modem_status(void)
 		strcpy(lte_value, "");
 		strcpy(mobile_network, "");
 	}
+	CON_LOG("==");
 
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem network \"%s\"",mobile_network);
 	system(cmd);
-	
+	CON_LOG("==");
+
 	memcpy(operator_str, lte_value, 5);
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem operator %s", operator_str);
 	system(cmd);
+	CON_LOG("==");
 
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_EC20_phoneNumber(lte_value);
-	if(strlen(lte_value) < 5) 
+	if(strlen(lte_value) < 5)
 	{
 		strcpy(lte_value, "");
 	}
+	CON_LOG("==");
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem phoneNumber +%s",lte_value);
 	system(cmd);
 
@@ -228,8 +251,9 @@ int init_set_modem_status(void)
 	atcmd_get_quectel_bandLte(lte_value);
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem bandLte %s",lte_value);
 	system(cmd);
+	CON_LOG("==");
 
-	if (strstr(lte_value,"LTE") != NULL)	
+	if (strstr(lte_value,"LTE") != NULL)
 	{
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem mobile_type 4G");
 	}
@@ -239,10 +263,10 @@ int init_set_modem_status(void)
 	}
 	system(cmd);
 
-	
+
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_center_number(lte_value);
-	if(strlen(lte_value) < 5) 
+	if(strlen(lte_value) < 5)
 	{
 		strcpy(lte_value, "");
 	}
@@ -251,7 +275,7 @@ int init_set_modem_status(void)
 
 	memset(lte_value, 0, OPTION_STR_LEN);
 	atcmd_get_iccid(lte_value);
-	if(strlen(lte_value) < 5) 
+	if(strlen(lte_value) < 5)
 	{
 		strcpy(lte_value, "");
 	}
@@ -260,7 +284,7 @@ int init_set_modem_status(void)
 
 	memset(lte_value, 0, OPTION_STR_LEN);
 	atcmd_get_lac(lte_value);
-	if(strlen(lte_value) < 2) 
+	if(strlen(lte_value) < 2)
 	{
 		strcpy(lte_value, "");
 	}
@@ -269,16 +293,17 @@ int init_set_modem_status(void)
 
 	memset(lte_value, 0, OPTION_STR_LEN);
 	atcmd_get_ci(lte_value);
-	if(strlen(lte_value) < 2) 
+	if(strlen(lte_value) < 2)
 	{
 		strcpy(lte_value, "");
 	}
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem ci %s",lte_value);
 	system(cmd);
-
+	CON_LOG("==");
 	atcmd_get_signal(&signal);
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem signal %d",signal);
 	system(cmd);
+	CON_LOG("==");
 	return 0;
 }
 
@@ -287,7 +312,7 @@ int check_modem_status(int retry)
 	int i_dail_check = 0;
 	int i_sysinfo = 0;
 	char lte_value[OPTION_STR_LEN] = {0};
-
+	CON_LOG("==");
 	if(retry >=3)
 	{
 		if(LTE_TRUE ==	restart_4gradio())
@@ -297,21 +322,23 @@ int check_modem_status(int retry)
 		{
 			return retry;
 		}
-		
+
 	}
-	
+	CON_LOG("==");
+
 	get_quectel_status(lte_value,&i_dail_check);
     if ( 1 == i_dail_check )
     {
         return 0;
     }
-	
+
 	i_sysinfo = net_ttyusb_sysinfo();
 	if(i_sysinfo==0)
 	{
 		retry++;
 		return retry;
 	}
+	CON_LOG("==");
 
 	i_sysinfo = net_ttyusb_cgreg();
 	if(i_sysinfo==0)
@@ -330,14 +357,17 @@ int quectel_gobinet_connect(void)
 	char user4g[RESULT_STR_LEN]={0},pass4g[RESULT_STR_LEN]={0};
 	char apn[RESULT_STR_LEN]={0},validation[RESULT_STR_LEN]={0};
 	char dialnum[RESULT_STR_LEN]={0},pincode[RESULT_STR_LEN]={0};
-	
+	CON_LOG("==");
+
 	huayi_uci_get_str(PKG_MODEM, "status", "mode", mode);
 	if(atoi(mode)==0)
 	{
+		CON_LOG("==");
 		system("quectel-CM &");
 	}
-	else if(atoi(mode)==1)	
+	else if(atoi(mode)==1)
 	{
+		CON_LOG("==");
 		huayi_uci_get_str(PKG_MODEM, "status", "user4g", user4g);
 		huayi_uci_get_str(PKG_MODEM, "status", "pass4g", pass4g);
 		huayi_uci_get_str(PKG_MODEM, "status", "apn", apn);
@@ -350,7 +380,8 @@ int quectel_gobinet_connect(void)
 			snprintf(cmd,sizeof(cmd),"quectel-CM -s %s %s %s %s &",apn,user4g,pass4g,validation);
 		system(cmd);
 	}
-	
+	CON_LOG("==");
+
 	return 1;
 }
 
@@ -363,30 +394,36 @@ int quectel_ECxx_model_handler(struct SMSAgent *Agent)
 	int ret = 0;
 	char lte_value[OPTION_STR_LEN] = {0};
 	char cmd[CMD_STR_LEN] = {0};
+	CON_LOG("==");
 
 	ret = init_check_lte_at();
 	while (ret < 0)
 	{
 		sleep(1);
 	}
+	CON_LOG("==");
 
 	init_set_modem_status();
-	
+	CON_LOG("init_set_modem_status out");
+
     while (VS_TRUE == gRunAgent )
     {
+    	CON_LOG("==");
     	modem_led_control(Agent);
         sleep(GET_SMS_INTERVAL);
-		
+		CON_LOG("==");
+
         if ( !huayi_file_exists(DEFAULT_DEV_ATC) )
         {
         	Agent->lte_led_status = MODEM_NO_MODEM;
         	goto out;
         }
-		
+		CON_LOG("==");
+
         atcmd_get_cpin(&i_ready);
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem sim_ready %d",i_ready);
 		system(cmd);
-		
+
 		if (i_ready != MODEM_SIN_READY)
 		{
 			if (i_ready == MODEM_SIN_PIN)
@@ -395,17 +432,20 @@ int quectel_ECxx_model_handler(struct SMSAgent *Agent)
 				Agent->lte_led_status = MODEM_PUK_LOCK;
 			else
 				Agent->lte_led_status = MODEM_NO_SIM;
-			
+
 			continue;
 		}
 		else
 		{
 			cpin_count++;
 		}
-		
+		CON_LOG("==");
+
 		init_set_modem_status();
-		
+		CON_LOG("==");
+
         i_link = net_usb_link(Agent);
+		CON_LOG("==");
 		signal_count=0;
         if ( i_link > 0 )
         {
@@ -426,32 +466,33 @@ int quectel_ECxx_model_handler(struct SMSAgent *Agent)
 					sleep(1);
 					goto retry_signal;
 				}
-				
+
 				Agent->lte_led_status = MODEM_NO_CONN;
 			}
 
 			huayi_sms_agent_loop(&Agent);
 
-			get_quectel_status(lte_value,&i_dail_check);	
-			
+			get_quectel_status(lte_value,&i_dail_check);
+
 			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem mobile_type %s",lte_value);
 			system(cmd);
-			
+
             continue;
 		}
 		else
 			Agent->lte_led_status = MODEM_NO_CONN;
-		
+
         atcmd_get_signal(&Agent->i_signal);
         if ( Agent->i_signal < 3 ) //0~100
             continue;
-		
+
 		/*if (cpin_count > 3)
 		{
 			system("huayi-reset lte4g");
 			cpin_count = 0;
 		}*/
-		
+		CON_LOG("==");
+
 		if (quectel_CM_start == 0)
 		{
 			quectel_gobinet_connect();
@@ -464,12 +505,13 @@ int quectel_ECxx_model_handler(struct SMSAgent *Agent)
 			sleep(10);
 			system("ifup wan4g");
 		}
-		
+		CON_LOG("==");
+
 		sleep(1);
-		retry = check_modem_status(retry);		
+		retry = check_modem_status(retry);
     }
 
-out:	
+out:
     printf("[Debug]Exit dial4g!!!\n");
     return 0;
 }
@@ -481,9 +523,10 @@ int quectel_ECM_connect(void)
 	char mode[RESULT_STR_LEN]={0};
 	char user4g[RESULT_STR_LEN]={0},pass4g[RESULT_STR_LEN]={0};
 	char apn[RESULT_STR_LEN]={0},validation[RESULT_STR_LEN]={0};
-	
+	CON_LOG("==");
+
 	huayi_uci_get_str(PKG_MODEM, "status", "mode", mode);
-	
+
 	if(atoi(mode)==0)
 	{
 		//CTNET UNINET CMNET
@@ -493,11 +536,13 @@ int quectel_ECM_connect(void)
 		//if(ret != LTE_TRUE)
 		//	return ret;
 	}
+
 	else
 	{
-		huayi_uci_get_str(PKG_MODEM, "status", "user4g", user4g);		
-		huayi_uci_get_str(PKG_MODEM, "status", "pass4g", pass4g);		
-		huayi_uci_get_str(PKG_MODEM, "status", "apn", apn);	
+	CON_LOG("==");
+		huayi_uci_get_str(PKG_MODEM, "status", "user4g", user4g);
+		huayi_uci_get_str(PKG_MODEM, "status", "pass4g", pass4g);
+		huayi_uci_get_str(PKG_MODEM, "status", "apn", apn);
 		huayi_uci_get_str(PKG_MODEM, "status", "validation", validation);
 		snprintf(cmd,sizeof(cmd),"at+qicsgp=1,1,\"%s\",\"%s\",\"%s\",%s",apn,user4g,pass4g,validation);
 		ret = AtcmdSendDelay(cmd,sizeof(cmd),0);
@@ -506,6 +551,7 @@ int quectel_ECM_connect(void)
 	}
 	AtcmdSendDelay("at+cgact=1,1",strlen("at+cgact=1,1"),0);
 	ret = AtcmdSendDelay("at+qnetdevctl=3,1,1",strlen("at+qnetdevctl=3,1,1"),0);
+	CON_LOG("==");
 
 	return ret;
 }
@@ -524,16 +570,18 @@ int quectel_ECM_handler(struct SMSAgent *Agent)
 	char wired_ipaddr[IPV4_STR_LEN] = {0};
 	char wan_type[OPTION_STR_LEN] = {0};
 
+	CON_LOG("==");
 
 	ret = ECM_init_check_lte_at();
 	while (ret < 0)
 	{
 		sleep(1);
 	}
-	
+	CON_LOG("==");
+
 	init_set_modem_status();
 
-	while(1) 
+	while(1)
 	{
 		i_dail_check = quectel_ECM_connect();
 		if(i_dail_check == LTE_TRUE)
@@ -541,19 +589,20 @@ int quectel_ECM_handler(struct SMSAgent *Agent)
 		else
 			sleep(1);
 	}
-	
-	
+
+	CON_LOG("==");
+
     while (VS_TRUE == gRunAgent )
     {
     	modem_led_control(Agent);
         sleep(GET_SMS_INTERVAL);
-		
+
         if ( !huayi_file_exists(DEFAULT_DEV_ATC) )
         {
         	Agent->lte_led_status = MODEM_NO_MODEM;
         	goto out;//will auto reload module
         }
-		
+
         atcmd_get_cpin(&i_ready);
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem sim_ready %d",i_ready);
 		system(cmd);
@@ -573,7 +622,7 @@ int quectel_ECM_handler(struct SMSAgent *Agent)
 				Agent->lte_led_status = MODEM_NO_SIM;
 			continue;
 		}
-		
+
         i_link = net_usb_link(Agent);
 		signal_count=0;
         if ( i_link > 0 )
@@ -594,7 +643,7 @@ retry_signal:
 					sleep(1);
 					goto retry_signal;
 				}
-				
+
 				Agent->lte_led_status = MODEM_NO_CONN;
 			}
 
@@ -603,7 +652,7 @@ retry_signal:
 		}
 		else
 		{
-			Agent->lte_led_status = MODEM_NO_CONN;	
+			Agent->lte_led_status = MODEM_NO_CONN;
 		}
 		atcmd_get_signal(&Agent->i_signal);
 		if ( Agent->i_signal <= 10 )
@@ -613,7 +662,7 @@ retry_signal:
 		{
 			huayi_uci_get_int(PKG_STATUS_MODEM,"modem","dialresetcount", &dialresetcount);
 			if(Agent->i_signal > 10 && dialresetcount < 2 ) {   // reset 2 count
-				snprintf(cmd, CMD_STR_LEN,"huayi_cmd set modem dialresetcount %d",dialresetcount+1);	
+				snprintf(cmd, CMD_STR_LEN,"huayi_cmd set modem dialresetcount %d",dialresetcount+1);
 				system(cmd);
 				system("huayi-reset lte4g parameter 1");
 			}
@@ -644,7 +693,7 @@ retry_signal:
 			if (!strcmp(wan_type,"prior"))
 			{
 				huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4", wired_ipaddr);
-				snprintf(cmd, CMD_STR_LEN,"echo 'cgpipaddr =  %s   cpe_ipaddr = %s' >> /tmp/test.txt", cgpipaddr, wired_ipaddr);	
+				snprintf(cmd, CMD_STR_LEN,"echo 'cgpipaddr =  %s   cpe_ipaddr = %s' >> /tmp/test.txt", cgpipaddr, wired_ipaddr);
 				system(cmd);
 				if(strlen(wired_ipaddr) > 7 && strstr(cgpipaddr, wired_ipaddr) == NULL)
 				{
@@ -663,7 +712,7 @@ retry_signal:
 			if (!strcmp(wan_type,"rep4g"))
 			{
 				huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4", wired_ipaddr);
-				snprintf(cmd, CMD_STR_LEN,"echo 'cgpipaddr =  %s   cpe_ipaddr = %s' >> /tmp/test.txt", cgpipaddr, wired_ipaddr);	
+				snprintf(cmd, CMD_STR_LEN,"echo 'cgpipaddr =  %s   cpe_ipaddr = %s' >> /tmp/test.txt", cgpipaddr, wired_ipaddr);
 				system(cmd);
 				if(strlen(wired_ipaddr) > 7 && strstr(cgpipaddr, wired_ipaddr) == NULL)
 				{
@@ -677,16 +726,17 @@ retry_signal:
 			}else
 #endif
 
-			{	
+			{
 				if(strlen(wan_ipaddr) > 7 && NULL == strstr(cgpipaddr, wan_ipaddr))
 					system("huayi-reset small4gfunc");
 			}
 		}
 #endif
     }
-
-out:	
+	CON_LOG("==");
+out:
     printf("[Debug]Exit dial4g!!!\n");
-    return 0;
+	CON_LOG("==");
+	return 0;
 }
 

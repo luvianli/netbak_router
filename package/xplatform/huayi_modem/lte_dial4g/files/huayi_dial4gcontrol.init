@@ -30,20 +30,21 @@ quectel_dev_name=`ifconfig -a | grep usb0`
 
 
 start_service() {
-
 	wan_type=`uci get system.mode.wan_type`
 	
 	if [ "$wan_type" == "mobile" ]; then
+		echo "huayi_cmd set network wan_link 0"
 		huayi_cmd set network wan_link 0
 	fi
-	
+	echo "huayi_cmd set modem "
 	huayi_cmd set modem signal 0
 	huayi_cmd set modem registStatus idle
 	huayi_cmd set modem imei ''
 	huayi_cmd set modem imsi ''
 	huayi_cmd set modem phoneNumber ''
-	
+	echo "insmod usbnet.ko"
 	insmod usbnet.ko
+	echo "insmod cdc_subset.ko"
 	insmod cdc_subset.ko
 	
 	if [ -n "$quectel_model_1_support""$quectel_model_2_support" ]; then
@@ -55,6 +56,7 @@ start_service() {
 		else
 			NET_IFACE="eth1"
 		fi
+		echo "huayi_cmd set modem modemModel 'EC20'"
 		huayi_cmd set modem modemModel 'EC20'
 		uci set network.wan4g.ifname=wwan0
 		uci commit
@@ -85,20 +87,23 @@ start_service() {
 	fi
 
 	if [ "$wan_type" == "prior" ]; then
+		echo "huayi_cmd set blend cpe_link 1" 
 		huayi_cmd set blend cpe_link 1
 	fi
 	if [ "$wan_type" == "rep4g" ]; then
+		echo "2huayi_cmd set blend cpe_link 1 " 
 		huayi_cmd set blend cpe_link 1
 	fi
 	huayi_atcmd_server $DEV_ATC &
-	
+	echo "/etc/init.d/huayi_dial4g restart" 
 	/etc/init.d/huayi_dial4g restart
 }
 
 stop_service() {
+echo "killall quectel-CM" 
  	killall quectel-CM
  	killall -9 quectel-CM
-	
+echo "/etc/init.d/huayi_dial4g stop" 	
 	/etc/init.d/huayi_dial4g stop
 	killall huayi_atcmd_server
 	killall -9 huayi_atcmd_server

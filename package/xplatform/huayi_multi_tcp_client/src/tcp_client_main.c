@@ -4,11 +4,12 @@
 #include<arpa/inet.h>
 #include<sys/socket.h>
 #include<string.h>
-#include<sys/socket.h> 
-#include<netinet/in.h> 
+#include<sys/socket.h>
+#include<netinet/in.h>
 #include<arpa/inet.h>
 #include"huayi_uci_fun.h"
 #include"cJSON.h"
+#include "huayi_atcmd.h"
 
 enum choose
 {
@@ -51,7 +52,7 @@ int client_socket_init()
 {
    int client_sockfd;
    struct sockaddr_in server_address;
-   
+
    client_sockfd=socket(AF_INET,SOCK_STREAM,0);
    if(client_sockfd < 0 )
    		return -1;
@@ -69,15 +70,16 @@ int client_socket_init()
 
 int read_client(int client_sockfd)
 {
-	
+
 	int msg_code,count=0, ret = 0;
 	char str_msg_code[HEART_RES_BUFF_LEN]={0};
-	memset(str_msg_code,0,sizeof(str_msg_code));
-	
-	ret = write_client(client_sockfd, huayi_dial4g_init);
+	//memset(str_msg_code,0,sizeof(str_msg_code));
+	if ( LTE_TRUE != atcmd_check() )
+		ret = write_client(client_sockfd, huayi_dial4g_init);
+	else
+		ret = write_client(client_sockfd,huayi_heartbeat);
 	if(ret == -1 )
-		return ret;
-	
+			return ret;
 	while(1)
 	{
 		memset(str_msg_code,0,sizeof(str_msg_code));
@@ -85,7 +87,7 @@ int read_client(int client_sockfd)
 		//当读到很大的数据时,表明数据传到client
 		huayi_uci_get_int(PKG_SYSTEM,"msg_code","hyid",&msg_code);
 		if(msg_code!=0)
-		{	
+		{
 			ret=exe_client(client_sockfd,msg_code);
 			if(ret>0)
 			{
@@ -97,23 +99,15 @@ int read_client(int client_sockfd)
 		}
 		//
 		msg_code=atoi(str_msg_code);
-		if(msg_code<199 || msg_code>400)
-		{
-			if(strstr(str_msg_code,"{")!=NULL)
-			{
-				msg_code=big_heartdata(str_msg_code,sizeof(str_msg_code));
-			}
-			
-			//这里不是正常响应，又不是json字符串，所以表示未连接	
-		}
 		switch (msg_code)
 		{
 			case -1:
 				//error,暂时不做修改
 				CON_LOG("read -1 ，error");
 			case huayi_heartbeat:
+				 CON_LOG("huayi_heartbeat");
 				ret = write_client(client_sockfd,huayi_heartbeat);
-				break;			
+				break;
 			case huayi_switch_sim_before :
 				system("killall -9 huayi_atcmd_server");
 			    CON_LOG("killall -9 huayi_atcmd_server");
@@ -130,20 +124,20 @@ int read_client(int client_sockfd)
 				ret = write_client(client_sockfd, res_huayi_sim_info);
 				break;
 			case huayi_product:
-				//client_product();	
+				//client_product();
 				CON_LOG("huayi_product");
 				ret = write_client(client_sockfd, res_huayi_product);
 				break;
 			case huayi_dial4g_init:
 				system("/etc/init.d/huayi_dial4_init restart");
-				        
+
 				CON_LOG("/etc/init.d/huayi_dial4_init restart");
 				ret = write_client(client_sockfd, res_huayi_dial4g_init);
 				break;
 //无连接状态，进入default
 			default:
 				sleep(5);
-				//ret = write_client(client_sockfd,0);	
+				//ret = write_client(client_sockfd,0);
 				CON_LOG("NO CONNECT");
 				close(client_sockfd);
 				return -1;
@@ -153,7 +147,7 @@ int read_client(int client_sockfd)
 		{
 			return -1;
 		}
-	
+
 	}
 
 	return 0;
@@ -205,7 +199,7 @@ int write_client(int client_sockfd,int number)
 	ret = write(client_sockfd, str_msg_code,sizeof(str_msg_code));
 	if(ret != sizeof(str_msg_code))
 		return -1;
-	
+
 	return 1;
 }
 

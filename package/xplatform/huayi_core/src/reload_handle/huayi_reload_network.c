@@ -4,10 +4,10 @@
 VTBool huayi_reload_network(void * arg,cJSON *input_root)
 {
 	char product_model[OPTION_STR_LEN] = {0};
-	
+
 #if defined(CONFIG_HUAYI_SPECIAL_LED_SUPPORT)
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
-	
+
 	Agent->special_led_status = LED_RESET;
 #endif
 
@@ -22,11 +22,11 @@ VTBool huayi_reload_network(void * arg,cJSON *input_root)
 	if(0 == strcmp(product_model, "4G1200-H002-HY06"))
 	{
 		system("/etc/init.d/huayi_dial4_init start");
-	} 
+	}
 
 	//system("ifdown wan");
 	system("/etc/init.d/network restart");
-	
+
 	return VT_TRUE;
 }
 
@@ -45,7 +45,7 @@ VTBool huayi_reload_ddns(void * arg,cJSON *input_root)
 	system("/etc/init.d/yddns restart");
 	system("/etc/init.d/orayddns restart");
 	system("/etc/init.d/noip2 restart");
-	
+
 	return VT_TRUE;
 }
 #endif
@@ -53,7 +53,7 @@ VTBool huayi_reload_ddns(void * arg,cJSON *input_root)
 VTBool huayi_reload_hwnat(void * arg,cJSON *input_root)
 {
 	system("/etc/init.d/hwnat restart");
-	
+
 	return VT_TRUE;
 }
 
@@ -78,7 +78,7 @@ VTBool huayi_reload_static_route(void * arg,cJSON *input_root)
 			break;
 		}
 		huayi_uci_get_str(PKG_NETWORK,section,"interface",inter_face);
-		
+
 		huayi_uci_get_str(PKG_NETWORK,section,"gateway",gateway);
 
 		huayi_uci_get_str(PKG_NETWORK,section,"netmask",netmask);
@@ -100,11 +100,11 @@ VTBool huayi_reload_static_route(void * arg,cJSON *input_root)
 			i++;
 			continue;
 		}
-			
+
 		system(cmd);
 		i++;
 	}
-	
+
 	return VT_TRUE;
 }
 
@@ -118,17 +118,17 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 	int  use_apn = 0;
 	int para = 0;
 	char product_model[OPTION_STR_LEN] = {0};
-	
+
 	huayi_uci_get_int(PKG_MODEM,"status","mode",&use_apn);
 	huayi_json_get_int(input_root, "parameter", &para);
-	if(1 == use_apn || 1 == para) 
+	if(1 == use_apn || 1 == para)
 	{
 		huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 		if(!strcmp(product_model, "4G300-H002-HY03"))
 		{
 			sleep(20);
 			system("/etc/init.d/huayi_dial4gcontrol restart");
-		} 
+		}
 		else
 		{
 			//sleep(3);
@@ -136,14 +136,14 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 			system("killall -9 huayi_dial4g");
 			system("/etc/init.d/huayi_dial4gcontrol stop");
 		}
-		
+
 		system("huayi_cmd set network wan_up 0");
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem signal %d", 0);
 		system(cmd);
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem registStatus %s",modems_status);
 		system(cmd);
 		sleep(1);
-		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);	
+		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
 		if(strncmp("EC200T",pmodel, 6) == 0 || strncmp("EC200A",pmodel, 6) == 0)
 		{
 			//system("huayi_AT_cli AT+QPOWD=1");
@@ -172,27 +172,27 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 		if(!strcmp(product_model, "4G1200-H002-HY06"))
 		{
 			system("/etc/init.d/huayi_dial4_init start");
-		} 
+		}
 		else
 		{
 			system("/etc/init.d/huayi_dial4gcontrol restart");
 		}
 	}
-	
-	if(!access("/etc/init.d/hy_cloud_client", 0))	
-		system("/etc/init.d/hy_cloud_client restart");	
-	
+
+	if(!access("/etc/init.d/hy_cloud_client", 0))
+		system("/etc/init.d/hy_cloud_client restart");
+
 	//system("huayi-reset network");
-	
+
 	return VT_TRUE;
 }
 
 VTBool huayi_reload_small4g_func(void * arg,cJSON *input_root)
 {
 	int  use_apn = 0;
-	
+
 	huayi_uci_get_int(PKG_MODEM,"status","mode",&use_apn);
-	if(0 == use_apn) 
+	if(0 == use_apn)
 	{
 		//system("ifup wan4g");
 		system("huayi_AT_cli at+cfun=1,1");
@@ -201,10 +201,10 @@ VTBool huayi_reload_small4g_func(void * arg,cJSON *input_root)
 	{
 		printf("Unidentified modem module!!!\n");
 	}
-	
-	if(!access("/etc/init.d/hy_cloud_client", 0))	
+
+	if(!access("/etc/init.d/hy_cloud_client", 0))
 		system("/etc/init.d/hy_cloud_client restart");
-	
+
 	return VT_TRUE;
 }
 
@@ -215,9 +215,9 @@ VTBool huayi_reload_small4g_func(void * arg,cJSON *input_root)
 VTBool huayi_reload_save_database(void * arg,cJSON *input_root)
 {
 	system("rm -rf /etc/config/data");
- 
+
  	system("cp -rf /tmp/data /etc/config/");
- 
+
  	return VT_TRUE;
 }
 #endif
@@ -225,9 +225,9 @@ VTBool huayi_reload_save_database(void * arg,cJSON *input_root)
 VTBool huayi_reload_save_database(void * arg,cJSON *input_root)
 {
 	system("rm -rf /etc/config/data");
- 
+
  	system("cp -rf /tmp/data /etc/config/");
- 
+
  	return VT_TRUE;
 }
 #endif
@@ -257,7 +257,7 @@ VTBool huayi_reload_mount(void * arg,cJSON *input_root)
 VTBool huayi_reload_udhcpd(void * arg,cJSON *input_root)
 {
 	system("/etc/init.d/huayi_udhcpd restart");
-	
+
 	return VT_TRUE;
 }
 
@@ -265,7 +265,7 @@ VTBool huayi_reload_udhcpd(void * arg,cJSON *input_root)
 VTBool huayi_reload_telnet(void * arg,cJSON *input_root)
 {
 	system("/etc/init.d/telnet restart");
-	
+
 	return VT_TRUE;
 }
 
