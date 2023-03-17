@@ -52,7 +52,7 @@ clean:
 
 def_config:
 	cd $(Topdir); \
-	cp -rf $(COMPILE_PRODUCT_DIR)/$(product)/target_patches/* $(Topdir)/target/linux/ramips/patches; \
+	cp -rf $(COMPILE_PRODUCT_DIR)/$(product)/target_patches/ $(Topdir)/target/linux/ramips/patches; \
 	cp -rf $(COMPILE_CONFIG_DIR)/$(product)/$(product).kernel_config $(Topdir)/target/linux/ramips/$(hardware)/config-3.10; \
 	if [ "$(FlashKey)" = "0" ];then \
 		cp -rf $(COMPILE_CONFIG_DIR)/$(product)/$(product).config .config; \
@@ -62,7 +62,8 @@ def_config:
 	fi
 
 real_make:
-	cd $(Topdir);make -j$(build_server_cores)
+	cd $(Topdir);make 
+	#-j$(build_server_cores)
 
 release:
 	cd $(hardware); \
