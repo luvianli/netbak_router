@@ -88,7 +88,7 @@ all: check_config clean def_config
 	@$(MAKE) $(t) product=$@ product_name=4G300-H002-HY07 Chip=MT7620N hardware=mt7620 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
 	
 ZC-MCA4-G1:
-	@$(MAKE) $(t) product=$@ product_name=ZC-MCA4-C1 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
+	@$(MAKE) $(t) product=$@ product_name=ZC-MCA4-G1 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
 	
 help:
 	@echo "make target   -- target maybe product model"
