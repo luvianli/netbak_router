@@ -1,0 +1,12 @@
+config about about_soft
+	option product_name		'ZC-MCA4-C1'
+	option product_model	'ZC-MCA4-C1'
+	option product_desc		'300M 4G Wireless Router'
+	option company_name		'NoNe'
+	option webui_version	'V1.0'
+	option enterprise_oid	'12358'
+	option company_website	'www..com'
+	option company_contacts	'@.com'
+	option company_address	'shenzhen'
+	option domain_name		'setup.wifi.net'
+	option company_copyright  'Copyright © 2023 All rights reserved.'
