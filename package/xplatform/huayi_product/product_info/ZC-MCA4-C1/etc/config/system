@@ -45,4 +45,4 @@ config wifi_sche wifi_sche
 	option end_minute '0'
 
 config upgrade upgrade
-	option check_model 4G300-H002-HY05
+	option check_model ZC-MCA4-C1
