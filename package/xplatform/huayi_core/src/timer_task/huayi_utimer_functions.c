@@ -486,7 +486,7 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 	int i_ready = 0; 
 #endif
 	
-	if (internet_do_ping_detect(INTERNET_DOMAIN, NULL) == 1)
+	if (internet_do_ping_detect(INTERNET_ABROAD_DOMAIN, NULL) == 1)
 	{
 		network_status = 1;	
 

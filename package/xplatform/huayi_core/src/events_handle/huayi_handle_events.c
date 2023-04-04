@@ -1070,8 +1070,8 @@ void do_power_led_off(void)
 		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", 37); //blue led  off
 		system(cmd);
 		//red led on
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
-		system(cmd);
+		//snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
+		//system(cmd);
 		return;
 	}
 	/*end by rex*/

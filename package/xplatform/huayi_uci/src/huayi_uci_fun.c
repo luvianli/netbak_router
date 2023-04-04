@@ -770,7 +770,7 @@ int internet_do_ping_detect(const char *host, char *ifname)
 	if ((NULL == host) || (strlen(host)<7))
 		goto fail;
 
-	for(i = 0;i < 3; i++)
+	for(i = 0;i < 5; i++)
 	{
 		if (ifname == NULL)
 		{
