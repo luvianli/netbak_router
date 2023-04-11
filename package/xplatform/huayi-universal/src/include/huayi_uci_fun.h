@@ -83,7 +83,7 @@ typedef enum{
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 #define WISP4G_TMPFILE                                  "/tmp/.wisp_success"
 #endif
-#define INTERNET_DOMAIN									"114.114.114.114"
+#define INTERNET_DOMAIN									"8.8.8.8"
 #define INTERNET_ABROAD_DOMAIN							"8.8.8.8"
 
 #define HUAYI_NET_PROTO_DISABLE   						"disable"

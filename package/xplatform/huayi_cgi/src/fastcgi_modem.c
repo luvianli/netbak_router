@@ -2410,8 +2410,9 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 
 
 	//上网是否成功
-	strcpy(checksignalips,"114.114.114.114");
+	//strcpy(checksignalips,"114.114.114.114");
 	memset(lte_value,0,sizeof(lte_value));
+	huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip", checksignalips);
 	is_ok = internet_do_ping_detect(checksignalips, NULL);
 	if(is_ok == 1)
 	{
