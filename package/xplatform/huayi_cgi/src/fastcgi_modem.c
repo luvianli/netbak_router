@@ -11,7 +11,7 @@ FCGI_BOOL huayiMySql2JsonArray(MYSQL *my_con,cJSON *array,char *query)
 	unsigned long nrow = 0;
 	cJSON *root;
 	FCGI_BOOL ret = FCGI_FALSE;
-	
+
 	if((my_con == NULL) || (array == NULL) || (query == NULL))
 	{
 		return FCGI_FALSE;
@@ -21,7 +21,7 @@ FCGI_BOOL huayiMySql2JsonArray(MYSQL *my_con,cJSON *array,char *query)
 	{
 		return FCGI_FALSE;
 	}
-	
+
 	if((!nrow)||(!result))
 	{
 		ret = FCGI_TRUE;
@@ -29,17 +29,17 @@ FCGI_BOOL huayiMySql2JsonArray(MYSQL *my_con,cJSON *array,char *query)
 	}
 
 	my_field = mysql_fetch_fields((MYSQL_RES *)result);
-	
+
 	if(!my_field)
 	{
 		ret = FCGI_FALSE;
 		goto end;
 	}
-	
+
 	for(i = 0;i<nrow;i++)
 	{
 		root = NULL;
-		
+
 		root=cJSON_CreateObject();
 
 		cJSON_AddItemToArray(array,root);
@@ -50,7 +50,7 @@ FCGI_BOOL huayiMySql2JsonArray(MYSQL *my_con,cJSON *array,char *query)
 		{
 			break;
 		}
-		
+
 		for(j= 0;j<ncol;j++)
 		{
 			cJSON_AddStringToObject(root, my_field[j].name,row[j]?row[j]:"");
@@ -58,7 +58,7 @@ FCGI_BOOL huayiMySql2JsonArray(MYSQL *my_con,cJSON *array,char *query)
 	}
 
 	ret = FCGI_TRUE;
-	
+
 end:
 	if(result)
 	{
@@ -74,14 +74,14 @@ FCGI_BOOL get_x55_result_str(char *cmd, char *key,char *value)
 	FILE *fp = NULL;
 	char data[TEMP_STR_LEN] = {0};
 	char *pvalue = NULL;
-	
+
 	if((!cmd)||(!key)||(!value))
 	{
 		return FCGI_FALSE;
 	}
-	
+
 	fp = popen(cmd, "r");
-	if(!fp) 
+	if(!fp)
 	{
 		return FCGI_FALSE;
 	}
@@ -111,7 +111,7 @@ int cgi_get_new_sms_state(cJSON *request_root, cJSON *response_root,int *lock_ti
 	char query[MAX_MYSQL_QUERY_LEN] = {0};
 	int unread_sms = 0;
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -127,7 +127,7 @@ int cgi_get_new_sms_state(cJSON *request_root, cJSON *response_root,int *lock_ti
 	}
 
 	snprintf(query,MAX_MYSQL_QUERY_LEN,"select count(*) from `%s` where %s>0;",SMS_HUAYI_TABLE,MYSQL_SMS_UNREAD_KEY_NAME);
-	
+
 	huayiMySqlGetInt(my_con,query,&unread_sms);
 
 	huayiMySqlClose(my_con);
@@ -138,7 +138,7 @@ int cgi_get_new_sms_state(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 
 }
@@ -151,7 +151,7 @@ int cgi_get_breaf_sms_info(cJSON *request_root, cJSON *response_root,int *lock_t
 	char query[MAX_MYSQL_QUERY_LEN] = {0};
 
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -169,7 +169,7 @@ int cgi_get_breaf_sms_info(cJSON *request_root, cJSON *response_root,int *lock_t
 	huayi_sms_json = cJSON_CreateArray();
 
 	snprintf(query,MAX_MYSQL_QUERY_LEN,"select * from `%s` order by %s desc;",SMS_HUAYI_TABLE,MYSQL_SMS_LASTTIME_KEY_NAME);
-	
+
 	huayiMySql2JsonArray(my_con,huayi_sms_json,query);
 
 	huayiMySqlClose(my_con);
@@ -178,7 +178,7 @@ int cgi_get_breaf_sms_info(cJSON *request_root, cJSON *response_root,int *lock_t
 
 	cJSON_AddItemToObject(result_root,"huayi_sms", huayi_sms_json);
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 
 }
@@ -192,16 +192,16 @@ int cgi_get_sms_session_by_number(cJSON *request_root, cJSON *response_root,int 
 	char phone_number[MAX_PHONE_NUMBER_LEN]= {0};
 
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if(!huayi_json_get_str(request_root,"number",phone_number,MAX_PHONE_NUMBER_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;	
+		return FCGI_RESP_CODE_DATA_MISS;
 	}
-	
+
 	if((my_con = mysql_init(NULL)) == NULL)
 	{
 		return FCGI_RESP_CODE_SERVER_FAILURE;
@@ -224,7 +224,7 @@ int cgi_get_sms_session_by_number(cJSON *request_root, cJSON *response_root,int 
 	huayiMySqlClose(my_con);
 
 	system("huayi-reset save_database");
-	
+
 
 	result_root = cJSON_CreateObject();
 
@@ -244,14 +244,14 @@ int cgi_delete_sms_session_by_sid(cJSON *request_root, cJSON *response_root,int 
 	MYSQL *my_con = NULL;
 	char phone_number[MAX_PHONE_NUMBER_LEN] = {0};
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if(!huayi_json_get_str(request_root,"messages_sid",sid_array,LONG_BUFF_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;	
+		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if((my_con = mysql_init(NULL)) == NULL)
@@ -270,9 +270,9 @@ int cgi_delete_sms_session_by_sid(cJSON *request_root, cJSON *response_root,int 
 		{
 
 			memset(phone_number,0,MAX_PHONE_NUMBER_LEN);
-			
+
 			snprintf(query,MAX_MYSQL_QUERY_LEN,"select %s from `%s` where %s='%s';",MYSQL_SMSNUMBER_KEY_NAME,SMS_HUAYI_TABLE,MYSQL_SMSID_KEY_NAME,sid);
-		
+
 			if(!huayiMySqlGetStr(my_con,query,phone_number,MAX_PHONE_NUMBER_LEN))
 			{
 				huayiMySqlClose(my_con);
@@ -281,21 +281,21 @@ int cgi_delete_sms_session_by_sid(cJSON *request_root, cJSON *response_root,int 
 			}
 
 			snprintf(query,MAX_MYSQL_QUERY_LEN,"drop table `%s`;",phone_number);
-			
+
 			if(!huayiMySqlExec(my_con,query))
 			{
 
 				huayiMySqlClose(my_con);
 				return FCGI_RESP_CODE_SERVER_FAILURE;
 			}
-		
+
 			snprintf(query,MAX_MYSQL_QUERY_LEN,"delete from `%s` where %s='%s';",SMS_HUAYI_TABLE,MYSQL_SMSID_KEY_NAME,sid);
-			
+
 			if(!huayiMySqlExec(my_con,query))
 			{
 				huayiMySqlClose(my_con);
 				return FCGI_RESP_CODE_SERVER_FAILURE;
-			} 
+			}
 		}
 	}
 
@@ -318,7 +318,7 @@ int cgi_delete_sms_by_cid(cJSON *request_root, cJSON *response_root,int *lock_ti
 	int sms_count = 0;
 
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -326,7 +326,7 @@ int cgi_delete_sms_by_cid(cJSON *request_root, cJSON *response_root,int *lock_ti
 	if(!huayi_json_get_str(request_root,"c_messages_sid",c_sid_array,LONG_BUFF_LEN)||
 		!huayi_json_get_str(request_root,"phone_num",phone_number,MAX_PHONE_NUMBER_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;	
+		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if((my_con = mysql_init(NULL)) == NULL)
@@ -343,9 +343,9 @@ int cgi_delete_sms_by_cid(cJSON *request_root, cJSON *response_root,int *lock_ti
 	if(strlen(c_sid_array))
 	{
 		while(huayi_get_nth_value(i++, c_sid_array, WEB_DEFAULT_DELIMIT, c_sid, sizeof(c_sid)))
-		{	
+		{
 			snprintf(query,MAX_MYSQL_QUERY_LEN,"delete from `%s` where %s='%s';",phone_number,MYSQL_SMS_CHILD_ID_KEY_NAME,c_sid);
-			
+
 			if(!huayiMySqlExec(my_con,query))
 			{
 				huayiMySqlClose(my_con);
@@ -380,7 +380,7 @@ int cgi_delete_sms_by_cid(cJSON *request_root, cJSON *response_root,int *lock_ti
 	}
 
 	huayiMySqlClose(my_con);
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 
 }
@@ -404,7 +404,7 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 	cJSON *result_root = NULL;
 	char *sql_hex = NULL;
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -412,7 +412,7 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 	if(!huayi_json_get_str(request_root,"c_messages_sid",sms_msg,MAX_SMS_MSG_LEN)||
 		!huayi_json_get_str(request_root,"phone_num",phone_number_array,LONG_BUFF_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;	
+		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if((my_con = mysql_init(NULL)) == NULL)
@@ -442,7 +442,7 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 				continue;
 			}
 			send_count++;
-			
+
 			ret = send_sms(phone_number, center_number, sms_msg);
 			if(0 == ret)
 			{
@@ -458,12 +458,12 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 						");",phone_number,MYSQL_SMS_CHILD_ID_KEY_NAME,MYSQL_SMS_MSG_KEY_NAME,MAX_SMS_MSG_LEN,
 						MYSQL_SMS_RECEIVE_TIME_KEY_NAME,MYSQL_SMS_SRC_KEY_NAME,MYSQL_SMS_CHILD_ID_KEY_NAME);
 
-						huayiMySqlExec(my_con,query);	
+						huayiMySqlExec(my_con,query);
 				}
 
 				huayiMySqlExec(my_con,"insert into `%s` (%s,%s,%s) values(0x%s,now(),1);",phone_number,MYSQL_SMS_MSG_KEY_NAME,MYSQL_SMS_RECEIVE_TIME_KEY_NAME,MYSQL_SMS_SRC_KEY_NAME,sql_hex);
-				
-				
+
+
 				snprintf(query,sizeof(query),"select %s from `%s` where %s='%s';",MYSQL_SMSID_KEY_NAME,SMS_HUAYI_TABLE,MYSQL_SMSNUMBER_KEY_NAME,phone_number);
 				huayiMySqlGetInt(my_con,query,&sid);
 
@@ -483,7 +483,7 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 																			SMS_HUAYI_TABLE,MYSQL_SMS_COUNT_KEY_NAME,SMS_HUAYI_TABLE,MYSQL_SMS_COUNT_KEY_NAME,
 																			SMS_HUAYI_TABLE,MYSQL_SMS_LASTTIME_KEY_NAME,MYSQL_SMS_RECEIVE_TIME_KEY_NAME,
 																			SMS_HUAYI_TABLE,MYSQL_SMSID_KEY_NAME,sid);
-		
+
 				}
 			}else
 			{
@@ -516,7 +516,7 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 	{
 		free(sql_hex);
 	}
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 #endif
@@ -531,7 +531,7 @@ FCGI_BOOL huayiSqlite3JsonArray(sqlite3 *my_con,cJSON *array,char *query)
 	int res = 0;
 	cJSON *root;
 	FCGI_BOOL ret = FCGI_FALSE;
-	
+
 	if((my_con == NULL) || (array == NULL) || (query == NULL))
 	{
 		return FCGI_FALSE;
@@ -543,21 +543,21 @@ FCGI_BOOL huayiSqlite3JsonArray(sqlite3 *my_con,cJSON *array,char *query)
 		ret = FCGI_TRUE;
 		goto end;
 	}
-	
+
 	if((!nrow)||(!result))
 	{
 		ret = FCGI_TRUE;
 		goto end;
 	}
-	
+
 	for(i = 1;i<nrow + 1;i++)
 	{
 		root = NULL;
-		
+
 		root=cJSON_CreateObject();
 
 		cJSON_AddItemToArray(array,root);
-		
+
 		for(j= 0;j<ncol;j++)
 		{
 			index = i * ncol + j;
@@ -566,7 +566,7 @@ FCGI_BOOL huayiSqlite3JsonArray(sqlite3 *my_con,cJSON *array,char *query)
 	}
 
 	ret = FCGI_TRUE;
-	
+
 end:
 	sqlite3_free_table(result);
 	return ret;
@@ -579,7 +579,7 @@ int cgi_get_new_sms_state(cJSON *request_root, cJSON *response_root,int *lock_ti
 	char query[MAX_SQLITE3_QUERY_LEN] = {0};
 	int unread_sms = 0;
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -590,7 +590,7 @@ int cgi_get_new_sms_state(cJSON *request_root, cJSON *response_root,int *lock_ti
 	}
 
 	snprintf(query,MAX_SQLITE3_QUERY_LEN,"select count(*) from `%s` where %s>0;",SMS_HUAYI_TABLE,SQLITE3_SMS_UNREAD_KEY_NAME);
-	
+
 	huayiSqlite3GetInt(my_con,query,&unread_sms);
 
 	huayiSqlite3Close(my_con);
@@ -601,7 +601,7 @@ int cgi_get_new_sms_state(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
@@ -613,7 +613,7 @@ int cgi_get_breaf_sms_info(cJSON *request_root, cJSON *response_root,int *lock_t
 	char query[MAX_SQLITE3_QUERY_LEN] = {0};
 
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -636,7 +636,7 @@ int cgi_get_breaf_sms_info(cJSON *request_root, cJSON *response_root,int *lock_t
 
 	cJSON_AddItemToObject(result_root,"huayi_sms", huayi_sms_json);
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
@@ -649,16 +649,16 @@ int cgi_get_sms_session_by_number(cJSON *request_root, cJSON *response_root,int 
 	char phone_number[MAX_PHONE_NUMBER_LEN]= {0};
 
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if(!huayi_json_get_str(request_root,"phone_num",phone_number,MAX_PHONE_NUMBER_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;	
+		return FCGI_RESP_CODE_DATA_MISS;
 	}
-	
+
 	if(!huayiSqlite3Open(&my_con))
 	{
 		return FCGI_RESP_CODE_SERVER_FAILURE;
@@ -676,7 +676,7 @@ int cgi_get_sms_session_by_number(cJSON *request_root, cJSON *response_root,int 
 	huayiSqlite3Close(my_con);
 
 	system("huayi-reset save_database");
-	
+
 
 	result_root = cJSON_CreateObject();
 
@@ -695,14 +695,14 @@ int cgi_delete_sms_session_by_sid(cJSON *request_root, cJSON *response_root,int 
 	sqlite3 *my_con = NULL;
 	char phone_number[MAX_PHONE_NUMBER_LEN] = {0};
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if(!huayi_json_get_str(request_root,"message_id",sid_array,LONG_BUFF_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;	
+		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if(!huayiSqlite3Open(&my_con))
@@ -716,9 +716,9 @@ int cgi_delete_sms_session_by_sid(cJSON *request_root, cJSON *response_root,int 
 		{
 
 			memset(phone_number,0,MAX_PHONE_NUMBER_LEN);
-			
+
 			snprintf(query,MAX_SQLITE3_QUERY_LEN,"select %s from `%s` where %s='%s';",SQLITE3_SMSNUMBER_KEY_NAME,SMS_HUAYI_TABLE,SQLITE3_SMSID_KEY_NAME,sid);
-		
+
 			if(!huayiSqlite3GetStr(my_con,query,phone_number,MAX_PHONE_NUMBER_LEN))
 			{
 				huayiSqlite3Close(my_con);
@@ -727,28 +727,28 @@ int cgi_delete_sms_session_by_sid(cJSON *request_root, cJSON *response_root,int 
 			}
 
 			snprintf(query,MAX_SQLITE3_QUERY_LEN,"drop table `%s`;",phone_number);
-			
+
 			if(!huayiSqlite3Exec(my_con,query))
 			{
 
 				huayiSqlite3Close(my_con);
 				return FCGI_RESP_CODE_SERVER_FAILURE;
 			}
-		
+
 			snprintf(query,MAX_SQLITE3_QUERY_LEN,"delete from `%s` where %s='%s';",SMS_HUAYI_TABLE,SQLITE3_SMSID_KEY_NAME,sid);
-			
+
 			if(!huayiSqlite3Exec(my_con,query))
 			{
 				huayiSqlite3Close(my_con);
 				return FCGI_RESP_CODE_SERVER_FAILURE;
-			} 
+			}
 		}
 	}
 
 	huayiSqlite3Close(my_con);
 
 	system("huayi-reset save_database");
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
@@ -765,13 +765,13 @@ int cgi_delete_sms_by_cid(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	char **result = NULL;
 	char *zErrMsg = NULL;
-	int nrow = 0,ncol = 0; 
+	int nrow = 0,ncol = 0;
 	int sql_c_sid = 0;
 	int sql_sms_count = 0;
 	char date_str[MAX_SQLITE3_VALUE_LEN] = {0};
 	char data_msg[MAX_SQLITE3_QUERY_LEN] = {0};
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -779,7 +779,7 @@ int cgi_delete_sms_by_cid(cJSON *request_root, cJSON *response_root,int *lock_ti
 	if(!huayi_json_get_str(request_root,"c_message_sid",c_sid_array,LONG_BUFF_LEN)||
 		!huayi_json_get_str(request_root,"phone_num",phone_number,MAX_PHONE_NUMBER_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;	
+		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if(!huayiSqlite3Open(&my_con))
@@ -791,9 +791,9 @@ int cgi_delete_sms_by_cid(cJSON *request_root, cJSON *response_root,int *lock_ti
 	if(strlen(c_sid_array))
 	{
 		while(huayi_get_nth_value(i++, c_sid_array, WEB_DEFAULT_DELIMIT, c_sid, sizeof(c_sid)))
-		{	
+		{
 			snprintf(query,MAX_SQLITE3_QUERY_LEN,"delete from `%s` where %s='%s';",phone_number,SQLITE3_SMS_CHILD_ID_KEY_NAME,c_sid);
-			
+
 			if(!huayiSqlite3Exec(my_con,query))
 			{
 				huayiSqlite3Close(my_con);
@@ -852,7 +852,7 @@ int cgi_delete_sms_by_cid(cJSON *request_root, cJSON *response_root,int *lock_ti
 			if(!huayiSqlite3Exec(my_con,query))
 			{
 				goto end;
-			}															
+			}
 		}
 		system("huayi-reset save_database");
 	}
@@ -884,13 +884,13 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	char **result = NULL;
 	char *zErrMsg = NULL;
-	int nrow = 0,ncol = 0; 
+	int nrow = 0,ncol = 0;
 	int c_sid = 0;
 	int sms_count = 0;
 	char date_str[MAX_SQLITE3_VALUE_LEN] = {0};
 	char data_msg[MAX_SQLITE3_QUERY_LEN] = {0};
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -898,7 +898,7 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 	if(!huayi_json_get_str(request_root,"message_content",sms_msg,MAX_SMS_MSG_LEN)||
 		!huayi_json_get_str(request_root,"phone_num",phone_number_array,LONG_BUFF_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;	
+		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if(!huayiSqlite3Open(&my_con))
@@ -940,17 +940,17 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 						");",phone_number,SQLITE3_SMS_CHILD_ID_KEY_NAME,SQLITE3_SMS_MSG_KEY_NAME,MAX_SMS_MSG_LEN,
 						SQLITE3_SMS_RECEIVE_TIME_KEY_NAME,SQLITE3_SMS_SRC_KEY_NAME,SQLITE3_SMS_CHILD_ID_KEY_NAME);
 
-						huayiSqlite3Exec(my_con,query);	
+						huayiSqlite3Exec(my_con,query);
 				}
 
 				//huayiSqlite3Exec(my_con,"insert into `%s` (%s,%s,%s) values('%s',datetime('now','localtime'),1);",phone_number,SQLITE3_SMS_MSG_KEY_NAME,SQLITE3_SMS_RECEIVE_TIME_KEY_NAME,SQLITE3_SMS_SRC_KEY_NAME,data_msg);
 				memset(query,0,sizeof(query));
 				snprintf(query,sizeof(query),"insert into `%s` (%s,%s,%s) values('%s',datetime('now','localtime'),1);",phone_number,SQLITE3_SMS_MSG_KEY_NAME,SQLITE3_SMS_RECEIVE_TIME_KEY_NAME,SQLITE3_SMS_SRC_KEY_NAME,data_msg);
-	
+
 				ret = sqlite3_exec(my_con,query, NULL, NULL, &zErrMsg);
 				if(ret != SQLITE_OK)
 				{
-					printf("%s sql fail,error code:%d, erro:%s\n",__FUNCTION__, ret, zErrMsg);	
+					printf("%s sql fail,error code:%d, erro:%s\n",__FUNCTION__, ret, zErrMsg);
 					goto end;
 				}
 				snprintf(query,sizeof(query),"select %s from `%s` where %s='%s';",SQLITE3_SMSID_KEY_NAME,SMS_HUAYI_TABLE,SQLITE3_SMSNUMBER_KEY_NAME,phone_number);
@@ -1002,10 +1002,10 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 					ret = sqlite3_exec(my_con,query, NULL, NULL, &zErrMsg);
 					if(ret != SQLITE_OK)
 					{
-						printf("%s sql fail,error code:%d, erro:%s\n",__FUNCTION__, ret, zErrMsg);	
+						printf("%s sql fail,error code:%d, erro:%s\n",__FUNCTION__, ret, zErrMsg);
 						goto end;
 					}
-		
+
 				}
 			}else
 			{
@@ -1034,7 +1034,7 @@ int cgi_send_sms_messages(cJSON *request_root, cJSON *response_root,int *lock_ti
 		system("huayi-reset save_database");
 	}
 
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 end:
 	sqlite3_free_table(result);
@@ -1043,14 +1043,14 @@ end:
 #endif
 
 int cgi_get_module_pin_state(cJSON *request_root, cJSON *response_root,int *lock_time)
-{	
+{
 	cJSON *result_root =NULL;
 	int sim_state = 0;
 	int pin_num = 0;
 	int puk_num = 0;
 	char module_status[OPTION_STR_LEN] = {0};
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -1068,18 +1068,18 @@ int cgi_get_module_pin_state(cJSON *request_root, cJSON *response_root,int *lock
 	}
 
 	atcmd_get_cpin(&sim_state);
-	
+
 	if (sim_state > MODEM_SIN_PUK)
 		sim_state = MODEM_SIN_NOT_INSERTED;
-	
+
 	atcmd_get_cpinr(&pin_num,&puk_num);
 
 	cJSON_AddNumberToObject(result_root,"sim_state",sim_state);
 
 	cJSON_AddNumberToObject(result_root,"last_times",pin_num);
-	
+
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
@@ -1093,8 +1093,8 @@ int cgi_set_sim_lock_set_pin(cJSON *request_root, cJSON *response_root,int *lock
 	int sim_state = LTE_TRUE;
 	int pin_num = 0;
 	int puk_num = 0;
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -1106,30 +1106,30 @@ int cgi_set_sim_lock_set_pin(cJSON *request_root, cJSON *response_root,int *lock
 	}
 
 	atcmd_get_clck(&old_sim_clck);
-	
+
 	atcmd_get_cpin(&sim_state);
 	if (sim_state == MODEM_SIN_PIN)
 	{
 		result = atcmd_set_cpin(pin_code);
 	}
-	
+
 	if (result == LTE_TRUE && old_sim_clck != sim_clck)
 	{
 		result = atcmd_set_clck(sim_clck,pin_code);
 	}
-	
+
 	if (result == LTE_FALSE)
-	{	
+	{
 		atcmd_get_cpinr(&pin_num,&puk_num);
-		
+
 		cJSON_AddNumberToObject(response_root,"last_times",pin_num);
-		
+
 		return FCGI_RESP_CODE_PIN_CODE_ERROR;
 	}
 	*lock_time = HUAYI_RELOAD_4G_MODE;
 	system("huayi-reset lte4g parameter 1");
 	system("huayi_cmd set modem lteMode 1");
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
@@ -1139,8 +1139,8 @@ int cgi_get_sim_clck(cJSON *request_root, cJSON *response_root,int *lock_time)
 	int sim_clck = 0;
 	int pin_num = 0;
 	int puk_num = 0;
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -1152,23 +1152,23 @@ int cgi_get_sim_clck(cJSON *request_root, cJSON *response_root,int *lock_time)
 	huayi_add_switch_to_json(result_root,"sim_clck",sim_clck);
 
 	atcmd_get_cpinr(&pin_num,&puk_num);
-	
+
 	cJSON_AddNumberToObject(result_root,"last_times",pin_num);
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
 	return FCGI_RESP_CODE_SUCCESS;
 }
-	
+
 int cgi_set_pin_clck(cJSON *request_root, cJSON *response_root,int *lock_time)
-{	
+{
 	char pin_code[SMALL_STR_LEN+1] ={0};
 	int sim_clck = 0;
 	int result = 0;
 	int pin_num = 0;
 	int puk_num = 0;
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -1178,9 +1178,9 @@ int cgi_set_pin_clck(cJSON *request_root, cJSON *response_root,int *lock_time)
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
-	
+
 	result = atcmd_set_clck(sim_clck,pin_code);
-	
+
 	if (result == LTE_TRUE)
 	{
 		*lock_time = HUAYI_RELOAD_4G_MODE;
@@ -1189,23 +1189,23 @@ int cgi_set_pin_clck(cJSON *request_root, cJSON *response_root,int *lock_time)
 		return FCGI_RESP_CODE_SUCCESS;
 	}
 	else
-	{	
+	{
 		atcmd_get_cpinr(&pin_num,&puk_num);
-		
+
 		cJSON_AddNumberToObject(response_root,"last_times",pin_num);
 		return FCGI_RESP_CODE_PIN_CODE_ERROR;
 	}
 }
 
 int cgi_change_module_pin_code(cJSON *request_root, cJSON *response_root,int *lock_time)
-{	
+{
 	char old_pin_code[SMALL_STR_LEN+1] = {0};
 	char new_pin_code[SMALL_STR_LEN+1] = {0};
 	int result = 0;
 	int pin_num = 0;
 	int puk_num = 0;
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -1230,8 +1230,8 @@ int cgi_change_module_pin_code(cJSON *request_root, cJSON *response_root,int *lo
 		{
 			goto update_fail;
 		}
-		
-	} 
+
+	}
 	else
 	{
 		goto update_fail;
@@ -1245,15 +1245,15 @@ update_succ:
 		return FCGI_RESP_CODE_SUCCESS;
 	}
 
-update_fail:		
+update_fail:
 	atcmd_get_cpinr(&pin_num,&puk_num);
-	
+
 	cJSON_AddNumberToObject(response_root,"last_times",pin_num);
 	return FCGI_RESP_CODE_PIN_CODE_ERROR;
 }
 
 int cgi_get_module_apn_config(cJSON *request_root, cJSON *response_root,int *lock_time)
-{	
+{
 	cJSON *result_root =NULL;
 	int sim_state = 0;
 	int module_ready = 0;
@@ -1264,14 +1264,14 @@ int cgi_get_module_apn_config(cJSON *request_root, cJSON *response_root,int *loc
 	char username[OPTION_STR_LEN] = {0};
 	char password[OPTION_STR_LEN] = {0};
 	int  use_apn = 0;
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	result_root = cJSON_CreateObject();
-	
+
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","modemModel",module_status);
 	if (strlen(module_status) == 0)
 	{
@@ -1300,7 +1300,7 @@ int cgi_get_module_apn_config(cJSON *request_root, cJSON *response_root,int *loc
 	huayi_uci_get_str(PKG_MODEM,"status","apn",apn_name);
 	huayi_uci_get_str(PKG_MODEM,"status","user4g",username);
 	huayi_uci_get_str(PKG_MODEM,"status","pass4g",password);
-	
+
 	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 	cJSON_AddStringToObject(result_root,"wan_mode",wan_type);
 
@@ -1309,21 +1309,21 @@ int cgi_get_module_apn_config(cJSON *request_root, cJSON *response_root,int *loc
 	cJSON_AddStringToObject(result_root,"apn_name",apn_name);
 	cJSON_AddStringToObject(result_root,"apn_usr",username);
 	cJSON_AddStringToObject(result_root,"apn_pwd",password);
-	
+
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
 int cgi_set_module_apn_config(cJSON *request_root, cJSON *response_root,int *lock_time)
-{	
+{
 	int  auth_type = 0;
 	char apn_name[OPTION_STR_LEN] = {0};
 	char username[OPTION_STR_LEN] = {0};
 	char password[OPTION_STR_LEN] = {0};
 	int  use_apn = 0;
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -1332,13 +1332,13 @@ int cgi_set_module_apn_config(cJSON *request_root, cJSON *response_root,int *loc
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
-	
+
 	huayi_json_get_int(request_root,"auth_type",&auth_type);
-	
+
 	huayi_json_get_str(request_root,"apn_name",apn_name,OPTION_STR_LEN);
-	
+
 	huayi_json_get_str(request_root,"apn_usr",username,OPTION_STR_LEN);
-	
+
 	huayi_json_get_str(request_root,"apn_pwd",password,OPTION_STR_LEN);
 
 	huayi_uci_set_int(PKG_MODEM,"status","mode",use_apn);
@@ -1346,16 +1346,16 @@ int cgi_set_module_apn_config(cJSON *request_root, cJSON *response_root,int *loc
 	huayi_uci_set_str(PKG_MODEM,"status","apn",apn_name);
 	huayi_uci_set_str(PKG_MODEM,"status","user4g",username);
 	huayi_uci_set_str(PKG_MODEM,"status","pass4g",password);
-	
+
 	huayi_uci_commit(PKG_MODEM);
 
 	system("huayi-reset lte4g parameter 1");
-	
+
 	cJSON_AddFalseToObject(response_root,"reconnection");
 	cJSON_AddStringToObject(response_root,"reconnection_addr","");
-	
+
 	*lock_time = HUAYI_RELOAD_NETWORK_TIME;
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
@@ -1379,8 +1379,8 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	unsigned long long rx_bytes = 0;
 	unsigned long long tx_bytes = 0;
 	int  wifi_2g = 0;
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -1392,10 +1392,10 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","link",&wan_link);
 
 	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","sim_ready",&sim_state);
-	
+
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","network",mobile_network);
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","mobile_type",mobile_type);
-	
+
 	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","signal",&signal);
 	signal = signal/5 - 120;
 
@@ -1405,7 +1405,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	huayi_uci_get_int(PKG_WIRELESS,"radio0","disabled",&wifi_2g);
 	wifi_2g = wifi_2g?0:1;
-	
+
 	result_root = cJSON_CreateObject();
 
 	cJSON_AddStringToObject(result_root,"wan_mode",wan_type);
@@ -1453,12 +1453,12 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	if(wan_up == 0)
 	{
-		cJSON_AddNumberToObject(result_root,"wan_uptime",0);	
+		cJSON_AddNumberToObject(result_root,"wan_uptime",0);
 	}else
-	{		
+	{
 		cJSON_AddNumberToObject(result_root,"wan_uptime",(uptime-wan_uptime));
 	}
-	
+
 	cJSON_AddNumberToObject(result_root,"sim_state",sim_state);
 
 	cJSON_AddStringToObject(result_root,"mobile_network",mobile_network);
@@ -1470,11 +1470,11 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	get_active_arp(1,NULL,&client_num);
 	cJSON_AddNumberToObject(result_root,"client_sum",client_num);
-	
+
 	huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","tx_bps",&tx_bps);
 	tx_bbbps = ((unsigned long long)tx_bps * 8);
 	cJSON_AddNumberToObject(result_root,"tx_bps",tx_bbbps);
-	
+
 	huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","rx_bps",&rx_bps);
 	rx_bbbps = ((unsigned long long)rx_bps * 8);
 	cJSON_AddNumberToObject(result_root,"rx_bps",rx_bbbps);
@@ -1482,7 +1482,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	huayi_uci_get_long_long(PKG_STATUS_NETWORK,"wan","rx_bytes",&rx_bytes);
 
 	cJSON_AddNumberToObject(result_root,"rx_bytes",rx_bytes);
-	
+
 	huayi_uci_get_long_long(PKG_STATUS_NETWORK,"wan","tx_bytes",&tx_bytes);
 
 	cJSON_AddNumberToObject(result_root,"tx_bytes",tx_bytes);
@@ -1506,8 +1506,8 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 	char	apcli_ifname[OPTION_STR_LEN] = {0};
 	char	resultbuf[OPTION_STR_LEN] = {0};
 	char	get_cmd[OPTION_STR_LEN] = {0};
-	
-		
+
+
 	if(!huayi_json_get_int(request_root,"channel",&channel) || \
 		!huayi_json_get_str(request_root,"bssid",bssid,OPTION_STR_LEN) || \
 		!huayi_json_get_str(request_root,"ssid",ssid,OPTION_STR_LEN) || \
@@ -1530,7 +1530,7 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 		strcpy(authmode_uci,get_wireless_config_authmode(authmode));
 		strcpy(encryption_uci,get_wireless_config_encryptype(encryption));
 	}
-	
+
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	if (channel > 14)
 	{
@@ -1541,11 +1541,11 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_enable","1");
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"network","wan");
 		strcpy(wan_ifname, W58G_REP_IFNAME);
-		
+
 		huayi_uci_set_int(PKG_WIRELESS,W58G_DEV,"channel",channel);
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_bssid",bssid);
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_ssid",ssid);
-		
+
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_authmode",authmode_uci);
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_encryptype",encryption_uci);
 
@@ -1569,11 +1569,11 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_enable","1");
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"network","wan");
 		strcpy(wan_ifname, W24G_REP_IFNAME);
-		
+
 		huayi_uci_set_int(PKG_WIRELESS,W24G_DEV,"channel",channel);
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_bssid",bssid);
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_ssid",ssid);
-		
+
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_authmode",authmode_uci);
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_encryptype",encryption_uci);
 
@@ -1591,18 +1591,18 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 	huayi_uci_set_int(PKG_WIRELESS,W24G_DEV,"ht_extcha",ht_extcha);
 	huayi_uci_get_int(PKG_SYSTEM,"mode","opmode",&old_sys_mode);
 	if(old_sys_mode != HUAYI_ROUTE_MODE && old_sys_mode != HUAYI_WISP_MODE)   //AP\REPEATER   ---> wisp MODE
-	{	
+	{
 		huayi_uci_get_str(PKG_NETWORK,"lan","def_ip",def_lan_ip);
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_lan_ifname",wan_lan_ifname);
-			
+
 		huayi_uci_set_str(PKG_NETWORK,"lan","ipaddr",def_lan_ip);
 		huayi_uci_set_str(PKG_NETWORK,"lan","netmask",HUAYI_DEFAULT_NET_MASK);
 		huayi_uci_set_str(PKG_NETWORK,"lan","proto","static");
 		huayi_uci_set_str(PKG_NETWORK,"lan","ifname",wan_lan_ifname);
 	}
-	
+
 	huayi_uci_set_str(PKG_DHCP,"lan","ignore","0");
-	
+
 	huayi_uci_set_str(PKG_NETWORK,"wan","ifname",wan_ifname);
 
 	huayi_uci_set_str(PKG_NETWORK,"wan","proto","dhcp");
@@ -1626,13 +1626,13 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 	huayi_uci_set_int(PKG_HWNAT,"global","enabled",1);
 	huayi_uci_commit(PKG_HWNAT);
 #endif
-	
+
 	return FCGI_TRUE;
 }
 
 
 int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *lock_time)
-{	
+{
 	cJSON 	*result_root =NULL;
 	char 	proto[OPTION_STR_LEN] = {0};
 	char 	ipaddr[IPV4_STR_LEN] = {0};
@@ -1646,7 +1646,7 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	char 	password[PASSWD_LONG_STR_LEN] = {0};
 	char 	ac[OPTION_STR_LEN] = {0};
 	char 	service[OPTION_STR_LEN] = {0};
-	char 	hostname[OPTION_STR_LEN] = {0};	
+	char 	hostname[OPTION_STR_LEN] = {0};
 	char 	macaddr[MAC_STR_LEN] = {0};
 	char 	def_macaddr[MAC_STR_LEN] = {0};
 	char 	wan_type[OPTION_STR_LEN] = {0};
@@ -1660,12 +1660,12 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	int  	use_apn = 0;
 	char	detectip[OPTION_STR_LEN] = {0};
 	int     detect_time = 0;
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
-	
+
 	result_root = cJSON_CreateObject();
 
 	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
@@ -1675,7 +1675,7 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	{
 		huayi_uci_get_str(PKG_NETWORK,"wan4g","proto",proto);
 		cJSON_AddStringToObject(result_root,"proto",proto);
-	
+
 		huayi_uci_get_str(PKG_NETWORK,"wan4g","hostname",hostname);
 		if(strlen(hostname) <= 0)
 		{
@@ -1686,13 +1686,13 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 
 		huayi_uci_get_str(PKG_NETWORK,"wan4g","macaddr",macaddr);
 		cJSON_AddStringToObject(result_root,"mac_addr",macaddr);
-		
+
 		huayi_uci_get_str(PKG_NETWORK,"wan4g","def_macaddr",def_macaddr);
 		cJSON_AddStringToObject(result_root,"def_mac_addr",def_macaddr);
-		
+
 		huayi_uci_get_int(PKG_NETWORK,"wan4g","ppp_mtu",&ppp_mtu);
 		cJSON_AddNumberToObject(result_root,"ppp_mtu",ppp_mtu);
-		
+
 		huayi_uci_get_int(PKG_NETWORK,"wan4g","cc_mtu",&cc_mtu);
 		cJSON_AddNumberToObject(result_root,"cc_mtu",cc_mtu);
 	}
@@ -1703,7 +1703,7 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 
 		huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
 		cJSON_AddStringToObject(result_root,"proto",proto);
-	
+
 		huayi_uci_get_str(PKG_NETWORK,"wan","hostname",hostname);
 		if(strlen(hostname) <= 0)
 		{
@@ -1714,13 +1714,13 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 
 		huayi_uci_get_str(PKG_NETWORK,"wan","macaddr",macaddr);
 		cJSON_AddStringToObject(result_root,"mac_addr",macaddr);
-		
+
 		huayi_uci_get_str(PKG_NETWORK,"wan","def_macaddr",def_macaddr);
 		cJSON_AddStringToObject(result_root,"def_mac_addr",def_macaddr);
-		
+
 		huayi_uci_get_int(PKG_NETWORK,"wan","ppp_mtu",&ppp_mtu);
 		cJSON_AddNumberToObject(result_root,"ppp_mtu",ppp_mtu);
-		
+
 		huayi_uci_get_int(PKG_NETWORK,"wan","cc_mtu",&cc_mtu);
 		cJSON_AddNumberToObject(result_root,"cc_mtu",cc_mtu);
 
@@ -1735,26 +1735,26 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 
 		huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
 		cJSON_AddStringToObject(result_root,"proto",proto);
-	
+
 		huayi_uci_get_str(PKG_NETWORK,"wan","hostname",hostname);
 		if(strlen(hostname) <= 0)
 		{
 			huayi_uci_get_str(PKG_SYSTEM,"system","hostname",hostname);
 		}
-		
+
 		cJSON_AddStringToObject(result_root,"hostname",hostname);
 		//huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
 		//cJSON_AddStringToObject(result_root,"detect_ip",detectip);
 
 		huayi_uci_get_str(PKG_NETWORK,"wan","macaddr",macaddr);
 		cJSON_AddStringToObject(result_root,"mac_addr",macaddr);
-		
+
 		huayi_uci_get_str(PKG_NETWORK,"wan","def_macaddr",def_macaddr);
 		cJSON_AddStringToObject(result_root,"def_mac_addr",def_macaddr);
-		
+
 		huayi_uci_get_int(PKG_NETWORK,"wan","ppp_mtu",&ppp_mtu);
 		cJSON_AddNumberToObject(result_root,"ppp_mtu",ppp_mtu);
-		
+
 		huayi_uci_get_int(PKG_NETWORK,"wan","cc_mtu",&cc_mtu);
 		cJSON_AddNumberToObject(result_root,"cc_mtu",cc_mtu);
 
@@ -1766,12 +1766,12 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	{
 		//huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
 		//cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
-		
+
 		//huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
 		//cJSON_AddStringToObject(result_root,"detect_ip",detectip);
 		huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
 		cJSON_AddStringToObject(result_root,"proto",proto);
-	
+
 		huayi_uci_get_str(PKG_NETWORK,"wan","hostname",hostname);
 		if(strlen(hostname) <= 0)
 		{
@@ -1782,34 +1782,34 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 
 		huayi_uci_get_str(PKG_NETWORK,"wan","macaddr",macaddr);
 		cJSON_AddStringToObject(result_root,"mac_addr",macaddr);
-		
+
 		huayi_uci_get_str(PKG_NETWORK,"wan","def_macaddr",def_macaddr);
 		cJSON_AddStringToObject(result_root,"def_mac_addr",def_macaddr);
-		
+
 		huayi_uci_get_int(PKG_NETWORK,"wan","ppp_mtu",&ppp_mtu);
 		cJSON_AddNumberToObject(result_root,"ppp_mtu",ppp_mtu);
-		
+
 		huayi_uci_get_int(PKG_NETWORK,"wan","cc_mtu",&cc_mtu);
 		cJSON_AddNumberToObject(result_root,"cc_mtu",cc_mtu);
 	}
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	huayi_uci_get_int(PKG_SYSTEM,"mode","detect_time", &detect_time);
 	cJSON_AddNumberToObject(result_root,"detect_time",detect_time);
-#endif		
+#endif
 	huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
 	cJSON_AddStringToObject(result_root,"detect_ip",detectip);
-	
+
 	huayi_uci_get_str(PKG_NETWORK,"wan","ipaddr",ipaddr);
 	cJSON_AddStringToObject(result_root,"ip_addr",ipaddr);
-	
+
 	huayi_uci_get_str(PKG_NETWORK,"wan","netmask",netmask);
 	cJSON_AddStringToObject(result_root,"subnet_mask",netmask);
-	
+
 	huayi_uci_get_str(PKG_NETWORK,"wan","gateway",gateway);
 	cJSON_AddStringToObject(result_root,"gateway",gateway);
 
 	huayi_uci_get_str(PKG_NETWORK,"wan","dns",temp_dns);
-		
+
 	dns_array = cJSON_CreateArray();
 	while(huayi_get_nth_value(i++, temp_dns, WEB_SPACE_DELIMIT, dns, sizeof(dns)))
 	{
@@ -1830,15 +1830,15 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	cJSON_AddStringToObject(result_root,"service",service);
 
 	huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","link",&link);
-	
+
 	cJSON_AddNumberToObject(result_root,"link",link);
-	
+
 	huayi_uci_get_int(PKG_MODEM,"status","mode",&use_apn);
 	huayi_uci_get_str(PKG_MODEM,"status","validation",auth_type);
 	huayi_uci_get_str(PKG_MODEM,"status","apn",apn_name);
 	huayi_uci_get_str(PKG_MODEM,"status","user4g",apnusername);
 	huayi_uci_get_str(PKG_MODEM,"status","pass4g",apnpassword);
-	
+
 	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 	cJSON_AddStringToObject(result_root,"wan_mode",wan_type);
 
@@ -1847,14 +1847,14 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	cJSON_AddStringToObject(result_root,"apn_name",apn_name);
 	cJSON_AddStringToObject(result_root,"apn_usr",apnusername);
 	cJSON_AddStringToObject(result_root,"apn_pwd",apnpassword);
-	
+
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
 int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *lock_time)
-{	
+{
 	char wan_type[OPTION_STR_LEN] = {0};
 	char wan_ifname[OPTION_STR_LEN] = {0};
 	char lan_ifname[OPTION_STR_LEN] = {0};
@@ -1872,14 +1872,14 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	char password[OPTION_STR_LEN] = {0};
 	int  use_apn = 0, ret = 0;
 	char pmodel[16] = { 0 };
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
-	
+
 	if(!huayi_json_get_str(request_root,"wan_mode",wan_type,OPTION_STR_LEN))
-	
+
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -1892,15 +1892,15 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		{
 			return FCGI_RESP_CODE_DATA_MISS;
 		}
-		
+
 		huayi_uci_delete_option(PKG_NETWORK,"wan","ifname");
-		
+
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_4g_ifname",lan_ifname);
 		if(strlen(lan_ifname)>0)
 		{
 			huayi_uci_set_str(PKG_NETWORK,"lan","ifname",lan_ifname);
 		}
-			
+
 		memset(cmd,0,sizeof(cmd));
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
 		if((strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
@@ -1923,8 +1923,8 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		if(1 == use_apn)
 		{
 			huayi_json_get_int(request_root,"auth_type",&auth_type);
-			huayi_json_get_str(request_root,"apn_name",apn_name,OPTION_STR_LEN);	
-			huayi_json_get_str(request_root,"apn_usr",username,OPTION_STR_LEN);	
+			huayi_json_get_str(request_root,"apn_name",apn_name,OPTION_STR_LEN);
+			huayi_json_get_str(request_root,"apn_usr",username,OPTION_STR_LEN);
 			huayi_json_get_str(request_root,"apn_pwd",password,OPTION_STR_LEN);
 
 			huayi_uci_set_int(PKG_MODEM,"status","validation",auth_type);
@@ -1935,7 +1935,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		else
 		{
 			if(!huayi_json_get_str(request_root,"mac_addr",macaddr,MAC_STR_LEN))
-			
+
 			{
 				return FCGI_RESP_CODE_DATA_MISS;
 			}
@@ -2015,7 +2015,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 				{
 					huayi_uci_revert(PKG_NETWORK);
 					return FCGI_RESP_CODE_DATA_MISS;
-				}*/	
+				}*/
 				huayi_json_get_str(request_root,"hostname",hostname,OPTION_STR_LEN);
 				if(strlen(hostname)>0)
 				{
@@ -2030,7 +2030,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 				huayi_uci_set_int(PKG_NETWORK,"wan","cc_mtu",cc_mtu);
 				huayi_uci_set_int(PKG_NETWORK,"wan","mtu",cc_mtu);
 			}
-		
+
 			huayi_uci_set_str(PKG_NETWORK,"wan","proto",proto);
 			if(!huayi_json_get_str(request_root,"mac_addr",macaddr,MAC_STR_LEN))
 			{
@@ -2062,8 +2062,8 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			if(1 == use_apn)
 			{
 				huayi_json_get_int(request_root,"auth_type",&auth_type);
-				huayi_json_get_str(request_root,"apn_name",apn_name,OPTION_STR_LEN);	
-				huayi_json_get_str(request_root,"apn_usr",username,OPTION_STR_LEN);	
+				huayi_json_get_str(request_root,"apn_name",apn_name,OPTION_STR_LEN);
+				huayi_json_get_str(request_root,"apn_usr",username,OPTION_STR_LEN);
 				huayi_json_get_str(request_root,"apn_pwd",password,OPTION_STR_LEN);
 
 				huayi_uci_set_int(PKG_MODEM,"status","validation",auth_type);
@@ -2074,7 +2074,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			else
 			{
 				if(!huayi_json_get_str(request_root,"mac_addr",macaddr,MAC_STR_LEN))
-				
+
 				{
 					return FCGI_RESP_CODE_DATA_MISS;
 				}
@@ -2095,7 +2095,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			}
 			huayi_uci_set_int(PKG_MODEM,"status","mode",use_apn);
 		}
-	
+
 	}
 #endif
 
@@ -2116,14 +2116,14 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend wisp_device %s",wan_ifname);
 		system(cmd);
-		
+
 		//huayi_uci_set_str(PKG_NETWORK,"wan","proto",proto);
 		//if(!huayi_json_get_str(request_root,"mac_addr",macaddr,MAC_STR_LEN))
 		//{
 		//	return FCGI_RESP_CODE_DATA_MISS;
 		//}
 		//huayi_uci_set_str(PKG_NETWORK,"wan","macaddr",macaddr);
-		
+
 		memset(cmd,0,sizeof(cmd));
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
 		if((strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
@@ -2138,7 +2138,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend cpe_device eth1");
 		}
 		system(cmd);
-		
+
 		huayi_json_get_str(request_root,"detect_ip", detectip, OPTION_STR_LEN);
 		if(strlen(detectip)>0)
 		{
@@ -2157,8 +2157,8 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		if(1 == use_apn)
 		{
 			huayi_json_get_int(request_root,"auth_type",&auth_type);
-			huayi_json_get_str(request_root,"apn_name",apn_name,OPTION_STR_LEN);	
-			huayi_json_get_str(request_root,"apn_usr",username,OPTION_STR_LEN); 
+			huayi_json_get_str(request_root,"apn_name",apn_name,OPTION_STR_LEN);
+			huayi_json_get_str(request_root,"apn_usr",username,OPTION_STR_LEN);
 			huayi_json_get_str(request_root,"apn_pwd",password,OPTION_STR_LEN);
 
 			huayi_uci_set_int(PKG_MODEM,"status","validation",auth_type);
@@ -2207,7 +2207,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		ret = set_wisp_mode(request_root);
 		if(FCGI_TRUE != ret)
 			return ret;
-		
+
 		huayi_uci_set_str(PKG_NETWORK,"wan","proto", "dhcp");
 	}
 #else
@@ -2259,13 +2259,13 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			{
 				huayi_uci_revert(PKG_NETWORK);
 				return FCGI_RESP_CODE_DATA_MISS;
-			}*/	
+			}*/
 			huayi_json_get_str(request_root,"hostname",hostname,OPTION_STR_LEN);
 			if(strlen(hostname)>0)
 			{
 				huayi_uci_set_str(PKG_NETWORK, "wan", "hostname",hostname);
 			}
-			
+
 			huayi_uci_delete_option(PKG_NETWORK, "wan", "dns");
 			huayi_uci_set_int(PKG_NETWORK,"wan","cc_mtu",cc_mtu);
 			huayi_uci_set_int(PKG_NETWORK,"wan","mtu",cc_mtu);
@@ -2273,7 +2273,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			huayi_uci_set_str(PKG_NETWORK,"wan","netmask", "");
 			huayi_uci_set_str(PKG_NETWORK,"wan","gateway", "");
 		}
-	
+
 		huayi_uci_set_str(PKG_NETWORK,"wan","proto",proto);
 		if(!huayi_json_get_str(request_root,"mac_addr",macaddr,MAC_STR_LEN))
 		{
@@ -2281,12 +2281,12 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		}
 		huayi_uci_set_str(PKG_NETWORK,"wan","macaddr",macaddr);
 	}
-#endif	
+#endif
 	huayi_uci_commit(PKG_SYSTEM);
 	huayi_uci_commit(PKG_NETWORK);
 	huayi_uci_commit(PKG_MODEM);
 	huayi_uci_commit(PKG_WIRELESS);
-	
+
 	if (!strcmp(wan_type, WAN_TYPE_4G_MOBILE))
 	{
 		system("huayi-reset lte4g parameter 0");
@@ -2303,13 +2303,13 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			system("huayi-reset lte4g parameter 0");
 		}
 #endif
-	
+
 	system("huayi-reset network");
 	*lock_time = HUAYI_RELOAD_NETWORK_TIME;
 
 	cJSON_AddFalseToObject(response_root,"reconnection");
 	cJSON_AddStringToObject(response_root,"reconnection_addr","");
-	
+
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
@@ -2322,11 +2322,11 @@ int cgi_get_4g_signal(cJSON *request_root, cJSON *response_root,int *lock_time)
 	char ssid_5g[OPTION_STR_LEN] = {0},pwd_5g[TEMP_STR_LEN] = {0};
 #endif
 
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
-	
+
 	result_root = cJSON_CreateObject();
 
 	atcmd_get_cpin(&i_ready);
@@ -2353,7 +2353,7 @@ int cgi_get_4g_signal(cJSON *request_root, cJSON *response_root,int *lock_time)
 	{
 		return FCGI_RESP_CODE_SERVER_FAILURE;
 	}
-	
+
 	huayi_uci_get_str(PKG_WIRELESS,"radio1_0","key",pwd_5g);
 
 	cJSON_AddStringToObject(result_root,"ssid_5g",ssid_5g);
@@ -2369,8 +2369,8 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 	cJSON 	*result_root =NULL;
 	char *lte_value[OPTION_STR_LEN]={0},checksignalips[OPTION_STR_LEN]={0};
 	int i_ready=0,i_signal=0,is_ok=0;
-	
-	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -2381,8 +2381,8 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 
 	//memset(lte_value,0,sizeof(lte_value));
 	//strcpy(lte_value,"SN");
-	
-	
+
+
 	memset(lte_value,0,sizeof(lte_value));
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","imei",lte_value);
 	cJSON_AddStringToObject(result_root,"imei",lte_value);
@@ -2410,8 +2410,9 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 
 
 	//上网是否成功
-	strcpy(checksignalips,"114.114.114.114");
+	//strcpy(checksignalips,"114.114.114.114");
 	memset(lte_value,0,sizeof(lte_value));
+	huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip", checksignalips);
 	is_ok = internet_do_ping_detect(checksignalips, NULL);
 	if(is_ok == 1)
 	{
@@ -2423,7 +2424,7 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 		cJSON_AddStringToObject(result_root,"net_delay", "0");
 	}
 	cJSON_AddNumberToObject(result_root,"intelnet_ok",is_ok);
-	
+
 	atcmd_get_cpin(&i_ready);
 	if(i_ready == 1)
 	{
@@ -2434,10 +2435,10 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 		i_signal = 0;
 	}
 	cJSON_AddNumberToObject(result_root,"4g_signal",i_signal);
-	
+
 	memset(lte_value,0,sizeof(lte_value));
 	get_relay_wf(lte_value);
-	cJSON_AddStringToObject(result_root,"wifi_rssi",lte_value);	
+	cJSON_AddStringToObject(result_root,"wifi_rssi",lte_value);
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
@@ -2445,7 +2446,7 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 }
 
 FCGI_BOOL FastCgiHandleModemFunctionInit(void)
-{	
+{
 	memset(&FastCgiHandleModemFunction,0,sizeof(MAX_MODEM_HYID*sizeof(int)));
 
 	FastCgiHandleModemFunction[HYID_GET_NEWS_SMS_STATE] = cgi_get_new_sms_state;
@@ -2503,8 +2504,8 @@ int main(int argc,char *argv[])
 	}
 
     //FCGX_Init();
-	
-	//while (FCGI_Accept() >= 0) 
+
+	//while (FCGI_Accept() >= 0)
 	{
 		rest_data		= NULL;
 		content_type	= NULL;
@@ -2517,34 +2518,34 @@ int main(int argc,char *argv[])
 		HYID			= 0;
 
 		response_root = cJSON_CreateObject();
-		
+
 		rest_data = getenv("QUERY_STRING");
-		
+
 		if(rest_data && (strlen(rest_data) > 0))
 		{
 			rest_code = FCGI_RESP_CODE_DATA_FORMAT_ERROR;
-			
+
 			goto v_out;
 		}
-		
+
 		content_type = getenv("CONTENT_TYPE");
 
 		if(strstr(content_type,"application/json") == NULL)
 		{
 			rest_code = FCGI_RESP_CODE_DATA_FORMAT_ERROR;
-			
+
 			goto v_out;
 		}
-		
+
 		content_len = strtol(getenv("CONTENT_LENGTH"), NULL, 10) + 1;
-		
+
 		if(content_len <= 1)
 		{
 			rest_code = FCGI_RESP_CODE_DATA_FORMAT_ERROR;
 
 			goto v_out;
 		}
-		
+
 	 	query_data = malloc(content_len);
 
 		if(!query_data)
@@ -2555,56 +2556,56 @@ int main(int argc,char *argv[])
 		}
 
 		memset(query_data,0,content_len);
-		
+
 		fread(query_data, 1, content_len, stdin);
-		
+
 		request_root = cJSON_Parse(query_data);
-		
-		if (!request_root) 
+
+		if (!request_root)
 		{
 			rest_code = FCGI_RESP_CODE_DATA_FORMAT_ERROR;
-			
+
 			goto v_out;
 		}
-		
+
 		if(!huayi_json_get_int(request_root,"HYID",&HYID))
 		{
 			rest_code = FCGI_RESP_CODE_HYID_MISS;
-			
+
 			goto v_out;
 		}
-		
+
 		if(HYID < HYID_GET_OVERVIEW_CONFIG || HYID >= MAX_MODEM_HYID)
 		{
 			rest_code = FCGI_RESP_CODE_ILLEGAL_HYID;
-			
+
 			goto v_out;
 		}
-		
+
 #if defined(CONFIG_HUAYI_CGI_COOKIE_SUPPORT)
-		
+
 		if(HYID > HYID_GET_OVERVIEW_CONFIG && FCGI_RESP_CODE_UNAUTHORIZED == check_landing_status())
 		{
 			rest_code = FCGI_RESP_CODE_UNAUTHORIZED;
 			goto v_out;
 		}
-		
+
 #endif
 		if(FastCgiHandleModemFunction[HYID] != NULL)
-		{		
+		{
 			rest_code = FastCgiHandleModemFunction[HYID](request_root,response_root,&lock_time);
 		}else
 		{
 			rest_code = FCGI_RESP_CODE_ILLEGAL_HYID;
 		}
-		
+
 v_out:
 		fast_cgi_response_web(response_root,rest_code,lock_time);
 
 		cJSON_Delete(request_root);
-		
+
 		cJSON_Delete(response_root);
-		
+
 		if(query_data)
 		{
 			free(query_data);
