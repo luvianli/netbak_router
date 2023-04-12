@@ -33,7 +33,7 @@ VTBool huayi_wps_pbc(void * arg,cJSON *input_root)
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	int radio5g_disable = 0;
 	char devname5g[SMALL_STR_LEN] = "rai0";
-	
+
 	huayi_uci_get_int(PKG_WIRELESS,"radio1_0","disabled",&radio5g_disable);
 #endif
 
@@ -95,19 +95,19 @@ VTBool huayi_wps_pin(void * arg,cJSON *input_root)
 	int pincodeenable = 0;
 	char devname2g[SMALL_STR_LEN] = "ra0";
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
-	
+
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	int radio5g_disable = 0;
 	char devname5g[SMALL_STR_LEN] = "rai0";
 
 	huayi_uci_get_int(PKG_WIRELESS,"radio1_0","disabled",&radio5g_disable);
 #endif
-	
+
 	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&radio2g_disable);
-	
+
 	huayi_json_get_int(input_root, "parameter", &para);
 	huayi_uci_get_int(PKG_WPS,"wps","stapincode", &stapincode);
-	
+
 	switch (para) {
 		case 0:   //disconnect
 			if (radio2g_disable == 0)
@@ -128,7 +128,7 @@ VTBool huayi_wps_pin(void * arg,cJSON *input_root)
 		case 1:
 			/*initialize pincode*/
 			huayi_uci_get_int(PKG_WPS,"wps","initpincodeflg", &initflag);
-			if(0 == initflag) 
+			if(0 == initflag)
 			{
 				if (radio2g_disable == 0)
 				{
@@ -139,17 +139,17 @@ VTBool huayi_wps_pin(void * arg,cJSON *input_root)
 				{
 					pincode = get_wsc_pincode(devname5g);
 				}
-				
+
 				huayi_uci_set_int(PKG_WPS,"wps","initpincode5g", pincode);
 				huayi_uci_set_int(PKG_WPS,"wps","own5gpincode", pincode);
 #endif
-				
+
 				huayi_uci_set_int(PKG_WPS,"wps","initpincode2g", pincode);
 				huayi_uci_set_int(PKG_WPS,"wps","own2gpincode", pincode);
 
 				huayi_uci_set_int(PKG_WPS,"wps","initpincodeflg",1);
-			} 
-			else 
+			}
+			else
 			{
 				if (radio2g_disable == 0)
 				{
@@ -188,7 +188,7 @@ VTBool huayi_wps_pin(void * arg,cJSON *input_root)
 				XCMD(strcmdbuf, "iwpriv %s set WscGenPinCode=1", devname5g);
 			}
 #endif
-			
+
 			usleep(5000);
 
 			if (radio2g_disable == 0)
@@ -237,7 +237,7 @@ VTBool huayi_wps_pin(void * arg,cJSON *input_root)
 					XCMD(strcmdbuf, "iwpriv %s set WscMode=2", devname2g);
 				}
 			}
-		
+
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 			if (radio5g_disable == 0)
 			{
@@ -265,12 +265,12 @@ VTBool huayi_wps_pin(void * arg,cJSON *input_root)
 void string2hex(char *str, int *intVal)
 {
 	uint8_t i,cnt=0;
-	char *p = str;             
+	char *p = str;
 	sscanf(str,"%X",intVal);
-	
+
 }
 VTBool huayi_reload_wireless(void * arg,cJSON *input_root)
-{	
+{
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
 #if defined(CONFIG_HUAYI_WIFI_MT7628_WLANLED)
 	char resultbuf[OPTION_STR_LEN] = {0};
@@ -344,7 +344,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 	int scan_status = 0;
 	char scan_status_str[SMALL_STR_LEN] = {0};
 	int para = 0;
-	
+
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	int wlan_5g_disabled = 0;
 	int disabled = 0;
@@ -357,7 +357,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 	get_cmd_result("huayi_cmd get system scan_state",scan_status_str,SMALL_STR_LEN);
 	scan_status = atoi(scan_status_str);
 	if(scan_status == 1)
-	{	
+	{
 		//return VT_TRUE;
 	}
 
@@ -366,7 +366,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 		system("iwpriv apcli0 set SiteSurvey=");
 		sleep(5);
 	}
-	
+
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	if((para & WIFI_58G_SCAN) == WIFI_58G_SCAN)
 	{
@@ -392,7 +392,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 			system("iwpriv apcli0 get_site_survey > /tmp/ChannelScanList");
 		}
 	}
-	
+
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	if((para & WIFI_58G_SCAN) == WIFI_58G_SCAN)
 	{
@@ -415,7 +415,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 				system("iwpriv rai1 get_site_survey > /tmp/ChannelScanList");
 			}
 		}
-		
+
 	}
 #endif
 
@@ -427,7 +427,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 		system("huayi_cmd set system scan_state 4");
 	}
 	//system("/etc/action.d/huayi_scan");
-	
+
 	return VT_TRUE;
 }
 
@@ -465,14 +465,14 @@ int huayi_change_channel(int wifi_type)
 		strcpy(rep_interface,W24G_DEV);
 	}
 
-	
-	fp = fopen("/tmp/ChannelScanList", "r");	
-	if (NULL == fp) 
-	{		
-		return -1;	
-	}	
 
-	while(fgets(buff, sizeof(buff), fp) != NULL)	
+	fp = fopen("/tmp/ChannelScanList", "r");
+	if (NULL == fp)
+	{
+		return -1;
+	}
+
+	while(fgets(buff, sizeof(buff), fp) != NULL)
 	{
 		if ((ptr = strrstr(buff,"BSSID:")) != NULL)
 		{
@@ -482,7 +482,7 @@ int huayi_change_channel(int wifi_type)
 			{
 				flag = 1;
 				break;
-			}	
+			}
 		}
 	}
 
@@ -497,9 +497,9 @@ int huayi_change_channel(int wifi_type)
 			{
 				huayi_uci_set_int(PKG_WIRELESS,rep_interface,"channel",channel_str);
 				huayi_uci_commit(PKG_WIRELESS);
-				system("huayi-reset network");
+				system("huayi-reset wireless");
 			}
-		}	
+		}
 	}
 
 	return 0;
@@ -521,7 +521,7 @@ void huayi_core_wifi_timer_scan(void* arg)
 	int disabled_5g = 0;
 	int rep_status_5g = 0;
 #endif
-	
+
 	huayi_uci_get_int(PKG_STATUS_SYSTEM, "sys", "rep_24g_status",&rep_status);
 	huayi_uci_get_int(PKG_WIRELESS,"radio0_cli0","disabled",&disabled);
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
