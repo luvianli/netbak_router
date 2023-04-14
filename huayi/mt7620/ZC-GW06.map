@@ -1,0 +1,6 @@
+FILE = MT7620_DDR2_64M_SINGLEIMG-uboot.bin
+ADDR = 0
+FILE = ZC-GW06.factory
+ADDR = 0x40000
+FILE = huayi_firmware.bin
+ADDR = 0x50000
