@@ -17,9 +17,9 @@ config interface 'lan'
 	option ifname 'eth0.1 ra0'
 	
 config interface 'wan'
-	option force_link '1'
 	option proto 'dhcp'
 	option mtu '1500'
+	option ifname 'apcli0'
 	option cc_mtu '1500'
 	option ppp_mtu '1492'
 	
