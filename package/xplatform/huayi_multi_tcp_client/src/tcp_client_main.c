@@ -105,7 +105,7 @@ int read_client(int client_sockfd)
 				//error,暂时不做修改
 				CON_LOG("read -1 ，error");
 			case huayi_heartbeat:
-				 CON_LOG("huayi_heartbeat");
+				 //CON_LOG("huayi_heartbeat");
 				ret = write_client(client_sockfd,huayi_heartbeat);
 				break;
 			case huayi_switch_sim_before :
