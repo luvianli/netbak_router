@@ -1890,7 +1890,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	{
 		if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
 		{
-			return FCGI_RESP_CODE_DATA_MISS;
+			;//return FCGI_RESP_CODE_DATA_MISS;
 		}
 		
 		huayi_uci_delete_option(PKG_NETWORK,"wan","ifname");
@@ -1937,12 +1937,12 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			if(!huayi_json_get_str(request_root,"mac_addr",macaddr,MAC_STR_LEN))
 			
 			{
-				return FCGI_RESP_CODE_DATA_MISS;
+				;//return FCGI_RESP_CODE_DATA_MISS;
 			}
 			huayi_uci_set_str(PKG_NETWORK,"wan4g","macaddr",macaddr);
 			if(!huayi_json_get_int(request_root,"cc_mtu",&cc_mtu))
 			{
-				return FCGI_FALSE;
+				;//return FCGI_FALSE;
 			}
 
 			huayi_uci_set_int(PKG_NETWORK,"wan4g","cc_mtu",cc_mtu);
