@@ -911,7 +911,7 @@ int set_wan_config(cJSON *request_root, cJSON *response_root,int *lock_time)
 	huayi_uci_set_str(PKG_NETWORK,"wan","macaddr",macaddr);
 
 	huayi_uci_commit(PKG_NETWORK);
-		CON_LOG("huayi-reset network");
+	//	CON_LOG("huayi-reset network");
 	system("huayi-reset network");
 
 	*lock_time = HUAYI_RELOAD_NETWORK_TIME;
