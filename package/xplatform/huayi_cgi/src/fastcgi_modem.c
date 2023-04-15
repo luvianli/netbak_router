@@ -1890,7 +1890,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	{
 		if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
 		{
-			return FCGI_RESP_CODE_DATA_MISS;
+			;//return FCGI_RESP_CODE_DATA_MISS;
 		}
 		
 		huayi_uci_delete_option(PKG_NETWORK,"wan","ifname");
@@ -1937,12 +1937,12 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			if(!huayi_json_get_str(request_root,"mac_addr",macaddr,MAC_STR_LEN))
 			
 			{
-				return FCGI_RESP_CODE_DATA_MISS;
+				;//return FCGI_RESP_CODE_DATA_MISS;
 			}
 			huayi_uci_set_str(PKG_NETWORK,"wan4g","macaddr",macaddr);
 			if(!huayi_json_get_int(request_root,"cc_mtu",&cc_mtu))
 			{
-				return FCGI_FALSE;
+				;//return FCGI_FALSE;
 			}
 
 			huayi_uci_set_int(PKG_NETWORK,"wan4g","cc_mtu",cc_mtu);
@@ -2298,10 +2298,10 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	}
 #endif
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
-		else if(!strcmp(wan_type, WAN_TYPE_WIRED_PRIOROTY))
-		{
-			system("huayi-reset lte4g parameter 0");
-		}
+	else if(!strcmp(wan_type, WAN_TYPE_REP4G_PRIOROTY))
+	{
+		system("huayi-reset lte4g parameter 0");
+	}
 #endif
 	
 	system("huayi-reset network");
@@ -2410,8 +2410,9 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 
 
 	//上网是否成功
-	strcpy(checksignalips,"114.114.114.114");
+	//strcpy(checksignalips,"114.114.114.114");
 	memset(lte_value,0,sizeof(lte_value));
+	huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip", checksignalips);
 	is_ok = internet_do_ping_detect(checksignalips, NULL);
 	if(is_ok == 1)
 	{
