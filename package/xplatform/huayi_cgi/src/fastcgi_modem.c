@@ -2298,10 +2298,10 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	}
 #endif
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
-		else if(!strcmp(wan_type, WAN_TYPE_WIRED_PRIOROTY))
-		{
-			system("huayi-reset lte4g parameter 0");
-		}
+	else if(!strcmp(wan_type, WAN_TYPE_REP4G_PRIOROTY))
+	{
+		system("huayi-reset lte4g parameter 0");
+	}
 #endif
 	
 	system("huayi-reset network");
