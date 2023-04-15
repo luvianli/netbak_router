@@ -497,7 +497,7 @@ int huayi_change_channel(int wifi_type)
 			{
 				huayi_uci_set_int(PKG_WIRELESS,rep_interface,"channel",channel_str);
 				huayi_uci_commit(PKG_WIRELESS);
-				system("huayi-reset network");
+				system("huayi-reset wireless");
 			}
 		}	
 	}
