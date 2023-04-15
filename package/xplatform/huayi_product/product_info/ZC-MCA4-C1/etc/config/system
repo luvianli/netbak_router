@@ -51,3 +51,6 @@ config upgrade upgrade
 	
 config msg_code msg_code
 	option hyid 0
+	
+config msg_code msg_code
+	option hyid 0
