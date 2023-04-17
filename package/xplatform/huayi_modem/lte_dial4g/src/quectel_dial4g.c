@@ -107,11 +107,11 @@ int ECM_init_check_lte_at(void)
 	}
 	*/
 	/*for ¾ÛºÏÄ£¿é*/
-	ret = AtcmdSendDelay("AT+QCFG='devmode,0'",strlen("AT+QCFG='devmode,0'"),0);
+	/*ret = AtcmdSendDelay("AT+QCFG='devmode,0'",strlen("AT+QCFG='devmode,0'"),0);
 	if(ret == LTE_FALSE)
 	{
 		system("huayi_AT_cli AT+QCFG='devmode,0'");
-	}
+	}*/
 	/*end*/
 	while (atcmd_get_usbnet(&dialing) == LTE_FALSE && dialing_count < 10 )
 	{
@@ -504,8 +504,8 @@ int quectel_ECM_connect(void)
 		if(ret != LTE_TRUE)
 			return ret;
 	}
-	AtcmdSendDelay("at+cgact=1,1",strlen("at+cgact=1,1"),0);
-	ret = AtcmdSendDelay("at+qnetdevctl=3,1,1",strlen("at+qnetdevctl=3,1,1"),0);
+	//AtcmdSendDelay("at+cgact=1,1",strlen("at+cgact=1,1"),0);
+	//ret = AtcmdSendDelay("at+qnetdevctl=3,1,1",strlen("at+qnetdevctl=3,1,1"),0);
 
 	return ret;
 }
@@ -632,7 +632,6 @@ retry_signal:
 			sleep(1);
 			continue;
 		}*/
-#if 0
 		atcmd_get_cgpaddr(cgpipaddr);
 		if(strlen(cgpipaddr) > 7)
 		{
@@ -650,6 +649,8 @@ retry_signal:
 				{
 					if(2 == ip_count)
 					{
+						AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
+						sleep(3);
 						system("huayi-reset small4gfunc");
 						ip_count = 0;
 					}
@@ -669,6 +670,8 @@ retry_signal:
 				{
 					if(2 == ip_count)
 					{
+						AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
+						sleep(3);
 						system("huayi-reset small4gfunc");
 						ip_count = 0;
 					}
@@ -679,10 +682,13 @@ retry_signal:
 
 			{	
 				if(strlen(wan_ipaddr) > 7 && NULL == strstr(cgpipaddr, wan_ipaddr))
+				{
+					AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
+					sleep(3);
 					system("huayi-reset small4gfunc");
+				}
 			}
 		}
-#endif
     }
 
 out:	
