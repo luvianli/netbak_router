@@ -1,0 +1,21 @@
+config global global
+	option mac_filter '0'
+	option url_filter '0'
+	option ip_port_filter	'0'
+	option port_forward	'0'
+	option conn_limit '0'
+
+config firewall acl
+	option acl_count '0'
+
+config firewall dmz
+	option dmz_enable '0'
+	option dest_ip ''
+
+config firewall remote
+	option remote_enable '0'
+	option port		'8080'
+	option remoteip '0.0.0.0'
+
+config firewall wanping
+	option wanping_en '0'
