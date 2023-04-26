@@ -89,9 +89,13 @@ all: check_config clean def_config
 	
 ZC-MCA4-C1:
 	@$(MAKE) $(t) product=$@ product_name=ZC-MCA4-C1 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
+
+ZC-GW01-2:
+	@$(MAKE) $(t) product=$@ product_name=ZC-GW01-2 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
 	
 help:
 	@echo "make target   -- target maybe product model"
 	@echo "eg:  make 4G300-H002-HY03 -- for 7620N Router 4G, support JuHe modem, support wired link+4g "
 	@echo "eg:  make 4G300-H002-HY07 -- for 7620N Router 300M 4G ,wisp+4g"
 	@echo "eg:  make ZC-MCA4-C1 -- for 7628DA Router 300M 4G, support juhe modem, wisp+4g"
+	@echo "eg:  make ZC-GW01-2 -- for 7628DA Router 300M 4G, support juhe modem, wisp+4g"
