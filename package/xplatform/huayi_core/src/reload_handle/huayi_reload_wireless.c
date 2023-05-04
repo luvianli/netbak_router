@@ -189,7 +189,8 @@ VTBool huayi_wps_pin(void * arg,cJSON *input_root)
 			}
 #endif
 			
-			usleep(5000);
+			usleep(5000
+);
 
 			if (radio2g_disable == 0)
 			{
@@ -497,7 +498,7 @@ int huayi_change_channel(int wifi_type)
 			{
 				huayi_uci_set_int(PKG_WIRELESS,rep_interface,"channel",channel_str);
 				huayi_uci_commit(PKG_WIRELESS);
-				system("huayi-reset network");
+				system("huayi-reset wireless");
 			}
 		}	
 	}
