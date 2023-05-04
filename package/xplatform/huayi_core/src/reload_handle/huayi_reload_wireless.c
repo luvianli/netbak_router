@@ -579,6 +579,3 @@ void huayi_core_wifi_timer_scan(void* arg)
 	}
 	huayi_core_add_task(wifi_scan_time,HUAYI_WIFI_SCAN_TASK,huayi_core_wifi_timer_scan,Agent);
 }
-
-
-
