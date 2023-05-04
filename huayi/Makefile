@@ -89,6 +89,9 @@ all: check_config clean def_config
 
 ZC-GW06:
 	@$(MAKE) $(t) product=$@ product_name=ZC-GW06 Chip=MT7620N hardware=mt7620 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
+
+ZC-GW05:
+	@$(MAKE) $(t) product=$@ product_name=ZC-GW05 Chip=MT7628MT7613 hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M COMPANY=HUAYI
 	
 ZC-MCA4-G1:
 	@$(MAKE) $(t) product=$@ product_name=ZC-MCA4-G1 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
@@ -102,3 +105,4 @@ help:
 	@echo "eg:  make ZC-GW06         -- for 7620N Router 300M 4G ,wisp+4g"
 	@echo "eg:  make ZC-MCA4-G1 -- for 7628DA Router 300M 4G, global EC25 modem, wisp+4g"
 	@echo "eg:  make ZC-GW03-2 -- for 7628DA Router 300M 4G, wired+4g"
+	@echo "eg:  make ZC-GW05 -- for 1200M Wireless 7628DA+7613B Modem, wisp+4g"
