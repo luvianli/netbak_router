@@ -99,5 +99,4 @@ ifeq ($(CONFIG_TARGET_ramips_mt7621),y)
 	fi
 endif
 endef
-
 $(eval $(call BuildPackage,switch))
