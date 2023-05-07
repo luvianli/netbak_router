@@ -101,11 +101,11 @@ int ECM_init_check_lte_at(void)
 		sleep(1);
 	}
 	
-	/*if(LTE_FALSE ==atcmd_set_nat())
+	if(LTE_FALSE ==atcmd_set_nat())
 	{
 		system("huayi_AT_cli AT+QCFG='nat',1");
 	}
-	*/
+	
 	/*for ¾ÛºÏÄ£¿é*/
 	/*ret = AtcmdSendDelay("AT+QCFG='devmode,0'",strlen("AT+QCFG='devmode,0'"),0);
 	if(ret == LTE_FALSE)
