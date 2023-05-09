@@ -481,6 +481,7 @@ int quectel_ECM_connect(void)
 	char mode[RESULT_STR_LEN]={0};
 	char user4g[RESULT_STR_LEN]={0},pass4g[RESULT_STR_LEN]={0};
 	char apn[RESULT_STR_LEN]={0},validation[RESULT_STR_LEN]={0};
+	int conntype = 0, netcardstatus = 0, netstate = 0, actstate = 0;
 	
 	huayi_uci_get_str(PKG_MODEM, "status", "mode", mode);
 	
@@ -503,6 +504,18 @@ int quectel_ECM_connect(void)
 		ret = AtcmdSendDelay(cmd,sizeof(cmd),0);
 		if(ret != LTE_TRUE)
 			return ret;
+	}
+	atcmd_get_cgact(&actstate);
+	if(0 == actstate)
+	{
+		AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
+		sleep(1);
+	}
+	atcmd_get_qnetdevctl(&conntype, &netcardstatus, &netstate);
+	if(0 == netcardstatus ||0 ==  netstate)
+	{
+		AtcmdSendDelay("at+qnetdevctl=3,1,1",strlen("at+qnetdevctl=3,1,1"),0);
+		sleep(1);
 	}
 	//AtcmdSendDelay("at+cgact=1,1",strlen("at+cgact=1,1"),0);
 	//ret = AtcmdSendDelay("at+qnetdevctl=3,1,1",strlen("at+qnetdevctl=3,1,1"),0);
