@@ -21,89 +21,6 @@ void huayi_4g_init_exit(int sig)
 
 	return;
 }
-void up_lte_modem_and_use_extsim(void)
-{
-	char cmd[CMD_STR_LEN] = {0};
-	char resultbuf[OPTION_STR_LEN] = {0};
-	int ret = 0, count = 0;
-	int i_ready = 0;
-
-	system("devmem 0x10000064 32 0x000555");
-	
-	snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", 41);
-	system(cmd);
-	while(1) {
-		ret = get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
-		if((ret == HUAYI_TRUE) && (strstr(resultbuf,"2c7c:") != NULL))
-		{
-			snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", 40);
-			system(cmd);
-			usleep(500);
-			//system("huayi-reset lte4g parameter 1");
-			if(count == 3) {
-				system("huayi_AT_cli AT+CFUN=0");
-				sleep(5);
-				system("huayi_AT_cli AT+CFUN=1");
-				sleep(8);
-				system("kill -9 huayi_dial4gcontrol");
-				system("/etc/init.d/huayi_dial4gcontrol restart");
-				break;
-			} else {
-				sleep(1);
-			}
-			count += 1;
-
-		}
-		else
-		{
-			system("devmem 0x10000064 32 0x000555");
-			snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", 41);
-			system(cmd);
-			sleep(1);
-		}
-	}
-	while(1) {
-		sleep(8);
-		atcmd_get_cpin(&i_ready);
-		if (i_ready != MODEM_SIN_READY)
-		{
-			snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", 40);
-			system(cmd);
-			usleep(500);
-			system("huayi_AT_cli AT+CFUN=0");
-			sleep(5);
-			system("huayi_AT_cli AT+CFUN=1");
-			sleep(8);
-		}
-		else
-		{
-			sleep(5);
-			//break;
-		}
-	}
-	return;
-}
-
-void huayi_to_ext_simcard()
-{
-	//gpio operator
-	SIMCARD_CHANGE_LOG("%s, %d \n", __FUNCTION__, __LINE__);
-	char cmd[CMD_STR_LEN] = {0};
-	int ret = 0, count = 0;
-	char resultbuf[OPTION_STR_LEN] = {0};
-	int i_ready = 0;
-		
-	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", 2);
-	system(cmd);
-	sleep(1);
-	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", 2);
-	system(cmd);
-	sleep(1);
-	system("huayi-reset lte4g parameter 1");
-	
-	return;
-}
-
 
 int main(int argc, char *argv[])
 {
@@ -118,18 +35,6 @@ int main(int argc, char *argv[])
 
 	(void) signal(SIGTERM, huayi_4g_init_exit);
 
-	/*针对这个型号的产品特殊处理，硬件设计模块电路时，启动需要软件连通电路*/
-	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-	if(!strcmp(product_model, "4G1200-H002-HY06"))
-	{
-		up_lte_modem_and_use_extsim();
-		return 0;
-	}
-	if(!strcmp(product_model, "4G300-H002-HY03"))
-	{
-		huayi_to_ext_simcard();
-		return 0;
-	}
 	while(1) 
 	{
 		ret = get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
