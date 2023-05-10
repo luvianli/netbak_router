@@ -43,7 +43,7 @@ void fast_cgi_response_web(cJSON *response_root,int rest_code,int lock_time)
 
 	output = cJSON_Print(response_root);
 	
-	//FCGI_printf("Content-Type: text/plain\n\n");
+	FCGI_printf("Content-Type: text/plain\n\n");
 	
 	FCGI_printf("%s",output);
 
@@ -858,7 +858,7 @@ void get_relay_wf(char *lte_vaule)
 {
 	char cmd[OPTION_STR_LEN]={0},value[OPTION_STR_LEN]={0};
 	//iwpriv apcli0 stat | grep RSSI | awk '{print $3}'
-	//sprintf(cmd,"iwpriv apcli0 stat | grep RSSI | awk '{print $3}'");
+	sprintf(cmd,"iwpriv apcli0 stat | grep RSSI | awk '{print $3}'");
 	//system(cmd);
 	get_cmd_result(cmd,value,sizeof(value));
 	sprintf(lte_vaule,"%s",value);
