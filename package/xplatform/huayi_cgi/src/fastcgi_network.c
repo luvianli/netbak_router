@@ -412,7 +412,7 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","sim_ready", str_sim_state);
 	sim_state = atoi(str_sim_state);
-	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","iccid",lte_value);
+	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","iccid",lte_value);
 	/*atcmd_get_iccid(lte_value);*/
 	if(strlen(lte_value) < 10)
 	{
