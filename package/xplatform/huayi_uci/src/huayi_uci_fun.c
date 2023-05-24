@@ -1025,4 +1025,138 @@ int get_dev_sn(char *sn)
 
 
 
+void save_useing_siminfo(int i)
+{
+	char cmd[OPTION_STR_LEN] = {0};
+	int  netoperator = 0;
+	char tmp[OPTION_STR_LEN] = {0};
+	int ret = 0, gpio = 0;
+	int i_ready = 0, i_signal = 0;
+	char lte_value[OPTION_STR_LEN] = {0};
+	int count = 0;
+	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
+	
+	count = 0;
+retry_getccid:  
+	memset(lte_value, 0, OPTION_STR_LEN);
+	atcmd_get_iccid(lte_value);
+	if(!isdigitstr(lte_value)) 
+	{
+		count += 1;
+		if(40 == count)  
+		{
+			system("huayi_AT_cli AT+CFUN=0 ");
+			sleep(5);
+			system("huayi_AT_cli AT+CFUN=1 ");
+		}
+		strcpy(lte_value, "");
+		usleep(800);
+		if(count < 55)
+			goto retry_getccid;
+	}
+	huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "iccid", lte_value);
+
+	count=0;
+retry_getlac:	 
+	memset(lte_value, 0, OPTION_STR_LEN);
+	atcmd_get_lac(lte_value);
+	if(strlen(lte_value) < 2) 
+	{
+		strcpy(lte_value, "");
+		count+=1;
+		if(count < 10)
+		goto retry_getlac;
+	}
+
+	huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "lac", lte_value);
+	
+	count = 0;
+retry_getci:	  
+	memset(lte_value, 0, OPTION_STR_LEN);
+	atcmd_get_ci(lte_value);
+	if(strlen(lte_value) < 2) 
+	{
+		strcpy(lte_value, "");
+		count+=1;
+		if(count < 10)
+			goto retry_getci;
+	}
+
+	huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "ci", lte_value);
+
+
+	count = 0;
+retry_getoperator:	  
+	memset(lte_value,0,OPTION_STR_LEN);
+	atcmd_get_imsi(lte_value);
+	if (strncmp(lte_value,"46000",5) == 0 || strncmp(lte_value,"46002",5) == 0 || strncmp(lte_value,"46004",5) == 0 ||
+		strncmp(lte_value,"46007",5) == 0 || strncmp(lte_value,"46008",5) == 0 || strncmp(lte_value,"46013",5) == 0)
+	{
+		netoperator = 3;
+	}
+	else if (strncmp(lte_value,"46001",5) == 0 || strncmp(lte_value,"46006",5) == 0 || strncmp(lte_value,"46009",5) == 0 ||
+		strncmp(lte_value,"46010",5) == 0 )
+	{
+		netoperator = 2;
+	}
+	else if (strncmp(lte_value,"46003",5) == 0 || strncmp(lte_value,"46005",5) == 0 || strncmp(lte_value,"46011",5) == 0 ||
+		strncmp(lte_value,"460012",5) == 0 )
+	{
+		netoperator = 1;
+	}
+	else
+	{
+		netoperator = 0;
+		count+=1;
+		if(count < 10)
+			goto retry_getoperator;
+	}
+	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "operator", netoperator);
+	
+	sprintf(cmd, "sim%d", i);
+	memset(tmp, 0, OPTION_STR_LEN);
+	memset(lte_value, 0, OPTION_STR_LEN);
+	huayi_uci_get_str(PKG_M_SYSTEM, cmd, "speedcmd", tmp); 
+	if(strlen(tmp) > 5)
+	{
+		ret = get_cmd_result(tmp, lte_value, sizeof(lte_value));
+		if(ret == HUAYI_TRUE)
+		{
+			
+			huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "speedcmd", tmp);
+		}
+		else
+		{
+			huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeddownlink", 0);
+			huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeduplink", 0);
+		}
+	}
+	else
+	{
+		huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeddownlink", 0);
+		huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeduplink", 0);
+		huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "speedcmd", "");
+	}
+
+	huayi_uci_commit(PKG_M_SYSTEM);
+	
+	return;
+}
+
+int isdigitstr(char *str)
+{
+    int i = 0;
+ 	if(strlen(str) < 5 || (strstr(str,"ERR")!=NULL) ||(strstr(str,"AT") != NULL))
+    	{
+			return 0;
+    	}
+    for (i = 0; i < strlen(str); i++)
+    {
+        if (!(isdigit(str[i])))
+        {	    		
+           return 0;
+        }
+    }
+    return 1;
+}
 
