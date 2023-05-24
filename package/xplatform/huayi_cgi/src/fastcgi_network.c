@@ -523,7 +523,7 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	cJSON_AddStringToObject(wan_obj,"iccid", lte_value);
 #endif
 	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ifname", ifname);
-	if(!strcmp(ifname, "apcli0"))
+	if(!strcmp(ifname, "apcli0") || !strcmp(ifname, "apclii0"))
 	{
 		cJSON_AddStringToObject(wan_obj,"net_type", "WISP");
 	}

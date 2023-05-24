@@ -1506,6 +1506,7 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 	char	apcli_ifname[OPTION_STR_LEN] = {0};
 	char	resultbuf[OPTION_STR_LEN] = {0};
 	char	get_cmd[OPTION_STR_LEN] = {0};
+	char cmd[CMD_STR_LEN] = {0};
 	
 		
 	if(!huayi_json_get_int(request_root,"channel",&channel) || \
@@ -1534,6 +1535,11 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	if (channel > 14)
 	{
+
+		//huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
+		huayi_uci_set_str(PKG_NETWORK,"wan","ifname", "apclii0");
+		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s", "apclii0");
+		system(cmd);
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"apcli_ssid",HUAYI_RANDOM_APCLI_NAME);
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"disabled","1");
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"apcli_enable","1");
@@ -1562,6 +1568,10 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 	else
 #endif
 	{
+		//huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
+		huayi_uci_set_str(PKG_NETWORK,"wan","ifname", "apcli0");
+		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s", "apcli0");
+		system(cmd);
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_ssid",HUAYI_RANDOM_APCLI_NAME);
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"disabled","1");
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_enable","1");
@@ -1895,7 +1905,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		
 		huayi_uci_delete_option(PKG_NETWORK,"wan","ifname");
 		
-		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_4g_ifname",lan_ifname);
+		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_ifname",lan_ifname);
 		if(strlen(lan_ifname)>0)
 		{
 			huayi_uci_set_str(PKG_NETWORK,"lan","ifname",lan_ifname);
@@ -2106,15 +2116,16 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		{
 			return FCGI_RESP_CODE_DATA_MISS;
 		}*/
+		
 
-		huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
+		//huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
 
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_ifname",lan_ifname);
 		huayi_uci_set_str(PKG_NETWORK,"lan","ifname",lan_ifname);
 
-		huayi_uci_set_str(PKG_NETWORK,"wan","ifname",wan_ifname);
+		//huayi_uci_set_str(PKG_NETWORK,"wan","ifname",wan_ifname);
 		//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
-		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend wisp_device %s",wan_ifname);
+	//	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend wisp_device %s",wan_ifname);
 		system(cmd);
 		
 		//huayi_uci_set_str(PKG_NETWORK,"wan","proto",proto);
@@ -2195,15 +2206,15 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	else
 	{
-		huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
+		//huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
 
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_ifname",lan_ifname);
 		huayi_uci_set_str(PKG_NETWORK,"lan","ifname",lan_ifname);
 
 		huayi_uci_delete_option(PKG_NETWORK,"wan4g","ifname");
-		huayi_uci_set_str(PKG_NETWORK,"wan","ifname",wan_ifname);
-		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
-		system(cmd);
+		//huayi_uci_set_str(PKG_NETWORK,"wan","ifname",wan_ifname);
+		//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
+		//system(cmd);
 		ret = set_wisp_mode(request_root);
 		if(FCGI_TRUE != ret)
 			return ret;
@@ -2445,6 +2456,99 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
+
+int cgi_get_card(cJSON *request_root, cJSON *response_root,int *lock_time){
+	//FASTCGI_LOG("%s___%d___\n",__FUNCTION__,__LINE__);
+ 	cJSON  *info_root=NULL,*card_info_root=NULL,*result_root=NULL;
+ 	int i_card_slot=0,i_operator=0,i_simnum=0,i=0,i_lac=0,info_card_slot=0,info_operator=0,count=0;
+ 	char cmd[OPTION_STR_LEN]={0},i_lte_value[OPTION_STR_LEN]={0},lte_value[OPTION_STR_LEN]={0},name[OPTION_STR_LEN]={0};
+ 	
+	memset(lte_value, 0,OPTION_STR_LEN);
+	memset(cmd,0,OPTION_STR_LEN);
+ 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+	count=0;
+again:
+	
+	result_root=cJSON_CreateObject();
+	card_info_root=cJSON_CreateArray();
+	memset(lte_value, 0,OPTION_STR_LEN);
+	huayi_uci_get_int(PKG_M_SYSTEM,"usesiminfo","card_slot",&info_card_slot);
+	huayi_uci_get_int(PKG_M_SYSTEM,"usesiminfo","operator",&info_operator);
+	huayi_uci_get_str(PKG_M_SYSTEM,"usesiminfo","iccid",lte_value);
+	cJSON_AddNumberToObject(result_root,"card",info_card_slot);
+	cJSON_AddNumberToObject(result_root,"operator",info_operator);
+	
+	huayi_uci_get_int(PKG_M_SYSTEM,"system","simnum",&i_simnum);
+	for(i=1;i<=i_simnum;i++)
+	{
+		
+		memset(cmd,0,OPTION_STR_LEN);
+		sprintf(cmd,"sim%d",i);
+
+		huayi_uci_get_int(PKG_M_SYSTEM,cmd,"card_slot",&i_card_slot);
+		huayi_uci_get_int(PKG_M_SYSTEM,cmd,"operator",&i_operator);
+		memset(i_lte_value, 0,OPTION_STR_LEN);
+		huayi_uci_get_str(PKG_M_SYSTEM,cmd,"iccid",i_lte_value);
+		//FASTCGI_LOG("%s___%d___infocard:%d__simcard:%d\n",__FUNCTION__,__LINE__,info_operator,i_operator);
+			if(info_card_slot==i&&info_operator!=i_operator&&strcmp(lte_value,i_lte_value))
+				{
+					cJSON_Delete(result_root);
+					cJSON_Delete(card_info_root);
+					cJSON_Delete(info_root);
+					count++;
+					if(count<=3)
+					{
+						sleep(1);
+						goto again;
+					}
+					else
+					{	system("huayi-reset switch_sim");
+						return FCGI_RESP_CODE_DATA_MISS;
+					}
+				}
+		info_root=cJSON_CreateObject();
+		cJSON_AddNumberToObject(info_root,"card",i_card_slot);
+		cJSON_AddNumberToObject(info_root,"operator",i_operator);
+		cJSON_AddStringToObject(info_root,"iccid",i_lte_value);
+		cJSON_AddItemToArray(card_info_root,info_root);
+	}
+	cJSON_AddItemToObject(result_root,"card_info",card_info_root);
+	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
+	//char *output =cJSON_Print(response_root);
+	//FASTCGI_LOG("%s___%d___%s\n",__FUNCTION__,__LINE__,output);
+	return FCGI_RESP_CODE_SUCCESS;
+
+}
+
+int cgi_set_card(cJSON *request_root, cJSON *response_root,int *lock_time){
+	FASTCGI_LOG("%s___%d___\n",__FUNCTION__,__LINE__);
+
+	char cmd[OPTION_STR_LEN]={0};
+	int card=0,operator=0,i_card_slot=0,i_operator=0,i_simnum=0;
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	{
+		return FCGI_RESP_CODE_DATA_MISS;			
+	}
+	if(!huayi_json_get_int(request_root,"card",&card))
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+	huayi_uci_set_int(PKG_M_SYSTEM,"usesiminfo","next_card_slot",card);
+	//FASTCGI_LOG("%s___%d___%d\n",__FUNCTION__,__LINE__,card);
+	huayi_uci_commit(PKG_M_SYSTEM);
+	*lock_time = HUAYI_SET_CARD;
+	system("huayi-reset switch_sim");
+	return FCGI_RESP_CODE_SUCCESS; 
+}
+
+
+
+
+
 FCGI_BOOL FastCgiHandleModemFunctionInit(void)
 {	
 	memset(&FastCgiHandleModemFunction,0,sizeof(MAX_MODEM_HYID*sizeof(int)));
@@ -2484,6 +2588,10 @@ FCGI_BOOL FastCgiHandleModemFunctionInit(void)
 	FastCgiHandleModemFunction[HYID_GET_4G_SIGNAL] = cgi_get_4g_signal;
 
 	FastCgiHandleModemFunction[HUID_GET_SIM_MESSAGE] =cgi_get_dev_message;
+
+	FastCgiHandleModemFunction[HYID_GET_CARD]=cgi_get_card;
+	
+	FastCgiHandleModemFunction[HYID_SET_CARD]=cgi_set_card;
 }
 
 int main(int argc,char *argv[])

@@ -25,9 +25,11 @@ esac
 		case $INTERFACE in
 			wan)
 				huayi_cmd set blend wisp_device $DEVICE
+				huayi_cmd set network "$section"_device $DEVICE
 				;;
 			wan4g)
 				huayi_cmd set blend cpe_device $DEVICE
+				huayi_cmd set network "$section"_device $DEVICE
 				;;
 			lan)
 				huayi_cmd set network "$section"_device $DEVICE

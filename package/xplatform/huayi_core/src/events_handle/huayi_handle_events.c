@@ -169,9 +169,34 @@ void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *even
 					system("/etc/init.d/huayi_udhcpd stop");
 				}
 			}
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+			huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
+			if(0 == event->status)
+			{
+				system("huayi_cmd set blend wisp_link 0");
+				system("huayi_cmd set network wan_link 0");
+				//system("ifdown wan");
+			}
+			else
+			{
+				system("huayi_cmd set blend wisp_link 1");
+				system("huayi_cmd set network wan_link 1");
+			}
+			if(Agent->repeater_status_58g == 0 && event->status == 1)  //disconnect ---> connect
+			{
+				if (access(WISP4G_TMPFILE, F_OK) != 0)
+				{
+					snprintf(cmd,CMD_STR_LEN,"echo 'wisp' > %s", WISP4G_TMPFILE);	
+					system(cmd);
+					system("ifup wan");
+				}
+			}
+#endif
+
 			Agent->repeater_status_58g = event->status;
 			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set system rep_58g_status %d",event->status);	
 			system(cmd);
+
 			break;
 		case WLAN_24G_WPS_PORT_NUM:
 			Agent->wps_connect_status_24g = WPS_SUCCESS;

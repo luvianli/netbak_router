@@ -46,7 +46,13 @@ endif
 ifeq ($(CONFIG_PACKAGE_huayi_wisp_4g),y)
 	$(INSTALL_BIN) ./files/huayi-proto-rep4g-prioroty.sh $(1)/lib/netifd/huayi-proto.sh
 endif
+
+ifeq ($(CONFIG_PACKAGE_huayi_1200m_wisp_4g),y)
+	$(INSTALL_BIN) ./files/huayi-proto-rep4g-prioroty.sh $(1)/lib/netifd/huayi-proto.sh
+endif
+
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+
 ifeq ($(CONFIG_PACKAGE_huayi_wired_prioroty),y)
 	$(INSTALL_BIN) ./files/30-huayi-netstate-wired-prioroty.hotplug $(1)/etc/hotplug.d/iface/30-huayi-netstate
 else 
@@ -57,6 +63,9 @@ ifeq ($(CONFIG_PACKAGE_huayi_wisp_4g),y)
 	$(INSTALL_BIN) ./files/30-huayi-netstate-rep4g-prioroty.hotplug $(1)/etc/hotplug.d/iface/30-huayi-netstate
 endif
 
+ifeq ($(CONFIG_PACKAGE_huayi_1200m_wisp_4g),y)
+	$(INSTALL_BIN) ./files/30-huayi-netstate-rep4g-prioroty.hotplug $(1)/etc/hotplug.d/iface/30-huayi-netstate
+endif
 endef
 	
 $(eval $(call BuildPackage,$(PKG_NAME)))

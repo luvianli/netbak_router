@@ -1,0 +1,88 @@
+config system system
+	option simnum	4
+	option imei ''
+	option switchres 0
+	option clientlog 0
+	option productmodel 'M4GJH-CNAA-M02'
+	option version '014'
+	#option urldomain 'http://120.25.165.86:8080/admin/juHeApi/uploadData'
+	#option urldomain 'https://zmp-test.nbm2m.com/manage-api/device/post/juHeApi/uploadData'
+	option urldomain 'https://up.aiotzy.com/api/device/post/juHeApi/uploadData'
+	#option urldomain 'https://zmp-test.nbm2m.com/api/device/post/juHeApi/uploadData'
+	option interval 60000
+	option firmwareurl ''
+	option firmwaremd5 ''
+	option msg_code  0
+	option network_is_ok 0
+	
+config usesiminfo usesiminfo
+	option operator ''
+	option usegpio 26
+	option iccid ''
+	option switchreq 0
+	option rebootact 0
+	option speedcmd ''
+	option checksignalips '223.5.5.5;www.baidu.com;www.qq.com'
+	option default_checkip '223.5.5.5;www.baidu.com;www.qq.com'
+	option maxdelay ''
+	option card_slot 1
+	
+#gpio number和sim几对应关系
+config s26 s26
+	option simn 1
+	
+config s25 s25
+	option simn 2
+	
+config s24 s24
+	option simn 3
+	
+config s27 s27
+	option simn 4
+
+config sim1 sim1
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 26
+	option iccid_gpio ''
+	option card_slot 1
+
+config sim2 sim2
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 25
+	option iccid_gpio ''
+	option card_slot 2
+
+config sim3 sim3
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 24
+	option iccid_gpio ''
+	option card_slot 3
+
+config sim4 sim4
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 27
+	option iccid_gpio ''
+	option card_slot 4
+	
+
+

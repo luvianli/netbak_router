@@ -62,6 +62,8 @@ ReloadCmdStructure CmdTable[] = {
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	{"small4gfunc",HUAYI_MSG_RELOAD_SMALL_4GFUNC,0,"--Reset 4G Minimum functionality"},
 #endif
+	{"switch_sim",HUAYI_MSG_SWITCH_CARD,0,"--Start the checker and save the configuration file usesiminfo"},
+
 
 };
 

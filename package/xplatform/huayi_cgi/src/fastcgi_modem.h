@@ -35,6 +35,8 @@ typedef enum
     HYID_SET_APN_CONFIG						=15,
     HYID_GET_4G_SIGNAL						=16,
     HUID_GET_SIM_MESSAGE 					=17,
+    HYID_GET_CARD							=18,
+    HYID_SET_CARD							=19,
     MAX_MODEM_HYID,
 }FGI_HYID_MODEM;
 
@@ -67,4 +69,10 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 int cgi_get_4g_signal(cJSON *request_root, cJSON *response_root,int *lock_time);
 
 int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time);
+
+int cgi_get_card(cJSON *request_root, cJSON *response_root,int *lock_time);
+
+int cgi_set_card(cJSON *request_root, cJSON *response_root,int *lock_time);
+
+
 #endif
