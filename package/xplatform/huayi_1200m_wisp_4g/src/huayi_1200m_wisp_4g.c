@@ -274,9 +274,10 @@ int main(int argc,char *argv[])
 			//printf("add route cmd_str = %s\n",cmd_str);
 		}
 
-		huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
+	//	huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
 		//printf("net_ipv4 = %s, wan_ipv4 = %s\n",net_ipv4, wan_ipv4);
-		if(strcmp(wan_ipv4,net_ipv4))  //更新proc下的网络状态信息
+		/*add update  status_network info，解决上网方式错乱的问题，实时更新上网方式接口*/
+		//if(strcmp(wan_ipv4,net_ipv4))  //更新proc下的网络状态信息
 		{	
 			memset(cmd_str,0,sizeof(cmd_str));
 			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
@@ -305,20 +306,6 @@ int main(int argc,char *argv[])
 				//printf("cmd_str = %s\n",cmd_str);
 				system(cmd_str);
 			}
-
-			//if(now_int_mode == INTERNET_4G)
-			//{
-				//system("ifup wan4g");
-			//	system("rm -fr /tmp/resolv.conf.auto");
-			//	system("echo # Interface wan4g >> /tmp/resolv.conf.auto");
-			//	memset(cmd_str,0,sizeof(cmd_str));
-			//	snprintf(cmd_str, CMD_STR_LEN, "echo nameserver %s >> /tmp/resolv.conf.auto", wan_gateway);
-			//	system(cmd_str);
-			//	system("echo search lan >> /tmp/resolv.conf.auto");
-			//}else if(now_int_mode == INTERNET_WIRED)
-			//{
-				//system("ifup wan");
-			//}
 		}
 	}
 
