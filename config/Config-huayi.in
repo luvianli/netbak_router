@@ -191,6 +191,31 @@ config HUAYI_REPEATER_LED_SUPPORT
 	depends on HUAYI_REPEATER_LED_SUPPORT
 	default 1000
 	
+config HUAYI_SWITCH_SIM_SUPPORT
+	bool	"Support SWITCH SIM CARD"
+	bool
+	
+	config HUAYI_SIM_GPIO1_NUM
+	int "Which Number of control sim gpio1"
+	depends on HUAYI_SWITCH_SIM_SUPPORT
+	default 1 
+	
+	config HUAYI_SIM_GPIO2_NUM
+	int "Which Number of control sim gpio2"
+	depends on HUAYI_SWITCH_SIM_SUPPORT
+	default 2
+	
+	config HUAYI_SIM_GPIO3_NUM
+	int "Which Number of control sim gpio3"
+	depends on HUAYI_SWITCH_SIM_SUPPORT
+	default 3	
+	
+	config HUAYI_SIM_GPIO4_NUM
+	int "Which Number of control sim gpio4"
+	depends on HUAYI_SWITCH_SIM_SUPPORT
+	default 37
+
+
 config HUAYI_POWER_LED_SUPPORT
 	bool	"Support power led"
 	depends on HUAYI_PLATFORM_SUPPORT

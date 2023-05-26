@@ -792,48 +792,92 @@ fail:
 	return 0;
 }
 
-int simcard_internet_check(const char *host, char *ifname)
+int internet_check(char *ping , char *file)
 {
 	char cmd[CMD_STR_LEN] = {0};
-	static int internet_flag = 0;
-
-	if ((NULL == host) || (strlen(host)<7))
-		goto fail;
-
-retry:
-	if (ifname == NULL)
-	{
-		snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
-	}
-	else
-	{
-		snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
-	}
+	char agant_cmd[CMD_STR_LEN] = {0};
+	char value[OPTION_STR_LEN] = { 0 };
+	
+	sprintf(cmd, "%s > %s",ping,file);
 	system(cmd);
-
-	if ( access(PING_TMPFILE, F_OK) == 0)
+	sprintf(agant_cmd, "cat %s | awk -F \" \" '{print $1}'",file);
+	get_cmd_result(agant_cmd, value, sizeof(value));
+	if(strlen(value)>3)
 	{
-		internet_flag = 0;
-		unlink(PING_TMPFILE);
+		unlink(file);
 		return 1;
 	}
-	else
-	{
-		if(3 > internet_flag) 
-		{
-			internet_flag += 1;
-			sleep(2);    //total 6 sec
-			goto retry;
-		}
-		else
-		{
-			internet_flag = 0;
-		}
-	}
-	
-fail:
 	return 0;
 }
+
+int simcard_internet_check(char *host, char *ifname)
+{
+	
+	int network_is_ok =0;	
+	char one_ping_addr[CMD_STR_LEN] = {0};
+	char two_ping_addr[CMD_STR_LEN] = {0};
+	char three_ping_addr[CMD_STR_LEN] = {0};
+	int usegpio =0,sim2gpio=1;
+
+
+
+	char *token;
+	int count=0,i=0;
+	char strPing[CMD_STR_LEN] = {0};
+	char array_token[5][OPTION_STR_LEN];
+
+	if ((NULL == host) || (strlen(host)<7))
+		return 0;
+	strcpy(strPing,host);
+	token = strtok(strPing,";");
+	while (token != NULL)
+	{
+		sprintf(array_token[count],"%s",token);
+		token = strtok(NULL, ";");
+		count++;
+	}
+	while(i<count)
+	{
+		huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", &usegpio);
+		huayi_uci_get_int(PKG_M_SYSTEM, "sim2", "gpio", &sim2gpio);
+		if(usegpio != sim2gpio)
+		{
+			//printf("%s ",array_token[i]);
+			if (ifname == NULL)
+				sprintf(one_ping_addr,"ping -c 1 -W 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ",array_token[i]);
+			else
+				sprintf(one_ping_addr,"ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ",array_token[i],ifname);
+			if(internet_check(one_ping_addr,PING_TMPFILE)==1)
+				return 1;
+		}		
+
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "network_is_ok", &network_is_ok);
+		if(network_is_ok==1)
+			return 1;
+		else
+		{	
+			if(usegpio == sim2gpio)
+			{			
+				if (ifname == NULL)
+					sprintf(one_ping_addr,"ping -c 1 -W 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ",array_token[i]);
+				else
+					sprintf(one_ping_addr,"ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ",array_token[i],ifname);
+				if(internet_check(one_ping_addr,PING_TMPFILE)==1)
+					return 1;
+			}
+		}	
+		CON_LOG("gpio:%d  network error", usegpio);
+		sleep(1);
+		i++;
+	}
+
+	CON_LOG("network fail %d\n",i);
+	unlink(PING_TMPFILE);
+	return 0;
+
+
+}
+
 
 long get_current_uptime_sec(void)
 {   

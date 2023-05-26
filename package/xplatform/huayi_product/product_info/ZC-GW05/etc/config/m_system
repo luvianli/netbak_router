@@ -3,8 +3,8 @@ config system system
 	option imei ''
 	option switchres 0
 	option clientlog 0
-	option productmodel 'M4GJH-CNAA-M02'
-	option version '014'
+	option productmodel 'ZC-GW05'
+	option version '001'
 	#option urldomain 'http://120.25.165.86:8080/admin/juHeApi/uploadData'
 	#option urldomain 'https://zmp-test.nbm2m.com/manage-api/device/post/juHeApi/uploadData'
 	option urldomain 'https://up.aiotzy.com/api/device/post/juHeApi/uploadData'
@@ -17,7 +17,7 @@ config system system
 	
 config usesiminfo usesiminfo
 	option operator ''
-	option usegpio 26
+	option usegpio 27
 	option iccid ''
 	option switchreq 0
 	option rebootact 0
