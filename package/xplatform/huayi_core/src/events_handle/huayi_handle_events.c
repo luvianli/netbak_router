@@ -92,6 +92,9 @@ void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *even
 {
 	char cmd[CMD_STR_LEN] = {0};
 	char proto[SHORT_STR_LEN] = {0};
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+	int rep_24g_status = 0, rep_58g_status = 0;
+#endif
 #if defined(CONFIG_HUAYI_SUPPORT_REPEATER_DHCPD)
 	int fix_enable = 0;
 #endif
@@ -121,18 +124,7 @@ void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *even
 				}
 			}
 			#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
-				huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
-				if(0 == event->status)
-				{
-					system("huayi_cmd set blend wisp_link 0");
-					system("huayi_cmd set network wan_link 0");
-					//system("ifdown wan");
-				}
-				else
-				{
-					system("huayi_cmd set blend wisp_link 1");
-					system("huayi_cmd set network wan_link 1");
-				}
+			CON_LOG("### %s, %d\n", __FUNCTION__, __LINE__);
 				if(Agent->repeater_status_24g == 0 && event->status == 1)  //disconnect ---> connect
 				{
 					if (access(WISP4G_TMPFILE, F_OK) != 0)
@@ -170,18 +162,7 @@ void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *even
 				}
 			}
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
-			huayi_uci_get_str(PKG_NETWORK,"wan","proto",proto);
-			if(0 == event->status)
-			{
-				system("huayi_cmd set blend wisp_link 0");
-				system("huayi_cmd set network wan_link 0");
-				//system("ifdown wan");
-			}
-			else
-			{
-				system("huayi_cmd set blend wisp_link 1");
-				system("huayi_cmd set network wan_link 1");
-			}
+			CON_LOG("### %s, %d\n", __FUNCTION__, __LINE__);
 			if(Agent->repeater_status_58g == 0 && event->status == 1)  //disconnect ---> connect
 			{
 				if (access(WISP4G_TMPFILE, F_OK) != 0)
@@ -211,6 +192,25 @@ void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *even
 		default:
 			break;
 	}
+#if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_24g_status",&rep_24g_status);	
+	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_58g_status",&rep_58g_status);
+	if((rep_24g_status ==1 && rep_58g_status == 0) || (rep_24g_status == 0 && rep_58g_status == 1))
+	{
+		CON_LOG("### %s, %d, rep_58g_status = %d, rep_24g_status=%d\n", __FUNCTION__, __LINE__,rep_58g_status, rep_24g_status);
+		system("huayi_cmd set blend wisp_link 1");
+		system("huayi_cmd set network wan_link 1"); 	
+	}
+
+	else
+	{
+		
+		CON_LOG("### %s, %d, rep_58g_status = %d, rep_24g_status=%d\n", __FUNCTION__, __LINE__,rep_58g_status, rep_24g_status);
+		system("huayi_cmd set blend wisp_link 0");
+		system("huayi_cmd set network wan_link 0");		
+	}
+#endif
+
 }
 
 void huayi_port_event_process(struct VcoreAgent *Agent,struct huayi_port_event *event)
