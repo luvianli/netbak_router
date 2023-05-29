@@ -118,6 +118,9 @@ int main(int argc, char *argv[])
 
 	(void) signal(SIGTERM, huayi_4g_init_exit);
 
+#if defined(CONFIG_HUAYI_SWITCH_SIM_SUPPORT)
+	return 0;  /*有切卡功能时，在切卡进程里收集完卡片后，再启动4G相关进程*/
+#endif
 	/*针对这个型号的产品特殊处理，硬件设计模块电路时，启动需要软件连通电路*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(!strcmp(product_model, "4G1200-H002-HY06"))

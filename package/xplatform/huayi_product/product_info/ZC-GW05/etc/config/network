@@ -19,7 +19,6 @@ config interface 'lan'
 config interface 'wan'
 	option proto 'dhcp'
 	option mtu '1500'
-	option ifname 'apcli0'
 	option cc_mtu '1500'
 	option ppp_mtu '1492'
 	

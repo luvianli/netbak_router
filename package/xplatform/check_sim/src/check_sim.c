@@ -55,7 +55,6 @@ retry_getccid:    //尽最大可能取到ICCID
 			if(count < 55)
 				goto retry_getccid;
 		}	
-		
 	count = 0;
 	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
 	sprintf(tmp, "%d_%s", gpio, lte_value);
@@ -197,11 +196,7 @@ void set_siminfo()
 	sprintf(tmp, "switch_sim %d", flag);
 	system(tmp);
 	save_siminfo(flag, usegpio);
-	//FASTCGI_LOG("zuihou sim");//test
-	system("/etc/init.d/cm.init start");
-	sleep(1);
-	ret = AtcmdSendDelay("at+qnetdevctl=3,1,1",strlen("at+qnetdevctl=3,1,1"),0);
-
+	
 	return;
 }
 
@@ -217,33 +212,35 @@ void check_network()
 	char iccid[OPTION_STR_LEN] = { 0 };
 
 	/*check use sim is connect network  检测上一次使用的卡是否可以上网(出厂时上一次使用的卡为默认卡)*/
+	system("ifup wan4g");
+	sleep(2);
 	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", &usegpio);
 	memset(tmp, 0, OPTION_STR_LEN);
 	sprintf(tmp, "s%d", usegpio);
 	huayi_uci_get_int(PKG_M_SYSTEM, tmp, "simn", &simn);
+CON_LOG("enter\n");//test
 
 cretry1:
 	memset(tmp, 0, OPTION_STR_LEN);
 	huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", tmp);
 	ret = simcard_internet_check(tmp, NULL);
+	CON_LOG("ret = %d\n", ret);
 	if(ret == 1)
 	{
 		save_useing_siminfo(simn);
-		//FASTCGI_LOG("check_network\n");//test
+		CON_LOG("check_network\n");//test
 		return;
 	}
 	else
 	{
 		count += 1;
 		sleep(3);
-		if(count <= 8)
+		if(count <= 20)
 			goto cretry1;
 	}
 	count = 0;
-
 	CON_LOG("sim%d ping bu tong %s",simn,tmp);
 check_net:
-
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &totalsimnum);
 	for(i = 1; i < totalsimnum+1; i++ )
 	{
@@ -255,26 +252,26 @@ check_net:
 		memset(tmp, 0, OPTION_STR_LEN);
 		sprintf(tmp, "switch_sim %d", i);
 		system(tmp);
-
+		sleep(6);
+		system("ifup wan4g");
+		sleep(2);
 	cretry2:
 		memset(tmp, 0, OPTION_STR_LEN);
 		huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "default_checkip", tmp);
 		ret = simcard_internet_check(tmp, NULL);
 		if(ret == 1)
 		{
-			sleep(3);
+			//sleep(3);
 			save_useing_siminfo(i);
-			FASTCGI_LOG("agant check_network\n");//test
+			CON_LOG("agant check_network\n");//test
 			return;
 		}
 		else
 		{
-
 			count += 1;
 			sleep(3);
-			if(count <= 8)
+			if(count <= 20)
 				goto cretry2;
-
 		}
 		count = 0;
 	}
@@ -292,19 +289,6 @@ void init_cloud_client()
 	return;
 }
 
-void at_init()
-{
-	int ret = 0;
-
-	ret = AtcmdSendDelay("AT+QCFG=\"devmode,0\"",strlen("AT+QCFG=\"devmode,0\""),0);
-	//usleep(500);
-	//system("huayi_AT_cli AT+CFUN=0 ");
-	//sleep(5);
-	//system("huayi_AT_cli AT+CFUN=1 ");
-
-	return;
-}
-
 void gpio_init()
 {
 	system("switch_sim 100");
@@ -316,11 +300,10 @@ void gpio_init()
 
 int main(int argc, char *argv[])
 {
-	
-	at_init();
+	system("huayi_atcmd_server /dev/ttyUSB1 &");
 	set_siminfo();
 	check_network();
-	//init_cloud_client();
+	system("/etc/init.d/huayi_dial4gcontrol restart");
 
 	return 0;
 }

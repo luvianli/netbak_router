@@ -12,59 +12,62 @@ int main(int argc, char* argv[])
 	{
 		int iSel = atoi(argv[1]);
 		char cmd[CMD_STR_LEN] = {0};
+		
 #if defined(CONFIG_HUAYI_SWITCH_SIM_SUPPORT)
+		if(iSel !=4)
+		{
+		system("devmem 0x10000060 32 0x4110441");
+		snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO4_NUM);
+		system(cmd);
+		}
+		else
+		{
+		system("devmem 0x10000060 32 0x55148451");
+		}
 		switch(iSel)
 		{ 
 			case 1 :
-	   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO4_NUM);
-					system(cmd);
-					break;
+   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
+				system(cmd);
+				break;
 			case 2 :
-	   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO4_NUM);
-					system(cmd);
-				    break;
+   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
+				system(cmd);
+			    break;
 		   case 3 :
-	   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO4_NUM);
-					system(cmd);
-			 	    break;
+   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
+				system(cmd);
+		 	    break;
 		   case 4 :
-	   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO4_NUM);
-					system(cmd);
-			 	    break;			
+   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO4_NUM);
+				system(cmd);
+		 	    break;			
 			default :
-	   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
-					system(cmd);
-					snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO4_NUM);
-					system(cmd);
-					break;
+   	    	 	snprintf(cmd, CMD_STR_LEN,"gpio l %d 0 4000 0 0 4000",CONFIG_HUAYI_SIM_GPIO1_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO2_NUM);
+				system(cmd);
+				snprintf(cmd, CMD_STR_LEN,"gpio l %d 4000 0 0 0 4000",CONFIG_HUAYI_SIM_GPIO3_NUM);
+				system(cmd);
+				break;
 
 		}
 

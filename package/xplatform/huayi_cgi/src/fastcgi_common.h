@@ -281,7 +281,7 @@ typedef enum
 #define HUAYI_WPS_ENABLE_TIME                           5
 #define HUAYI_USB_ENABLE_TIME                           5
 #define HUAYI_RELOAD_4G_MODE							75
-#define HUAYI_SET_CARD									60
+#define HUAYI_SET_CARD									30
 
 
 #define HUAYI_DEFAULT_DHCP_START						1

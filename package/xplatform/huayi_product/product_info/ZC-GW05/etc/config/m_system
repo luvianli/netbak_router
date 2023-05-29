@@ -17,7 +17,7 @@ config system system
 	
 config usesiminfo usesiminfo
 	option operator ''
-	option usegpio 27
+	option usegpio 26
 	option iccid ''
 	option switchreq 0
 	option rebootact 0

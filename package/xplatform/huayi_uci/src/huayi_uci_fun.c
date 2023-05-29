@@ -792,17 +792,19 @@ fail:
 	return 0;
 }
 
-int internet_check(char *ping , char *file)
+int parse_pingmsg(char *ping , char *file)
 {
 	char cmd[CMD_STR_LEN] = {0};
-	char agant_cmd[CMD_STR_LEN] = {0};
 	char value[OPTION_STR_LEN] = { 0 };
 	
-	sprintf(cmd, "%s > %s",ping,file);
+	sprintf(cmd, "%s > %s", ping,file);
 	system(cmd);
-	sprintf(agant_cmd, "cat %s | awk -F \" \" '{print $1}'",file);
-	get_cmd_result(agant_cmd, value, sizeof(value));
-	if(strlen(value)>3)
+	CON_LOG("cmd =  %s\n", cmd);
+	memset(cmd, 0 ,sizeof(cmd));
+	sprintf(cmd, "cat %s | awk -F \" \" '{print $1}'", file);
+	get_cmd_result(cmd, value, sizeof(value));
+	CON_LOG("value =  %s\n", value);
+	if(strlen(value) >= 1)
 	{
 		unlink(file);
 		return 1;
@@ -811,16 +813,8 @@ int internet_check(char *ping , char *file)
 }
 
 int simcard_internet_check(char *host, char *ifname)
-{
-	
-	int network_is_ok =0;	
+{	
 	char one_ping_addr[CMD_STR_LEN] = {0};
-	char two_ping_addr[CMD_STR_LEN] = {0};
-	char three_ping_addr[CMD_STR_LEN] = {0};
-	int usegpio =0,sim2gpio=1;
-
-
-
 	char *token;
 	int count=0,i=0;
 	char strPing[CMD_STR_LEN] = {0};
@@ -838,35 +832,13 @@ int simcard_internet_check(char *host, char *ifname)
 	}
 	while(i<count)
 	{
-		huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", &usegpio);
-		huayi_uci_get_int(PKG_M_SYSTEM, "sim2", "gpio", &sim2gpio);
-		if(usegpio != sim2gpio)
-		{
-			//printf("%s ",array_token[i]);
-			if (ifname == NULL)
-				sprintf(one_ping_addr,"ping -c 1 -W 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ",array_token[i]);
-			else
-				sprintf(one_ping_addr,"ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ",array_token[i],ifname);
-			if(internet_check(one_ping_addr,PING_TMPFILE)==1)
-				return 1;
-		}		
-
-		huayi_uci_get_int(PKG_M_SYSTEM, "system", "network_is_ok", &network_is_ok);
-		if(network_is_ok==1)
-			return 1;
+		if (ifname == NULL)
+			sprintf(one_ping_addr,"ping -c 1 -W 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ", array_token[i]);
 		else
-		{	
-			if(usegpio == sim2gpio)
-			{			
-				if (ifname == NULL)
-					sprintf(one_ping_addr,"ping -c 1 -W 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ",array_token[i]);
-				else
-					sprintf(one_ping_addr,"ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ",array_token[i],ifname);
-				if(internet_check(one_ping_addr,PING_TMPFILE)==1)
-					return 1;
-			}
-		}	
-		CON_LOG("gpio:%d  network error", usegpio);
+			sprintf(one_ping_addr,"ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ", array_token[i],ifname);
+		CON_LOG("one_ping_addr =  %s\n", one_ping_addr);
+		if(parse_pingmsg(one_ping_addr, PING_TMPFILE)==1)
+			return 1;		
 		sleep(1);
 		i++;
 	}
@@ -877,7 +849,6 @@ int simcard_internet_check(char *host, char *ifname)
 
 
 }
-
 
 long get_current_uptime_sec(void)
 {   
@@ -1078,29 +1049,35 @@ void save_useing_siminfo(int i)
 	int i_ready = 0, i_signal = 0;
 	char lte_value[OPTION_STR_LEN] = {0};
 	int count = 0;
-	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
-	
-	count = 0;
-retry_getccid:  
-	memset(lte_value, 0, OPTION_STR_LEN);
-	atcmd_get_iccid(lte_value);
-	if(!isdigitstr(lte_value)) 
-	{
-		count += 1;
-		if(40 == count)  
-		{
-			system("huayi_AT_cli AT+CFUN=0 ");
-			sleep(5);
-			system("huayi_AT_cli AT+CFUN=1 ");
-		}
-		strcpy(lte_value, "");
-		usleep(800);
-		if(count < 55)
-			goto retry_getccid;
-	}
-	huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "iccid", lte_value);
+	int AsciiNum[22],j;
 
-	count=0;
+	CON_LOG("i = %d\n", i);
+	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
+	count = 0;
+retry_getccid:    //尽最大可能取到ICCID
+	memset(lte_value, 0, OPTION_STR_LEN);
+	ret = atcmd_get_iccid(lte_value);
+	CON_LOG("lte_value = %s\n", lte_value);
+	for(j=0; j<strlen(lte_value) ,AsciiNum[j]=lte_value[j]; j++)		
+		if(strlen(lte_value) < 5 ||!((AsciiNum[j]>=48 && AsciiNum[j]<=58) || (AsciiNum[j]>=65 && AsciiNum[j]<=90) || (AsciiNum[j]>=97 && AsciiNum[j]<=122)))
+		{
+
+			count += 1;
+			if(40 == count)  //3.2ms
+			{
+				system("huayi_AT_cli AT+CFUN=0 ");
+				sleep(5);
+				system("huayi_AT_cli AT+CFUN=1 ");
+			}
+			strcpy(lte_value, "");
+			usleep(800);
+			if(count < 55)
+				goto retry_getccid;
+		}	
+	count = 0;
+	huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "iccid", lte_value);
+	CON_LOG("lte_value = %s\n", lte_value);
+
 retry_getlac:	 
 	memset(lte_value, 0, OPTION_STR_LEN);
 	atcmd_get_lac(lte_value);
@@ -1187,20 +1164,5 @@ retry_getoperator:
 	return;
 }
 
-int isdigitstr(char *str)
-{
-    int i = 0;
- 	if(strlen(str) < 5 || (strstr(str,"ERR")!=NULL) ||(strstr(str,"AT") != NULL))
-    	{
-			return 0;
-    	}
-    for (i = 0; i < strlen(str); i++)
-    {
-        if (!(isdigit(str[i])))
-        {	    		
-           return 0;
-        }
-    }
-    return 1;
-}
+
 

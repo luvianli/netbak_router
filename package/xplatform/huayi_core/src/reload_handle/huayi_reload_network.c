@@ -272,34 +272,21 @@ VTBool huayi_reload_telnet(void * arg,cJSON *input_root)
 #endif
 VTBool huayi_switch_card(void *arg,cJSON *input_root)
 {
-	
-	int count=0,i_card_slot=0,i_operator=0,info_operator=0,info_card_slot=0;
-	char switch_cmd[OPTION_STR_LEN] = {0},i_cmd[OPTION_STR_LEN]={0},i_lte_value[OPTION_STR_LEN] = {0},lte_value[OPTION_STR_LEN] = {0};
-
+	int info_card_slot=0;
+	char switch_cmd[OPTION_STR_LEN] = {0};
 	if( VT_TRUE != atcmd_check() )
 	{
 		system("killall -9 huayi_atcmd_server");
 		system("huayi_atcmd_server /dev/ttyUSB1 &");
 		return VT_FALSE;
 	}
-
-	
 	huayi_uci_get_int(PKG_M_SYSTEM,"usesiminfo","next_card_slot",&info_card_slot);
-	
 	memset(switch_cmd, 0,OPTION_STR_LEN);
 	sprintf(switch_cmd,"switch_sim %d",info_card_slot);
 	system(switch_cmd); 
-	
-
 	sleep(8); 
-	
+	system("ifup wan4g");
 	save_useing_siminfo(info_card_slot);
-
-	
-	huayi_uci_get_int(PKG_M_SYSTEM,"usesiminfo","card_slot",&i_card_slot);
-	FASTCGI_LOG("%s__%d__---q:%d != y:%d----",__FUNCTION__,__LINE__,info_card_slot,i_card_slot);
 	return VT_TRUE;
-	
-	
 }
 
