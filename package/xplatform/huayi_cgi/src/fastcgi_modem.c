@@ -1513,6 +1513,7 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 	char	resultbuf[OPTION_STR_LEN] = {0};
 	char	get_cmd[OPTION_STR_LEN] = {0};
 	char cmd[CMD_STR_LEN] = {0};
+	char apcli_ssid[64],disabled[64],apcli_enable[64];
 	
 		
 	if(!huayi_json_get_int(request_root,"channel",&channel) || \
@@ -1546,9 +1547,9 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 		huayi_uci_set_str(PKG_NETWORK,"wan","ifname", "apclii0");
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s", "apclii0");
 		system(cmd);
-		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"apcli_ssid",HUAYI_RANDOM_APCLI_NAME);
-		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"disabled","1");
-		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"apcli_enable","1");
+		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_ssid",HUAYI_RANDOM_APCLI_NAME);
+		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"disabled","1");
+		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_enable","1");
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"disabled","0");
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_enable","1");
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"network","wan");
@@ -1560,6 +1561,10 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 		
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_authmode",authmode_uci);
 		huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_encryptype",encryption_uci);
+
+
+		FASTCGI_LOG("===wisp2.4g close===");
+		FASTCGI_LOG("###wisp5G###channel:%d,bssid:%s,ssid:%s,authmode_uci:%s,encryption_uci:%s", channel,bssid,ssid,authmode_uci,encryption_uci);
 
 		if(strcmp("NONE",encryption_uci) == 0)
 		{
@@ -1593,6 +1598,8 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_authmode",authmode_uci);
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_encryptype",encryption_uci);
 
+		FASTCGI_LOG("===wisp5g close===");
+		FASTCGI_LOG("###wisp2.4G###channel:%d,bssid:%s,ssid:%s,authmode_uci:%s,encryption_uci:%s", channel,bssid,ssid,authmode_uci,encryption_uci);
 		if(strcmp("NONE",encryption_uci) == 0)
 		{
 			//huayi_uci_delete_option(PKG_WIRELESS,W24G_REP_IFACE,"key");
@@ -1603,6 +1610,17 @@ FCGI_BOOL set_wisp_mode(cJSON *request_root)
 		}
 		huayi_uci_get_str(PKG_WIRELESS,W24G_REP_IFACE,"ifname",apcli_ifname);
 	}
+
+	huayi_uci_commit(PKG_WIRELESS);
+	huayi_uci_get_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_ssid",apcli_ssid);
+	huayi_uci_get_str(PKG_WIRELESS,W24G_REP_IFACE,"disabled",disabled);
+	huayi_uci_get_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_enable",apcli_enable);
+	FASTCGI_LOG("==W24G_REP_IFNAME==apcli_ssid:%s,disabled:%s,apcli_enable:%s===",apcli_ssid,disabled,apcli_enable);
+	huayi_uci_get_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_ssid",apcli_ssid);
+	huayi_uci_get_str(PKG_WIRELESS,W58G_REP_IFACE,"disabled",disabled);
+	huayi_uci_get_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_enable",apcli_enable);
+	FASTCGI_LOG("==W58G_REP_IFACE==apcli_ssid:%s,disabled:%s,apcli_enable:%s==",apcli_ssid,disabled,apcli_enable);
+
 
 	huayi_uci_set_int(PKG_WIRELESS,W24G_DEV,"ht_extcha",ht_extcha);
 	huayi_uci_get_int(PKG_SYSTEM,"mode","opmode",&old_sys_mode);

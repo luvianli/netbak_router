@@ -23,17 +23,17 @@ void get_maxdelay(char *checksignalips, char *ifname)
 	{
 		sprintf(cmd, "ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk '{print $7}' > /tmp/pingtmp.txt", checksignalips, ifname);
 		system(cmd);
-		CON_LOG("cmd = %s\n", cmd);
+	//	CON_LOG("cmd = %s\n", cmd);
 		
 		memset(cmd, 0, TEMP_STR_LEN);
 		memset(value, 0, sizeof(value));
 		strcpy(cmd, "cat /tmp/pingtmp.txt | awk -F \" \" '{print $1}'");
 		get_cmd_result(cmd, value, sizeof(value));
-		CON_LOG("ping time value  = %s\n", value);
+	//	CON_LOG("ping time value  = %s\n", value);
 		timevalue = atoi(value+strlen("time="));
 		if(timevalue != 0)
 		{
-			CON_LOG("ping time value  = %d, maxdelay = %d\n", timevalue, maxdelay);
+		//	CON_LOG("ping time value  = %d, maxdelay = %d\n", timevalue, maxdelay);
 			if(timevalue > maxdelay)
 			{
 				delaycount += 1;
@@ -41,7 +41,7 @@ void get_maxdelay(char *checksignalips, char *ifname)
 		}
 		else
 		{
-			CON_LOG("strlen(value) = %d , ping time value  = %s \n", strlen(value), value);
+		//	CON_LOG("strlen(value) = %d , ping time value  = %s \n", strlen(value), value);
 			delaycount += 1;
 		}
 	}
