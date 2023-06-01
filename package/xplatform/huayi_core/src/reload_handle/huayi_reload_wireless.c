@@ -380,7 +380,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 		{
 			system("ifconfig apclii0 up");
 		}
-		sleep(15);
+		sleep(10);
 	}
 #endif
 	if((para & WIFI_24G_SCAN) == WIFI_24G_SCAN)
@@ -571,7 +571,7 @@ void huayi_core_wifi_timer_scan(void* arg)
 		}
 	}
 
-	wifi_scan_time += Agent->wifi_scan_status*30;
+	wifi_scan_time += Agent->wifi_scan_status*10;
 
 	if(Agent->wifi_scan_status > 5)
 	{
