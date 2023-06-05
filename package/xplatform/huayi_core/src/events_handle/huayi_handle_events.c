@@ -88,10 +88,13 @@ void update_netstate(unsigned char port_id,unsigned char status,unsigned char ol
 	return;
 }
 
+int discon_24g_count = 0, discon_58g_count = 0;
 void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *event)
 {
 	char cmd[CMD_STR_LEN] = {0};
 	char proto[SHORT_STR_LEN] = {0};
+	int scan_status = 0;
+	char scan_status_str[SMALL_STR_LEN] = {0};
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	int rep_24g_status = 0, rep_58g_status = 0;
 #endif
@@ -137,7 +140,14 @@ void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *even
 			#endif
 			Agent->repeater_status_24g = event->status;
 			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set system rep_24g_status %d",event->status);	
-			system(cmd);		
+			system(cmd);
+			if(Agent->repeater_status_24g == 1 && event->status == 0)   //connect---> disconnect
+			{
+				get_cmd_result("huayi_cmd get system scan_state",scan_status_str,SMALL_STR_LEN);
+				scan_status = atoi(scan_status_str);
+				if(scan_status != 3)		/*后台扫描处理断线重连时，这里不再计数*/
+					discon_24g_count += 1;
+			}
 			break;
 		case WLAN_58G_REPEATER_PORT_NUM:
 			if (Agent->repeater_status_58g == 1 && event->status == 0)
@@ -177,7 +187,13 @@ void update_repeater_info(struct VcoreAgent *Agent,struct huayi_port_event *even
 			Agent->repeater_status_58g = event->status;
 			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set system rep_58g_status %d",event->status);	
 			system(cmd);
-
+			if(Agent->repeater_status_58g == 1 && event->status == 0)   //connect---> disconnect
+			{
+				get_cmd_result("huayi_cmd get system scan_state",scan_status_str,SMALL_STR_LEN);
+				scan_status = atoi(scan_status_str);
+				if(scan_status != 3)    /*后台扫描处理断线重连时，这里不再计数*/
+					discon_58g_count += 1;
+			}
 			break;
 		case WLAN_24G_WPS_PORT_NUM:
 			Agent->wps_connect_status_24g = WPS_SUCCESS;

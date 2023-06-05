@@ -506,7 +506,7 @@ int huayi_change_channel(int wifi_type)
 	return 0;
 }
 
-
+extern int discon_24g_count, discon_58g_count;
 void huayi_core_wifi_timer_scan(void* arg)
 {
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
@@ -530,8 +530,25 @@ void huayi_core_wifi_timer_scan(void* arg)
 	huayi_uci_get_int(PKG_STATUS_SYSTEM, "sys", "rep_58g_status",&rep_status_5g);
 	if(rep_status_5g != 0 || rep_status != 0)
 	{
-		flag = 0;
-		Agent->wifi_scan_status = 1;
+		if(discon_24g_count >= 3)
+		{
+			discon_24g_count = 0;
+			flag = 1;
+			Agent->wifi_scan_type = WIFI_24G_SCAN;
+			Agent->wifi_scan_status += 1;
+		} 
+		else if(discon_58g_count >= 3)
+		{
+			discon_58g_count = 0;
+			flag = 1;
+			Agent->wifi_scan_type = WIFI_58G_SCAN;
+			Agent->wifi_scan_status += 1;
+		}
+		else
+		{
+			flag = 0;
+			Agent->wifi_scan_status = 1;
+		}
 	}else if(disabled_5g == 0)
 	{
 		flag = 1;

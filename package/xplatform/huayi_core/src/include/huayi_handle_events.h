@@ -3,7 +3,7 @@
 
 #include "huayi_core_base.h"
 #include "huayi_utimer_functions.h"
-#include "huayi_utimer_functions.h"
+//#include "huayi_utimer_functions.h"
 
 #define HUAYI_PORT_NETLINK_MSG_TYPE   		30
 #define HUAYI_PORT_NETLINK_PORT_ID    		50
