@@ -86,9 +86,11 @@ start_service() {
 
 	if [ "$wan_type" == "prior" ]; then
 		huayi_cmd set blend cpe_link 1
+		huayi_cmd set network wan_link 1
 	fi
 	if [ "$wan_type" == "rep4g" ]; then
 		huayi_cmd set blend cpe_link 1
+		huayi_cmd set network wan_link 1
 	fi
 	huayi_atcmd_server $DEV_ATC &
 	
