@@ -34,6 +34,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hy_internet_strategy $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/hy_internet_strategy.init $(1)/etc/init.d/hy_internet_strategy
+	
+	$(INSTALL_DIR) $(1)/lib/netifd/
+	$(INSTALL_BIN) ./files/hy_del_wisp.sh $(1)/lib/netifd/hy_del_wisp.sh
 endef
 	
 $(eval $(call BuildPackage,$(PKG_NAME)))

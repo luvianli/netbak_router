@@ -1,14 +1,97 @@
+
 #include <stdio.h>
 #include <unistd.h>
 #include <huayi_uci_fun.h>
-
+#include <sys/time.h>
+#define MIN(a)    a*1000*60
+#define SEC(a)    a*1000
 typedef enum{
 	INTERNET_UNDEFINE = 0,
 	INTERNET_4G,
 	INTERNET_WIRED,
-	
+
 }INTERNET_MODE;
 static int delaycount = 1;
+static long long timerStart =0;
+static long long delaywisp=0;
+
+typedef enum{
+	ADDDELAY = 1,
+	GETDELAY,
+	DELDELAY,
+	REDUCEDELAY,
+}DELAYTIME;
+
+
+long long getTime()
+{
+    struct timeval myTime;
+    gettimeofday(&myTime,NULL);
+    long long startTime = (long long)myTime.tv_sec * 1000+(long long)myTime.tv_usec / 1000;
+    return startTime;
+}
+
+int DetermineRepeater()
+{
+	char cmd_str[CMD_STR_LEN] = {0};
+	char resultbuf[SHORT_STR_LEN] = {0};
+    int rep_24g_status = 0;
+    int rep_58g_status = 0;
+	char wisp_gateway[IPV4_STR_LEN] = {0};
+	memset(cmd_str,0,sizeof(cmd_str));
+	memset(resultbuf, 0, sizeof(resultbuf));
+	strcpy(cmd_str,"route | grep \"default\" | awk {'print $8'}");
+	get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+    huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_24g_status",&rep_24g_status);
+    huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_58g_status",&rep_58g_status);
+    huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", wisp_gateway);
+
+    if(strstr(wisp_gateway,"0.0")==NULL &&(rep_24g_status == 1 ||rep_58g_status == 1 ))
+    {
+    //  CON_LOG("$$$using the network:%s##\n",resultbuf);
+	  if(strstr(resultbuf, "apcli"))
+	    return 1;
+    }
+    return 0;
+}
+
+int DelayExecutionTimeSetting(int modeType,char *ifname)
+{
+	long long delayTime=0;
+	static int cpeAcc=0;
+	static int wispAcc=0;
+	switch(modeType)
+	{
+		case ADDDELAY:
+			if(DetermineRepeater())
+			{
+			    timerStart=getTime();
+			    if(delaywisp<=10)
+				    delayTime=delaywisp+=1;
+				else
+				    delaywisp=10;
+            }
+	 		//CON_LOG(" %s network err ,add delaytime :%lld ##delaywisp:%lld ##",ifname,delayTime,delaywisp);
+			 break;
+		case GETDELAY:
+				delayTime=delaywisp;
+			break;
+		case DELDELAY:
+			if(DetermineRepeater())
+			{
+				delaywisp=0;
+			//	CON_LOG("##wisp netwoek ok##");
+			}
+		//		CON_LOG("##cpe netwoek ok##");
+			///}
+		//	CON_LOG("###DELDELAY###");
+			break;
+		default:
+			CON_LOG("##TimeSelaySetting error##");
+    		break;
+	}
+	return delayTime;
+}
 
 
 void get_maxdelay(char *checksignalips, char *ifname)
@@ -23,17 +106,14 @@ void get_maxdelay(char *checksignalips, char *ifname)
 	{
 		sprintf(cmd, "ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk '{print $7}' > /tmp/pingtmp.txt", checksignalips, ifname);
 		system(cmd);
-	//	CON_LOG("cmd = %s\n", cmd);
-		
+		sleep(1);
 		memset(cmd, 0, TEMP_STR_LEN);
 		memset(value, 0, sizeof(value));
 		strcpy(cmd, "cat /tmp/pingtmp.txt | awk -F \" \" '{print $1}'");
 		get_cmd_result(cmd, value, sizeof(value));
-	//	CON_LOG("ping time value  = %s\n", value);
 		timevalue = atoi(value+strlen("time="));
 		if(timevalue != 0)
 		{
-		//	CON_LOG("ping time value  = %d, maxdelay = %d\n", timevalue, maxdelay);
 			if(timevalue > maxdelay)
 			{
 				delaycount += 1;
@@ -41,7 +121,6 @@ void get_maxdelay(char *checksignalips, char *ifname)
 		}
 		else
 		{
-		//	CON_LOG("strlen(value) = %d , ping time value  = %s \n", strlen(value), value);
 			delaycount += 1;
 		}
 	}
@@ -55,12 +134,13 @@ int wisp4g_internet_do_ping(const char *host, char *ifname, char *del_gateway)
 	char cmd[CMD_STR_LEN] = {0};
 	char wan_gateway[IPV4_STR_LEN] = {0};
 	char resultbuf[SHORT_STR_LEN] = {0};
+    char value[OPTION_STR_LEN] = { 0 };
 	int i = 0;
 
 	if ((NULL == host) || (strlen(host)<7))
 		goto fail;
 
-	
+
 	if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
 	{
 		sprintf(cmd,"route del default gw %s",del_gateway);
@@ -94,25 +174,66 @@ int wisp4g_internet_do_ping(const char *host, char *ifname, char *del_gateway)
 	for(i = 0;i < 3; i++)
 	{
 		if (ifname == NULL)
-		{
-			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
-		}
+		    sprintf(cmd,"ping -c 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}'  > %s", host,PING_TMPFILE);
 		else
-		{
-			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
-		}
+		    sprintf(cmd,"ping -c 1 %s -I %s | grep \"time=\" | awk -F \"=\" '{print $NF}'  > %s", host,ifname,PING_TMPFILE);
+
 		system(cmd);
-		usleep(500);
-		if ( access(PING_TMPFILE, F_OK) == 0)
+		sleep(1);
+		sprintf(cmd, "cat %s | awk -F \" \" '{print $1}'", PING_TMPFILE);
+	    get_cmd_result(cmd, value, sizeof(value));
+		if (strstr(value,"."))
 		{
+		    CON_LOG("ping ok %s",ifname);
+		    DelayExecutionTimeSetting(DELDELAY,ifname);
 			unlink(PING_TMPFILE);
 			return 1;
 		}
+		sleep(1);
 	}
+DelayExecutionTimeSetting(ADDDELAY,ifname);
 fail:
 	return 0;
 }
 
+
+
+void del_wisp()
+{
+    char del_gateway[RESULT_STR_LEN] = {0};
+	char cmd[CMD_STR_LEN] = {0};
+	char wisp_device[SHORT_STR_LEN] = {0};
+    int rep_24g_status = 0;
+    int rep_58g_status = 0;
+    long long ret=0;
+    long long nowTimer =getTime();
+	huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "device", wisp_device);
+    huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_24g_status",&rep_24g_status);
+    huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_58g_status",&rep_58g_status);
+     if(strstr(wisp_device,"apcli") &&(rep_24g_status == 1 ||rep_58g_status == 1 ))
+     {
+        ret=DelayExecutionTimeSetting(GETDELAY, wisp_device);
+        CON_LOG("ret:%d",ret);
+
+        memset(del_gateway, 0, sizeof(del_gateway));
+        memset(cmd, 0, sizeof(cmd));
+		huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
+		CON_LOG("# # #%s network err# # #delay:%lldSEC# # #Delayed:%lld-----SEC(ret):%lld--(nowTimer-timerStart):%lld# # #",wisp_device,ret,MIN(ret)-(nowTimer-timerStart),MIN(ret),(nowTimer-timerStart));
+		if(ret)
+	    {
+    		if((nowTimer-timerStart) < MIN(ret))
+    		 sprintf(cmd,". /lib/netifd/hy_del_wisp.sh del %s", del_gateway);
+    		else if((nowTimer-timerStart) >= MIN(ret))
+    		 sprintf(cmd,". /lib/netifd/hy_del_wisp.sh rst %s %s", del_gateway, wisp_device);
+
+    		system(cmd);
+            sleep(10);
+        }
+
+
+
+    }
+}
 
 int main(int argc,char *argv[])
 {
@@ -139,10 +260,12 @@ int main(int argc,char *argv[])
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
 
+        CON_LOG("start huayi_1200m_wisp_4g");
 	delaycount = 1;
 	while(1)
 	{
 		sleep(10);
+
 		memset(wan_type,0,sizeof(wan_type));
 		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 
@@ -159,6 +282,10 @@ int main(int argc,char *argv[])
 		cpe_link = 0;
 		wired_status = 0;
 		cpe_status = 0;
+
+        del_wisp();
+
+
 		huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "device", wired_device);
 		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "device", cpe_device);
 		huayi_uci_get_int(PKG_STATUS_BLEND, "wisp", "link", &wired_link);
@@ -172,6 +299,7 @@ int main(int argc,char *argv[])
 			continue;
 		memset(wisp_ipv4, 0, sizeof(wisp_ipv4));
 		memset(wan4g_ipv4, 0, sizeof(wan4g_ipv4));
+        memset(cmd_str,0,sizeof(cmd_str));
 		if(wired_link == 1 && cpe_link == 1)//同时在线时，使用wisp优先策略
 		{
 			memset(del_gateway, 0, sizeof(del_gateway));
@@ -206,7 +334,7 @@ int main(int argc,char *argv[])
 			}
 		}
 		else if(cpe_link == 1)//使用4G上网方式
-		{	
+		{
 			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4", wan4g_ipv4);
 			if(strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
 				continue;
@@ -245,7 +373,7 @@ int main(int argc,char *argv[])
 		{
 			sprintf(cmd_str,"route del default gw %s",del_gateway);
 			system(cmd_str);
-			//printf("cmd_str = %s\n",cmd_str);			
+			//printf("cmd_str = %s\n",cmd_str);
 		}
 		else
 		{
@@ -278,7 +406,7 @@ int main(int argc,char *argv[])
 		//printf("net_ipv4 = %s, wan_ipv4 = %s\n",net_ipv4, wan_ipv4);
 		/*add update  status_network info，解决上网方式错乱的问题，实时更新上网方式接口*/
 		//if(strcmp(wan_ipv4,net_ipv4))  //更新proc下的网络状态信息
-		{	
+		{
 			memset(cmd_str,0,sizeof(cmd_str));
 			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
 			system(cmd_str);
