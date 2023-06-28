@@ -1994,6 +1994,13 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
         huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_ssid",HUAYI_RANDOM_APCLI_NAME);
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"disabled","1"); //off
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"apcli_enable","1");
+        
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
+                huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_ssid",HUAYI_RANDOM_APCLI_NAME);
+                huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"disabled","1");
+                huayi_uci_set_str(PKG_WIRELESS,W58G_REP_IFACE,"apcli_enable","1");
+#endif
+
 #endif
 	}
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
