@@ -1991,6 +1991,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		huayi_uci_set_str(PKG_NETWORK,"wan4g","proto",proto);
 		huayi_uci_set_int(PKG_MODEM,"status","mode",use_apn);
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+        huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_ssid",HUAYI_RANDOM_APCLI_NAME);
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"disabled","1"); //off
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"apcli_enable","1");
 #endif
