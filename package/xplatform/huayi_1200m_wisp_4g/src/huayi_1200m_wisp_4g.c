@@ -20,6 +20,7 @@ static long long delaycpe=0;
 typedef enum{
 	ADDDELAY = 1,
 	GETDELAY,
+	GETWISPPINGERROR,
 	DELDELAY,
 	REDUCEDELAY,
 }DELAYTIME;
@@ -86,6 +87,10 @@ int DelayExecutionTimeSetting(int modeType)
                 if(delaywisp > 0 && delaycpe > 0 )
                     delayTime=1;
 			break;
+        case GETWISPPINGERROR:
+                if(delaywisp > 1)
+                    delayTime=1;
+            break;
 		case DELDELAY:
 			if(DetermineRepeater()>0)
 			{
@@ -110,7 +115,7 @@ int DelayExecutionTimeSetting(int modeType)
 
 
 
-void del_wisp()
+int del_wisp()
 {
     char del_gateway[RESULT_STR_LEN] = {0};
 	char cmd[TEMP_STR_LEN] = {0};
@@ -124,27 +129,25 @@ void del_wisp()
     huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_58g_status",&rep_58g_status);
      if(strstr(wisp_device,"apcli") &&(rep_24g_status == 1 ||rep_58g_status == 1 ))
      {
-        ret=DelayExecutionTimeSetting(GETDELAY);
+        ret=DelayExecutionTimeSetting(GETWISPPINGERROR);
         CON_LOG("ret:%d",ret);
-
-        memset(del_gateway, 0, sizeof(del_gateway));
-        memset(cmd, 0, sizeof(cmd));
-		huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
-		CON_LOG("# # #%s network err# # #delay:%lldSEC# # #Delayed:%lld-----SEC(ret):%lld--(nowTimer-timerStart):%lld# # #",wisp_device,ret,MIN(ret)-(nowTimer-timerStart),MIN(ret),(nowTimer-timerStart));
-		if(ret)
+        if(ret)
 	    {
+           system(". /lib/netifd/hy_del_wisp.sh del");
+           return 1;
+           /*
     		if((nowTimer-timerStart) < MIN(ret))
-    		 sprintf(cmd,". /lib/netifd/hy_del_wisp.sh del %s", del_gateway);
+    		 sprintf(cmd,". /lib/netifd/hy_del_wisp.sh del", del_gateway);
+            
     		else if((nowTimer-timerStart) >= MIN(ret))
     		 sprintf(cmd,". /lib/netifd/hy_del_wisp.sh rst %s %s", del_gateway, wisp_device);
 
     		system(cmd);
             sleep(10);
+            */
         }
-
-
-
     }
+     return 0;
 }
 
 
@@ -329,6 +332,8 @@ int main(int argc,char *argv[])
 			wired_status = wisp4g_internet_do_ping(detectip, wired_device, del_gateway);
 			if(wired_status == 0)
 			{
+                if(del_wisp())
+                    continue;
 				memset(del_gateway, 0, sizeof(del_gateway));
 				huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
 				cpe_status = wisp4g_internet_do_ping(detectip, cpe_device, del_gateway);
