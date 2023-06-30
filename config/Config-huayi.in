@@ -137,6 +137,11 @@ config HUAYI_WIFI_MT7628_WLANLED
 		The application layer can control 2.4GWiFi lights.
 	bool
 	
+config HUAYI_DETECTION_NETWORK_SUPPORT
+	bool	"Support detection network"
+	depends on (HUAYI_PLATFORM_SUPPORT)
+	bool
+	
 config HUAYI_SPECIAL_LED_SUPPORT
 	bool	"Support special two-color led"
 	depends on (HUAYI_PLATFORM_SUPPORT && !HUAYI_WPS_LED_SUPPORT)
