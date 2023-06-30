@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>	
 #include <sys/stat.h>
+#include <time.h>
+#include <stdarg.h>
 
 
 #ifndef __HUAYI_LOG_H__
@@ -121,5 +123,27 @@
 							}\
 						}while(0)
 
+#define DETECTION_NETWORK_LOG(format, args...) \
+					do{ \
+						if(CON_LOG_SIN) \
+						{\
+							FILE *fp = fopen("/tmp/log/detection_network_log", "a"); \
+							if(fp)\
+							{\
+								time_t now = time(NULL);\
+								struct tm *t = localtime(&now);\
+								fprintf(fp, "time:%d:%d:%d##%s@%s,%d] " format "\n", \
+								t->tm_hour, t->tm_min, t->tm_sec,__FILE__, __func__,__LINE__, ##args ); \
+							}\
+							fclose(fp);\
+							struct stat buf;\
+							int size=stat("/tmp/log/detection_network_log", &buf);\
+							if(size > 20000)\
+							{\
+								system("rm -fr /tmp/log/detection_network_log");\
+							}\
+							}\
+					}while(0)
 
 #endif /* __HUAYI_LOG_H__ */
+

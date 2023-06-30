@@ -11,6 +11,8 @@
 #include	 <arpa/inet.h>
 
 #include "dial4g.h"
+#include "huayi_uci_fun.h"
+
 
 int get_quectel_status(char *mobile_type, int *dial_link)
 {
@@ -24,7 +26,8 @@ int get_quectel_status(char *mobile_type, int *dial_link)
 MCC: 0, MNC: 0, PS: Detached, DataCap: UNKNOW
 MCC: 460, MNC: 0, PS: Detached, DataCap: UNKNOW
 MCC: 460, MNC: 0, PS: Attached, DataCap: LTE
-*/
+*/
+
 
 	get_cmd_result("cat /tmp/lte_status", buf, 128);
 	
@@ -658,10 +661,14 @@ retry_signal:
 				huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4", wired_ipaddr);
 				snprintf(cmd, CMD_STR_LEN,"echo 'cgpipaddr =  %s   cpe_ipaddr = %s' >> /tmp/test.txt", cgpipaddr, wired_ipaddr);	
 				system(cmd);
+                
+                DETECTION_NETWORK_LOG("cgpipaddr =  %s   cpe_ipaddr = %s\n", cgpipaddr, wired_ipaddr);
 				if(strlen(wired_ipaddr) > 7 && strstr(cgpipaddr, wired_ipaddr) == NULL)
 				{
 					if(2 == ip_count)
 					{
+                        
+                        DETECTION_NETWORK_LOG("cgpipaddr =  %s   wan_ipaddr = %s\n", cgpipaddr, wan_ipaddr);
 						AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
 						sleep(3);
 						system("huayi-reset small4gfunc");
@@ -669,7 +676,11 @@ retry_signal:
 					}
 					ip_count += 1;
 				}
-			}else
+			}
+            else
+            {
+                DETECTION_NETWORK_LOG("cgpipaddr =  %s. 4G ipaddr is not ok.\n", cgpipaddr);
+            }
 #endif
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 			huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);

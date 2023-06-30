@@ -970,6 +970,16 @@ void huayi_core_mount(void* arg)
 	return;
 }
 
+void huayi_core_ping(void* arg)
+{
+	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
+	
+	system("huayi_detect_network www.baidu.com www.bjzhongyi.com www.haidilao.com");
+	
+	huayi_core_add_task(20,HUAYI_RELOAD_MOUNT_TASK,huayi_core_ping,Agent);
+	return;
+}
+
 
 void huayi_utimer_functions_start(struct VcoreAgent *Agent)
 {
@@ -1002,6 +1012,11 @@ void huayi_utimer_functions_start(struct VcoreAgent *Agent)
 #if defined(CONFIG_PACKAGE_VSFTPD)
 	huayi_core_add_task(60,HUAYI_RELOAD_MOUNT_TASK,huayi_core_mount,Agent);
 #endif
+
+#if defined(CONFIG_HUAYI_DETECTION_NETWORK_SUPPORT)
+        huayi_core_add_task(60,HUAYI_RELOAD_MOUNT_TASK,huayi_core_ping,Agent);
+#endif
+
 	
 	if(sys_mode == HUAYI_WISP_MODE || sys_mode == HUAYI_REP_MODE)
 	{

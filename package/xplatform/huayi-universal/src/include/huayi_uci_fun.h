@@ -70,7 +70,7 @@ typedef enum{
 #define WLAN_ENCRTYPE_AES     		0x20
 #define WLAN_ENCRTYPE_WEP     		0x40
 
-
+#define PING_FILE                                  	        "/tmp/ping_file"
 #define UPLOAD_BIN  									"/tmp/firmware.bin"
 #define UPGRADE_FILE  									"/tmp/firmware.img"
 
