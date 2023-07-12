@@ -203,6 +203,7 @@ int main(int argc,char *argv[])
 				if(cpe_status == 0)//使用wisp上网方式
 				{
 					sprintf(section,"wisp");
+                    system(". /lib/netifd/hy_del_wisp.sh del");
 				}else//使用4G上网方式
 				{
 					sprintf(section,"cpe");
