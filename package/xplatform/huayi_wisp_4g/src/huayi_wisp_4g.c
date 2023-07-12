@@ -167,6 +167,24 @@ int main(int argc,char *argv[])
 		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4", wan4g_ipv4);
 		if(wired_link == 0 && cpe_link == 0)
 			continue;
+		if(cpe_link == 1)
+		{
+			memset(cmd_str,0,sizeof(cmd_str));
+			memset(resultbuf, 0, sizeof(resultbuf));
+			strcpy(cmd_str,"ifconfig wwan0");
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+			if(strncmp(resultbuf,"error",sizeof(resultbuf)))
+			{
+				memset(cmd_str,0,sizeof(cmd_str));
+				memset(resultbuf, 0, sizeof(resultbuf));
+				strcpy(cmd_str,"ifconfig wwan0 | grep inet | awk {'print $1'}");
+				get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+				if(!strstr(resultbuf, "inet"))
+				{
+					system("quectel-CM &");
+				}
+			}
+		}
 		if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0
 			&& strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
 			continue;
@@ -276,7 +294,7 @@ int main(int argc,char *argv[])
 
 		huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
 		//printf("net_ipv4 = %s, wan_ipv4 = %s\n",net_ipv4, wan_ipv4);
-		if(strcmp(wan_ipv4,net_ipv4))  //更新proc下的网络状态信息
+		//if(strcmp(wan_ipv4,net_ipv4))  //更新proc下的网络状态信息
 		{	
 			memset(cmd_str,0,sizeof(cmd_str));
 			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
