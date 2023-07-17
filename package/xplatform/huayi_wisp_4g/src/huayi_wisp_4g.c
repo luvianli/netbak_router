@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 
 #include <huayi_uci_fun.h>
 
@@ -40,17 +42,17 @@ void get_maxdelay(char *checksignalips, char *ifname)
 	{
 		sprintf(cmd, "ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk '{print $7}' > /tmp/pingtmp.txt", checksignalips, ifname);
 		system(cmd);
-		CON_LOG("cmd = %s\n", cmd);
+		WISP_NETWORK_LOG("cmd = %s\n", cmd);
 		
 		memset(cmd, 0, TEMP_STR_LEN);
 		memset(value, 0, sizeof(value));
 		strcpy(cmd, "cat /tmp/pingtmp.txt | awk -F \" \" '{print $1}'");
 		get_cmd_result(cmd, value, sizeof(value));
-		CON_LOG("ping time value  = %s\n", value);
+		WISP_NETWORK_LOG("ping time value  = %s\n", value);
 		timevalue = atoi(value+strlen("time="));
 		if(timevalue != 0)
 		{
-			CON_LOG("ping time value  = %d, maxdelay = %d\n", timevalue, maxdelay);
+			WISP_NETWORK_LOG("ping time value  = %d, maxdelay = %d\n", timevalue, maxdelay);
 			if(timevalue > maxdelay)
 			{
 				delaycount += 1;
@@ -58,15 +60,13 @@ void get_maxdelay(char *checksignalips, char *ifname)
 		}
 		else
 		{
-			CON_LOG("strlen(value) = %d , ping time value  = %s \n", strlen(value), value);
+			WISP_NETWORK_LOG("strlen(value) = %d , ping time value  = %s \n", strlen(value), value);
 			delaycount += 1;
 		}
 	}
 
 	return;
 }
-
-
 unsigned short icmp_checksum(unsigned short* buffer, int size) {
     unsigned long sum = 0;
 
@@ -85,20 +85,58 @@ unsigned short icmp_checksum(unsigned short* buffer, int size) {
     return (unsigned short)(~sum);
 }
 
-int networkConnectTest(const char* ipAddress) {
+
+int IcmpnetworkConnect(const char* interface, const char* ipAddress) {
+    int sockfd;
     int i = 0;
+    struct ifreq ifr;
+    struct sockaddr_in* sin;
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        WISP_NETWORK_LOG("socket");
+        return -1;
+    }
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, interface, IFNAMSIZ - 1);
+
+    if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
+        perror("ioctl");
+        close(sockfd);
+        return -1;
+    }
+
+
+    if (ifr.ifr_addr.sa_family == AF_INET) {
+    sin = (struct sockaddr_in*)&ifr.ifr_addr;
+    char ipAddr[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &(sin->sin_addr), ipAddr, INET_ADDRSTRLEN) == NULL) {
+        WISP_NETWORK_LOG("inet_ntop");
+        close(sockfd);
+        return -1;
+    }
+    WISP_NETWORK_LOG("Network interface %s is up.\n", interface);
+    WISP_NETWORK_LOG("IP address: %s\n", ipAddr);
+    } else {
+        WISP_NETWORK_LOG("Network interface %s does not have an IPv4 address.\n", interface);
+        close(sockfd);
+        return -1;
+    }
+
+    close(sockfd);
 
     struct sockaddr_in server;
     server.sin_family = AF_INET;
     server.sin_port = 0;
     if (inet_aton(ipAddress, &server.sin_addr) == 0) {
-        WISP_NETWORK_LOG("inet_aton error");
+        WISP_NETWORK_LOG("inet_aton");
         return -1;
     }
 
     int sd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sd < 0) {
-        WISP_NETWORK_LOG("socket error");
+        WISP_NETWORK_LOG("socket");
         return -1;
     }
 
@@ -106,7 +144,7 @@ int networkConnectTest(const char* ipAddress) {
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
     if (setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0) {
-        WISP_NETWORK_LOG("setsockopt error");
+        WISP_NETWORK_LOG("setsockopt");
         close(sd);
         return -1;
     }
@@ -128,7 +166,7 @@ int networkConnectTest(const char* ipAddress) {
         packet.header.checksum = htons(~icmp_checksum((unsigned short*)&packet, sizeof(packet)));
 
         if (sendto(sd, &packet, sizeof(packet), 0, (struct sockaddr*)&server, sizeof(server)) <= 0) {
-            WISP_NETWORK_LOG("sendto error");
+            WISP_NETWORK_LOG("sendto");
             close(sd);
             return -1;
         }
@@ -157,23 +195,35 @@ int networkConnectTest(const char* ipAddress) {
     }
 }
 
-int networkCheck(const char* interface, const char* ipAddress) {
-    if (networkConnectTest(ipAddress) == 0) {
-        WISP_NETWORK_LOG("Network is reachable.\n");
-        return 0;
-    }
 
+
+
+
+
+int networkCheck(const char* interface, const char* ipAddress) {
+    int i = 0;
     char command[100];
     snprintf(command, sizeof(command), "ping -c 1 -W 1 %s -I %s > /dev/null 2>&1", ipAddress, interface);
-
-    int status = system(command);
-    if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-        WISP_NETWORK_LOG("Network is reachable.\n");
-        return 0;
-    } else {
-        WISP_NETWORK_LOG("Network is unreachable.\n");
-        return -1;
+    for (i=0;i<3;i++)
+    {
+        if (IcmpnetworkConnect(interface,ipAddress) == 0) {
+            WISP_NETWORK_LOG("Network is reachable.\n");
+            goto succeed;
+        }
+        int status = system(command);
+        if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+            WISP_NETWORK_LOG("Network is reachable.\n");
+            goto succeed;
+        }
+        usleep(500);
     }
+    WISP_NETWORK_LOG("Network is unreachable.\n");
+    goto fail;
+succeed:
+    return 0;
+fail:
+    return -1;
+
 }
 
 
