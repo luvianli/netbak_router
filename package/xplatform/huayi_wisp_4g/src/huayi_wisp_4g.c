@@ -129,10 +129,13 @@ int IcmpnetworkConnect(const char* interface, const char* ipAddress) {
     struct sockaddr_in server;
     server.sin_family = AF_INET;
     server.sin_port = 0;
-    if (inet_aton(ipAddress, &server.sin_addr) == 0) {
-        WISP_NETWORK_LOG("inet_aton");
+    struct in_addr ip;
+    if (inet_pton(AF_INET, ipAddress, &ip) <= 0) {
+        WISP_NETWORK_LOG("Invalid IP address: %s\n", ipAddress);
         return -1;
     }
+    server.sin_addr = ip;
+
 
     int sd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sd < 0) {
