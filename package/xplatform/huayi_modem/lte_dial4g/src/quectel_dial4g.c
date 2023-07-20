@@ -13,7 +13,6 @@
 #include "dial4g.h"
 #include "huayi_uci_fun.h"
 
-
 int get_quectel_status(char *mobile_type, int *dial_link)
 {
 	char buf[128] = {0};
