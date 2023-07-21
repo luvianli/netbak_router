@@ -42,7 +42,7 @@ int DetectConfigurationOfSimAndDns()
 	for(j=0;j<strlen(lte_value) ,AsciiNum[j]=lte_value[j];j++){
     	if(strlen(lte_value) < 5 ||!((AsciiNum[j]>=48 && AsciiNum[j]<=58) || (AsciiNum[j]>=65 && AsciiNum[j]<=90) || (AsciiNum[j]>=97 && AsciiNum[j]<=122))){
     		DETECTION_NETWORK_LOG("SIM card cannot read");
-    		return 0;
+    		return -1;
     	}
 	}
     int result = checkDNS();
@@ -59,7 +59,7 @@ int DetectConfigurationOfSimAndDns()
 }
 
 
-int parse_pingmsg(char *ping , char *file)
+int parse_pingmsg_detect(char *ping , char *file)
 {
 	char cmd[CMD_STR_LEN] = {0};
 	char iccid[OPTION_STR_LEN] = { 0 };
@@ -88,23 +88,39 @@ int parse_pingmsg(char *ping , char *file)
 int simcard_internet_check(int count,char *host[], char *ifname)
 {	
 	char ping_addr[CMD_STR_LEN] = {0};
-	int i=1;
+	int i=1,counter = 0,ret = 0;
+    huayi_uci_set_int(PKG_SYSTEM,"Ping_tool","enabled",1);
+    huayi_uci_commit(PKG_SYSTEM);
 
 	if ((NULL == host) || (strlen(host)<7))
 		return 0;
-	
+netretry:	
+    i = 0;
 	while(i<count)
 	{
 		if (ifname == NULL)
 			sprintf(ping_addr,"ping -c 1 -W 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ", host[i]);
 		else
 			sprintf(ping_addr,"ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ", host[i],ifname);
-		if(parse_pingmsg(ping_addr, PING_FILE)==1){
-            unlink(PING_FILE);
-			return 1;
+
+        ret = parse_pingmsg_detect(ping_addr, PING_FILE);
+        if( ret == 1 || ret == -1){
+            goto end;
         }
 		i++;
 	}
+    counter += 1;
+	sleep(1);
+	if(counter <= 20){
+		goto netretry;
+	}
+    DETECTION_NETWORK_LOG("Counter timeout ! exe huayi-reset lte4g parameter 1");
+    system("huayi-reset lte4g parameter 1");
+    DETECTION_NETWORK_LOG("ok");
+    goto end;
+end:
+    huayi_uci_set_int(PKG_SYSTEM,"Ping_tool","enabled",0);
+    huayi_uci_commit(PKG_SYSTEM);
 	unlink(PING_FILE);
 	return 0;
 

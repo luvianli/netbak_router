@@ -47,5 +47,7 @@ config wifi_sche wifi_sche
 
 config upgrade upgrade
 	option check_model ZC-GW03-2
+config Ping_tool Ping_tool
+	option enabled 0
 	
 	

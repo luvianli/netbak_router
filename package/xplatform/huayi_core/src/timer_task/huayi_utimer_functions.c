@@ -972,10 +972,13 @@ void huayi_core_mount(void* arg)
 
 void huayi_core_ping(void* arg)
 {
+    int value = 0;
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
-	
-	system("huayi_detect_network www.baidu.com www.bjzhongyi.com www.haidilao.com");
-	
+    
+	huayi_uci_get_int(PKG_SYSTEM,"Ping_tool","enabled",&value);
+    if(value == 0){
+	    system("huayi_detect_network www.baidu.com www.bjzhongyi.com www.haidilao.com");
+    }
 	huayi_core_add_task(20,HUAYI_RELOAD_MOUNT_TASK,huayi_core_ping,Agent);
 	return;
 }
