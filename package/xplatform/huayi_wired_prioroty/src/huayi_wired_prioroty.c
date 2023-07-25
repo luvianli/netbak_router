@@ -134,7 +134,7 @@ int main(int argc,char *argv[])
 			}
 
 			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
-			if(strcmp(wan_ipv4,net_ipv4))
+			//if(strcmp(wan_ipv4,net_ipv4))
 			{	
 				memset(cmd_str,0,sizeof(cmd_str));
 				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
