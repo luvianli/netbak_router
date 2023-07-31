@@ -388,6 +388,7 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	int sim_state = 0;
 	char str_sim_state[OPTION_STR_LEN] = {0};
 	char lte_value[OPTION_STR_LEN] = {0};
+	int wired_link = 0;
 #endif
 
 
@@ -433,7 +434,8 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
 	else if(!strcmp(wan_type,WAN_TYPE_WIRED_PRIOROTY))
 	{
-		if (wan_link == 0)
+		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
+		if (wan_link == 0||wired_link == 0)
 		{
 			if (sim_state != MODEM_SIN_READY)
 			{

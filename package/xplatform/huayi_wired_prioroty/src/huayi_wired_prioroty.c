@@ -61,27 +61,35 @@ int main(int argc,char *argv[])
 
 		if(wired_link == 1 && cpe_link == 1)//Í¬Ê±ÔÚÏßÊ±£¬Ê¹ÓÃÓÐÏßÓÅÏÈ²ßÂÔ
 		{
-			wired_status = internet_do_ping_detect(detectip, wired_device);
+			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
+			wired_status = first_internet_do_ping(detectip, wired_device,del_gateway);
 			if(wired_status == 0)
 			{
-				cpe_status = internet_do_ping_detect(detectip, cpe_device);
+				sleep(2);
+                DETECTION_NETWORK_LOG("wired internet error");
+                huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", del_gateway);
+				cpe_status = first_internet_do_ping(detectip, cpe_device,del_gateway);
 				if(cpe_status == 0)//Ê¹ÓÃÓÐÏßÉÏÍø·½Ê½
 				{
+					DETECTION_NETWORK_LOG("cpe internet error");
 					sprintf(section,"wired");
 					now_int_mode = INTERNET_WIRED;
 					old_int_mode = INTERNET_UNDEFINE;
 				}else//Ê¹ÓÃ4GÉÏÍø·½Ê½
 				{
+				 	DETECTION_NETWORK_LOG("cpe internet");
 					sprintf(section,"cpe");
 					now_int_mode = INTERNET_4G;
 				}
 			}else//Ê¹ÓÃÓÐÏßÉÏÍø·½Ê½
 			{
+				DETECTION_NETWORK_LOG("wired internet");
 				sprintf(section,"wired");
 				now_int_mode = INTERNET_WIRED;
 			}
 
-		}else if(cpe_link == 1)//Ê¹ÓÃ4GÉÏÍø·½Ê½
+		}
+		else if(cpe_link == 1)//Ê¹ÓÃ4GÉÏÍø·½Ê½
 		{	
 			sprintf(section,"cpe");
 			now_int_mode = INTERNET_4G;
@@ -114,27 +122,40 @@ int main(int argc,char *argv[])
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "netmask", wan_netmask);
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "gateway", wan_gateway);
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "dns_server",temp_dns);
-			//printf("del_gateway = %s\n",del_gateway);
 			if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
 			{
 				sprintf(cmd_str,"route del default gw %s",del_gateway);
+				DETECTION_NETWORK_LOG("%s",cmd_str);
 				system(cmd_str);
 				//printf("cmd_str = %s\n",cmd_str);
+			}else{
+    			/*ï¿½Ð¶Ïµï¿½Ç°Ê¹ï¿½Ãµï¿½Ä¬ï¿½ï¿½Â·ï¿½ï¿½ï¿½Ç·ï¿½Îª0.0.0.0ï¿½ï¿½ï¿½ï¿½ï¿½Îª0.0.0.0ï¿½ï¿½ï¿½ï¿½É¾ï¿½ï¿½*/
+    			memset(cmd_str,0,sizeof(cmd_str));
+    			memset(resultbuf, 0, sizeof(resultbuf));
+    			strcpy(cmd_str,"route | grep \"default\" | awk {'print $2'}");
+    			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+    			if(strstr(resultbuf, "0.0.0.0"))
+    			{
+    				system("route del default");
+    				sleep(1);
+    				system("route del default");
+                    DETECTION_NETWORK_LOG("route del default");
+    			}
+        	}
+			memset(cmd_str,0,sizeof(cmd_str));
+			sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
 
+			if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
+			{
 				memset(cmd_str,0,sizeof(cmd_str));
-				sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
-				get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
-
-				if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
-				{
-					memset(cmd_str,0,sizeof(cmd_str));
-					sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
-					system(cmd_str);
-				}
+				sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
+				DETECTION_NETWORK_LOG("%s",cmd_str);
+				system(cmd_str);
 			}
 
 			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
-			//if(strcmp(wan_ipv4,net_ipv4))
+			if(strcmp(wan_ipv4,net_ipv4))
 			{	
 				memset(cmd_str,0,sizeof(cmd_str));
 				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
@@ -167,9 +188,11 @@ int main(int argc,char *argv[])
 				if(now_int_mode == INTERNET_4G)
 				{
 					system("ifup wan4g");
+					DETECTION_NETWORK_LOG("ifup wan4g");
 				}else if(now_int_mode == INTERNET_WIRED)
 				{
 					system("ifup wan");
+					DETECTION_NETWORK_LOG("ifup wan");
 				}
 			}
 

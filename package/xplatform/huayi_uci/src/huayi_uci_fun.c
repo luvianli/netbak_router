@@ -792,6 +792,69 @@ fail:
 	return 0;
 }
 
+int first_internet_do_ping(const char *host, char *ifname, char *del_gateway)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	char wan_gateway[IPV4_STR_LEN] = {0};
+	char resultbuf[SHORT_STR_LEN] = {0};
+	int i = 0;
+
+	if ((NULL == host) || (strlen(host)<7))
+		goto fail;
+
+
+	if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
+	{
+		sprintf(cmd,"route del default gw %s",del_gateway);
+		system(cmd);
+		//printf("cmd_str = %s\n",cmd_str);
+		if(strcmp(ifname, "eth0.2") == 0)
+		{
+			huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wan_gateway);
+		}
+		else
+		{
+			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", wan_gateway);
+		}
+		memset(cmd,0,sizeof(cmd));
+		sprintf(cmd,"route -n | grep %s | grep UG | grep %s |wc -l", ifname, wan_gateway);
+		get_cmd_result(cmd, resultbuf, sizeof(resultbuf));
+
+		if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
+		{
+			memset(cmd,0,sizeof(cmd));
+			sprintf(cmd,"route add default gw %s dev %s",wan_gateway,ifname);
+			system(cmd);
+		}
+	}
+	else
+	{
+		goto fail;
+	}
+
+	memset(cmd,0,sizeof(cmd));
+	for(i = 0;i < 3; i++)
+	{
+		if (ifname == NULL)
+		{
+			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
+		}
+		else
+		{
+			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
+		}
+		system(cmd);
+		usleep(500);
+		if ( access(PING_TMPFILE, F_OK) == 0)
+		{
+			unlink(PING_TMPFILE);
+			return 1;
+		}
+	}
+fail:
+	return 0;
+}
+
 int parse_pingmsg(char *ping , char *file)
 {
 	char cmd[CMD_STR_LEN] = {0};
@@ -812,43 +875,49 @@ int parse_pingmsg(char *ping , char *file)
 	return 0;
 }
 
-int simcard_internet_check(char *host, char *ifname)
-{	
-	char one_ping_addr[CMD_STR_LEN] = {0};
-	char *token;
-	int count=0,i=0;
-	char strPing[CMD_STR_LEN] = {0};
-	char array_token[5][OPTION_STR_LEN];
+int simcard_internet_check(const char *host, char *ifname)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	static int internet_flag = 0;
 
 	if ((NULL == host) || (strlen(host)<7))
-		return 0;
-	strcpy(strPing,host);
-	token = strtok(strPing,";");
-	while (token != NULL)
+		goto fail;
+
+retry:
+	if (ifname == NULL)
 	{
-		sprintf(array_token[count],"%s",token);
-		token = strtok(NULL, ";");
-		count++;
+		snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
 	}
-	while(i<count)
+	else
 	{
-		if (ifname == NULL)
-			sprintf(one_ping_addr,"ping -c 1 -W 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ", array_token[i]);
+		snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
+	}
+	system(cmd);
+
+	if ( access(PING_TMPFILE, F_OK) == 0)
+	{
+		internet_flag = 0;
+		unlink(PING_TMPFILE);
+		return 1;
+	}
+	else
+	{
+		if(3 > internet_flag) 
+		{
+			internet_flag += 1;
+			sleep(2);    //total 6 sec
+			goto retry;
+		}
 		else
-			sprintf(one_ping_addr,"ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ", array_token[i],ifname);
-		CON_LOG("one_ping_addr =  %s\n", one_ping_addr);
-		if(parse_pingmsg(one_ping_addr, PING_TMPFILE)==1)
-			return 1;		
-		sleep(1);
-		i++;
+		{
+			internet_flag = 0;
+		}
 	}
-
-	CON_LOG("network fail %d\n",i);
-	unlink(PING_TMPFILE);
+	
+fail:
 	return 0;
-
-
 }
+
 
 long get_current_uptime_sec(void)
 {   

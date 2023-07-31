@@ -83,6 +83,7 @@ _huayi_set_route() {
 				wan4g)
 					huayi_cmd set blend cpe_gateway "$gw"
 					huayi_cmd set network wan_up 1
+					huayi_cmd set network wan_link 1
 					;;
 				*)
 					huayi_cmd set network "$section"_gateway "$gw"
