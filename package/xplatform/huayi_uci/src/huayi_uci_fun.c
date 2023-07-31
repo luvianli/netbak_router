@@ -1259,11 +1259,11 @@ int CheckDns() {
 }
 
 
-int checkInternet(const char* addresses) {
+int checkInternet(const char* address) {
     char command[200];
-    sprintf(command, "ping -c 1 %s", addresses); // 构造ping命令
+    sprintf(command, "ping -c 1 %s 2>&1", address); // 构造 ping 命令，将错误输出重定向到标准输出
 
-    FILE* fp = popen(command, "r"); // 执行ping命令并获取输出结果
+    FILE* fp = popen(command, "r"); // 执行 ping 命令并获取输出结果
     if (fp == NULL) {
         printf("Failed to execute ping command.\n");
         return 0;
@@ -1272,8 +1272,12 @@ int checkInternet(const char* addresses) {
     char buffer[100];
     int received = 0;
     while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        if (strstr(buffer, "1 packets transmitted, 1 received") != NULL) {
+        if (strstr(buffer, "1 packets transmitted") != NULL && strstr(buffer, "1 received") != NULL) {
             received = 1;
+            break;
+        }
+        if (strstr(buffer, "bad address") != NULL) {
+            received = 0;
             break;
         }
     }
@@ -1282,6 +1286,7 @@ int checkInternet(const char* addresses) {
 
     return received;
 }
+
 
 void DetectInternetFaults() {
     char resultbuf[CMD_STR_LEN] = {0};
