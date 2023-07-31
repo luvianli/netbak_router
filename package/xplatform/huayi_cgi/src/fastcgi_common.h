@@ -261,6 +261,8 @@ typedef enum
 	HYID_GET_FORCE_FIX_DHCP 			= 183,
 	HYID_SET_SKIP_QUICK_SETTING 		= 185,
 	HYID_GET_WANMODE_INFO				= 186,
+	HYID_GET_HBP_CONFIG                 = 189,
+	HYID_SET_HBP_CONFIG                 = 190,
 	MAX_HUAYI_HYID,
 }FCGI_HYID_ENUM;
 
@@ -280,6 +282,8 @@ typedef enum
 #define HUAYI_RELOAD_VPN_SERVER_TIME                    10
 #define HUAYI_WPS_ENABLE_TIME                           5
 #define HUAYI_USB_ENABLE_TIME                           5
+#define HUAYI_SET_CARD                                  60
+
 #define HUAYI_RELOAD_4G_MODE							75
 
 #define HUAYI_DEFAULT_DHCP_START						1
@@ -439,6 +443,10 @@ int get_force_fix_dhcp(cJSON *request_root, cJSON *response_root,int *lock_time)
 int set_force_fix_dhcp(cJSON *request_root, cJSON *response_root,int *lock_time);
 #endif
 int get_wanmode_info(cJSON *request_root, cJSON *response_root,int *lock_time);
+int get_hbp_config(cJSON *request_root, cJSON *response_root,int *lock_time);
+int set_hbp_config(cJSON *request_root, cJSON *response_root,int *lock_time);
+
+
 
 /*fastcgi_wireless.c*/
 int get_wifi_stamacnum(char *vap_ifname, int radio_id, unsigned long *stanum);

@@ -1,3 +1,4 @@
+#include"huayi_uci_fun.h"
 
 #include "fastcgi_modem.h"
 
@@ -2466,6 +2467,94 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
+
+int cgi_get_card(cJSON *request_root, cJSON *response_root,int *lock_time){
+ 	cJSON  *info_root=NULL,*card_info_root=NULL,*result_root=NULL;
+ 	int i=0,count=0;
+    char usesiminfoBuf[1024] = {0},siminfoBuf[1024] = {0};
+    int usesiminfoCard_slot = 0 ,usesiminfoOperator = 0 ,usesiminfoLock = 0 ,usesiminfoSimnum = 0 ,simCard_slot[4] ,simOperator[4];
+    char usesiminfoIccid[OPTION_STR_LEN],simIccid[4][OPTION_STR_LEN];
+    char command1 []= "echo `uci get m_system.usesiminfo.operator;uci get m_system.usesiminfo.card_slot;uci get m_system.usesiminfo.iccid;uci get m_system.usesiminfo.lock;uci get m_system.system.simnum`";
+    char command2 []= "echo `uci get m_system.sim1.operator;uci get m_system.sim1.card_slot;uci get m_system.sim1.iccid; \
+        uci get m_system.sim2.operator;uci get m_system.sim2.card_slot;uci get m_system.sim2.iccid; \
+        uci get m_system.sim3.operator;uci get m_system.sim3.card_slot;uci get m_system.sim3.iccid; \
+        uci get m_system.sim4.operator;uci get m_system.sim4.card_slot;uci get m_system.sim4.iccid`";
+
+ 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+	count=0;
+again:
+	result_root=cJSON_CreateObject();
+	card_info_root=cJSON_CreateArray();
+
+    CustomCommunicationClient("echo `uci get m_system.usesiminfo.operator;uci get m_system.usesiminfo.card_slot;uci get m_system.usesiminfo.iccid;uci get m_system.usesiminfo.lock;uci get m_system.system.simnum`",usesiminfoBuf);
+     if(!(toParsing(usesiminfoBuf, 5, &usesiminfoOperator, &usesiminfoCard_slot, usesiminfoIccid, &usesiminfoLock, &usesiminfoSimnum))){
+        CLIENT_SOCKET_LOG("usesiminfoBuf error");
+        goto end;
+     }
+    CustomCommunicationClient("echo `uci get m_system.sim1.operator;uci get m_system.sim1.card_slot;uci get m_system.sim1.iccid;uci get m_system.sim2.operator;uci get m_system.sim2.card_slot;uci get m_system.sim2.iccid;uci get m_system.sim3.operator;uci get m_system.sim3.card_slot;uci get m_system.sim3.iccid;uci get m_system.sim4.operator;uci get m_system.sim4.card_slot;uci get m_system.sim4.iccid`",siminfoBuf);
+    if(!(toParsing(siminfoBuf,12,
+    &simOperator[0],&simCard_slot[0],simIccid[0],
+    &simOperator[1],&simCard_slot[1],simIccid[1],
+    &simOperator[2],&simCard_slot[2],simIccid[2],
+    &simOperator[3],&simCard_slot[3],simIccid[3]))){
+        CLIENT_SOCKET_LOG("siminfoBuf error");
+        goto end;
+    }
+	cJSON_AddNumberToObject(result_root,"card",usesiminfoCard_slot);
+	cJSON_AddNumberToObject(result_root,"operator",usesiminfoOperator);
+	cJSON_AddNumberToObject(result_root,"lock",usesiminfoLock);
+	for(i=0;i<usesiminfoSimnum;i++)
+	{
+        if (strlen(simIccid[i]) < 5 || !isStringValid(simIccid[i])) {
+            CLIENT_SOCKET_LOG("sim%d iccid Invalid",i+1);
+            continue;
+        } 
+		info_root=cJSON_CreateObject();
+		cJSON_AddNumberToObject(info_root,"card",simCard_slot[i]);
+		cJSON_AddNumberToObject(info_root,"operator",simOperator[i]);
+		cJSON_AddStringToObject(info_root,"iccid",simIccid[i]);
+		cJSON_AddItemToArray(card_info_root,info_root);
+	}
+end:
+	cJSON_AddItemToObject(result_root,"card_info",card_info_root);
+	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
+    return FCGI_RESP_CODE_SUCCESS;
+
+}
+
+int cgi_set_card(cJSON *request_root, cJSON *response_root,int *lock_time){
+
+
+	char cmd[OPTION_STR_LEN]={0};
+	int card=0;
+    int lock =0;
+    //parseRequest(request_root);
+
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	{
+		return FCGI_RESP_CODE_DATA_MISS;			
+	}
+	if(!huayi_json_get_int(request_root,"card",&card))
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+    if(!huayi_json_get_int(request_root,"lock",&lock))
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+    snprintf(cmd,OPTION_STR_LEN,"custom_switch_sim %d %d &",card,lock);
+    huayi_uci_set_str(PKG_SYSTEM,"mysocket","send",cmd);
+    huayi_uci_commit(PKG_SYSTEM);
+	*lock_time = HUAYI_SET_CARD;
+    //CustomCommunicationClient(cmd,NULL);
+	system("huayi-reset switch_sim");
+	return FCGI_RESP_CODE_SUCCESS; 
+}
+
+
 FCGI_BOOL FastCgiHandleModemFunctionInit(void)
 {
 	memset(&FastCgiHandleModemFunction,0,sizeof(MAX_MODEM_HYID*sizeof(int)));
@@ -2505,6 +2594,10 @@ FCGI_BOOL FastCgiHandleModemFunctionInit(void)
 	FastCgiHandleModemFunction[HYID_GET_4G_SIGNAL] = cgi_get_4g_signal;
 
 	FastCgiHandleModemFunction[HUID_GET_SIM_MESSAGE] =cgi_get_dev_message;
+
+    FastCgiHandleModemFunction[HYID_GET_CARD]=cgi_get_card;
+	
+	FastCgiHandleModemFunction[HYID_SET_CARD]=cgi_set_card;
 }
 
 int main(int argc,char *argv[])

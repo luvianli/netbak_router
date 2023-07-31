@@ -270,3 +270,25 @@ VTBool huayi_reload_telnet(void * arg,cJSON *input_root)
 }
 
 #endif
+
+VTBool huayi_switch_card(void *arg,cJSON *input_root)
+{
+    char cmd[LONG_BUFF_LEN]={0};
+    huayi_uci_get_str(PKG_SYSTEM,"mysocket","send",cmd);
+    
+    CustomCommunicationClient(cmd,NULL);
+    
+    huayi_uci_set_str(PKG_SYSTEM,"mysocket","send","");
+    huayi_uci_commit(PKG_SYSTEM);
+	return VT_TRUE;
+}
+
+VTBool huayi_check_internet_state(void *arg,cJSON *input_root){
+
+    CLIENT_SOCKET_LOG("==");
+
+    DetectInternetFaults();
+    return VT_TRUE;
+}
+
+

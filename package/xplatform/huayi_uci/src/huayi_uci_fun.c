@@ -16,6 +16,11 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <stdarg.h>
+#include <pthread.h>
+#include <limits.h>
+#include "huayi_atcmd.h"
+
 
 
 
@@ -1021,6 +1026,323 @@ int get_dev_sn(char *sn)
 	close(fd);
 
 	return 0;
+}
+
+#define MAX_TOKEN_LEN 64
+
+int parseRequest(cJSON *request_root) {
+    // 将 cJSON 对象转换为字符串
+    char *json_str = cJSON_Print(request_root);
+    
+    if (json_str == NULL) {
+        CLIENT_SOCKET_LOG("Conversion failed!\n");
+        return 0;
+    }
+    
+    // 输出结果
+    CLIENT_SOCKET_LOG("Analysis results:\n%s\n", json_str);
+    
+    // 释放内存
+    free(json_str);
+    
+    return 1;
+}
+
+
+
+HUAYI_BOOL ParsingStrings(const char* resultbuf, int count, char (*stringArray)[64]) {
+    if (resultbuf == NULL || count <= 0 || stringArray == NULL) {
+        return HUAYI_FALSE;
+    }
+
+    char* token = strtok((char*)resultbuf, " ");
+    int i = 0;
+    while (token != NULL && i < count) {
+        size_t len = strlen(token);
+        if (len >= MAX_TOKEN_LEN) {
+            len = MAX_TOKEN_LEN - 1;
+        }
+        strncpy(stringArray[i], token, len);
+        stringArray[i][len] = '\0';
+        token = strtok(NULL, " ");
+        i++;
+    }
+
+    return HUAYI_TRUE;
+}
+
+
+int isCharValid(char c) {
+    return ((c >= 48 && c <= 58) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122));
+}
+_BOOL isStringValid(const char* str) {
+    size_t len = strlen(str);
+    size_t i = 0;
+    for (i = 0; i < len; i++) {
+        if (!isCharValid(str[i])) {
+            return _false;
+        }
+    }
+    return _true;
+}
+
+
+
+HUAYI_BOOL toParsing(const char* resultbuf, int count, ...) {
+    if (resultbuf == NULL || count <= 0) {
+        return HUAYI_FALSE;
+    }
+
+    va_list args;
+    va_start(args, count);
+
+    char* token = strtok((char*)resultbuf, " ");
+    int i = 0;
+    while (token != NULL && i < count) {
+        void* arg = va_arg(args, void*);
+
+        if (arg == NULL || token == NULL) {
+            continue;
+        }
+
+        if (strncmp(token, " ", 1) == 0) {
+            token = strtok(NULL, " ");
+            continue;
+        }
+
+       // CLIENT_SOCKET_LOG("%s", token);
+
+        // 判断token是否为整数
+        int intVal;
+        if (strlen(token)<4 && sscanf(token, "%d", &intVal) == 1) {
+            int* intPtr = (int*)arg;
+            *intPtr = intVal;
+        } else {
+            char* strPtr = (char*)arg;
+            strncpy(strPtr, token, OPTION_STR_LEN -1);
+            strPtr[OPTION_STR_LEN -1] = '\0';
+
+        }
+
+        token = strtok(NULL, " ");
+        i++;
+    }
+
+    va_end(args);
+    return HUAYI_TRUE;
+}
+
+
+
+
+HUAYI_BOOL CustomCommunicationClient(const char *sendBuf,char * recvBuf){
+    
+    struct DataPacket datapacket;
+    struct DataPacket receivePackets;
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock == -1) {
+            CLIENT_SOCKET_LOG("socket");
+            goto fail;
+        }
+    
+        struct sockaddr_in server_addr;
+        memset(&server_addr, 0, sizeof(server_addr));
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(9595);
+        server_addr.sin_addr.s_addr = inet_addr("192.168.64.1");
+    
+        if (connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+            CLIENT_SOCKET_LOG("Failed to connect to server");
+            goto fail;
+        }
+        CLIENT_SOCKET_LOG("Connected to server.\n");
+    datapacket.sockfd=sock;
+    datapacket.choose=TcpExeCmd;
+    strncpy(datapacket.cmdBuf,sendBuf, sizeof(datapacket.cmdBuf));
+    strncpy(datapacket.returnValue, "", sizeof(datapacket.returnValue));
+    
+    int written = send(sock, &datapacket, sizeof(datapacket), 0);
+    if (written == -1) {
+        CLIENT_SOCKET_LOG("Write error");
+        goto fail;
+    } else if (written < sizeof(datapacket)){
+        CLIENT_SOCKET_LOG("Only partial data was written");
+    } else {
+        CLIENT_SOCKET_LOG("Write#fd:%d# choose:%d# cmdBuf:%s# returnValue:%s#",datapacket.sockfd,datapacket.choose,datapacket.cmdBuf,datapacket.returnValue);
+    }
+   int dataLen = recv(sock, &receivePackets, sizeof(receivePackets), 0);
+    if (dataLen > 0) {
+            // 成功读取了一定数量的数据
+            CLIENT_SOCKET_LOG("###read######fd:%d,cmdBuf:%s# returnValue:%s",receivePackets.sockfd,receivePackets.cmdBuf,receivePackets.returnValue);
+            strncpy(recvBuf,receivePackets.returnValue, strlen(receivePackets.returnValue));
+        } else if (dataLen == 0) {
+            // 对端关闭了连接
+            CLIENT_SOCKET_LOG("Connection closed\n");
+            goto fail;
+        } else if (dataLen == -1) {
+            // 出现了错误
+            CLIENT_SOCKET_LOG("Failed to receive data");
+            goto fail;
+        }
+    close(sock);
+    return HUAYI_TRUE;
+fail:
+    close(sock);
+    return HUAYI_FALSE;
+}
+
+
+void getCmdResult(const char* cmd, char** resultbuf, size_t* bufsize) {
+    FILE* fp = popen(cmd, "r");
+    if (fp) {
+        *resultbuf = malloc(*bufsize);
+        fgets(*resultbuf, *bufsize, fp);
+        pclose(fp);
+    }
+}
+
+HUAYI_BOOL checkFileExistsAndNotEmpty(const char* filename) {
+    // 检查文件是否存在
+    if (access(filename, F_OK) == -1) {
+        return HUAYI_FALSE;
+    }
+
+    // 检查文件大小是否为0
+    struct stat fileStat;
+    if (stat(filename, &fileStat) == -1) {
+        return HUAYI_FALSE;
+    }
+
+    if (fileStat.st_size == 0) {
+        return HUAYI_FALSE;
+    }
+
+    return HUAYI_TRUE;
+}
+int CheckDns() {
+    const char* filename = "tmp/resolv.conf.auto";
+
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        CON_LOG("open files error\n");
+        return 1;
+    }
+
+    char line[256];
+    int interfaceCount = 0;
+    int hasZeroIP = 0;
+
+    while (fgets(line, sizeof(line), file)) {
+        if (strstr(line, filename) != NULL) {
+            interfaceCount = 0;
+            hasZeroIP = 0;
+        }
+
+        if (strstr(line, "Interface") != NULL) {
+            interfaceCount++;
+        }
+
+        if (strstr(line, "0.0.0.0") != NULL) {
+            hasZeroIP = 1;
+        }
+    }
+
+    fclose(file);
+
+    if (strstr(filename, "tmp/resolv.conf.auto") != NULL && interfaceCount >= 2) {
+        return 0;
+    } else if (hasZeroIP) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+
+int checkInternet(const char* addresses) {
+    char command[200];
+    sprintf(command, "ping -c 1 %s", addresses); // 构造ping命令
+
+    FILE* fp = popen(command, "r"); // 执行ping命令并获取输出结果
+    if (fp == NULL) {
+        printf("Failed to execute ping command.\n");
+        return 0;
+    }
+
+    char buffer[100];
+    int received = 0;
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        if (strstr(buffer, "1 packets transmitted, 1 received") != NULL) {
+            received = 1;
+            break;
+        }
+    }
+
+    pclose(fp); // 关闭文件指针
+
+    return received;
+}
+
+void DetectInternetFaults() {
+    char resultbuf[CMD_STR_LEN] = {0};
+    char cmd_route[CMD_STR_LEN] = {0},cmd[CMD_STR_LEN] = {0};
+    char charValue[OPTION_STR_LEN] = {0};
+    if (LTE_FALSE == atcmd_check()) {
+        //...at error
+        strcpy(charValue, "at error");
+    }
+
+    char ifname[OPTION_STR_LEN] = {0};
+    int state;
+    huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ifname", ifname);
+    if (!strcmp(ifname, "apcli0") || !strcmp(ifname, "eth0.2")) {
+        atcmd_get_cpin(&state);
+        if (state == MODEM_SIN_READY) {
+            memset(resultbuf, 0, sizeof(resultbuf));
+            if (atcmd_get_lac(resultbuf) == LTE_TRUE && strlen(resultbuf) > 2) {
+                atcmd_get_signal_for_cloud(&state);
+                if (state != -121) {
+                    goto check;
+                } else {
+                    // no signal
+                    strcpy(charValue, "no signal");
+                }
+            } else {
+                // SIM card not activated
+                strcpy(charValue, "SIM card not activated");
+            }
+        } else {
+            // SIM card not found
+            strcpy(charValue, "SIM card not found");
+        }
+    } else {
+        // Non-4G
+        goto check;
+    }
+
+check:
+    memset(cmd_route, 0, sizeof(cmd_route));//one "default" ->1 ,otherwise 0
+    strncpy(cmd_route, "route | awk '$1 == \"default\" && $2 != \"0.0.0.0\" { count++ } END { if (count == 1) print 1; else print 0 }'", sizeof(cmd_route));
+    get_cmd_result(cmd_route, resultbuf, sizeof(resultbuf));
+    if (atoi(resultbuf)) {
+        if (CheckDns() == 1) {
+            // DNS check passed
+            memset(resultbuf, 0, sizeof(resultbuf));
+            huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",resultbuf);
+            if(checkInternet(resultbuf) != 0) {
+                strcpy(charValue, "No fault detected");
+            } else {
+            //internet error
+                strcpy(charValue, "internet error");
+            }
+        } else {
+            strcpy(charValue, "dnserr");
+        }
+    } else {
+        strcpy(charValue, "route error");
+    }
+    snprintf(cmd,sizeof(cmd),"echo '%s' > /etc/config/internet_state",charValue);
+    system(cmd);
 }
 
 

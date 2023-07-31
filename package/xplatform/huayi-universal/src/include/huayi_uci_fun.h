@@ -11,6 +11,39 @@ typedef enum{
 	HUAYI_TRUE,
 }HUAYI_BOOL;
 
+#define BUFFER_SIZE 1024
+
+enum commSwitch{
+    stopComm=0,
+    startComm
+};
+typedef enum {
+    _false=0,
+    _true
+}_BOOL;
+
+enum Choose
+{
+    TcpHeartbeat=200,
+    TcpExeCmd,
+    TcpStoCmd
+};
+
+
+struct DataPacket {
+    int sockfd;
+    enum Choose choose;
+    char cmdBuf[BUFFER_SIZE]; 
+    char returnValue[BUFFER_SIZE];
+};
+
+
+
+
+
+
+
+
 
 #define XCMD( x, fmt, args... ) do {\
         sprintf( x, fmt, ##args ); \
@@ -199,6 +232,7 @@ HUAYI_BOOL huayi_json_get_int(cJSON *root, char *key, int *value);
 HUAYI_BOOL huayi_json_get_str(cJSON *root, char *key,char *value,unsigned int len);
 HUAYI_BOOL huayi_get_nth_value(int index, char *value, char delimit, char *result, int len);
 HUAYI_BOOL huayiHanldeEscapeCharacter(char *value, char delimit, char *result);
+HUAYI_BOOL CustomCommunicationClient(const char *sendBuf,char * recvBuf);
 
 char* strrstr(const char *haystack, const char *needle);
 int is_phyconnected(int portNum);

@@ -13,7 +13,7 @@ include $(INCLUDE_DIR)/kernel.mk
 define Package/$(PKG_NAME)
   SECTION:=Xplatform
   CATEGORY:=Xplatform
-  TITLE:=HUAYI TCP
+  TITLE:=HUAYI TCP client
   DEPENDS:=+kmod-huayi-universal +libpthread +libuci +huayi_uci +libcjson +libm
 endef
 

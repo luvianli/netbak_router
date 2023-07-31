@@ -71,6 +71,11 @@ VTBool huayi_reload_functions_init(struct VcoreAgent *Agent)
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_SMALL_4GFUNC-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_small4g_func;
 #endif
+
+	Agent->CoreReloadFunction[HUAYI_MSG_SWITCH_CARD-HUAYI_MSG_PAYLOAD_OFFSET] =huayi_switch_card;
+    Agent->CoreReloadFunction[HUAYI_MSG_CHECK_INTERNET_STATE-HUAYI_MSG_PAYLOAD_OFFSET] =huayi_check_internet_state;
+
+
 	return VT_TRUE;
 }
 

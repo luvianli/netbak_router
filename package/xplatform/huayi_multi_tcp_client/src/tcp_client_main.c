@@ -1,207 +1,117 @@
 #include<stdio.h>
-#include<unistd.h>
 #include<stdlib.h>
-#include<arpa/inet.h>
-#include<sys/socket.h>
 #include<string.h>
-#include<sys/socket.h>
+#include<errno.h>
+#include<sys/types.h>
 #include<netinet/in.h>
-#include<arpa/inet.h>
+#include<unistd.h>
+#include<netinet/in.h>
+#include<arpa/inet.h> //struct sockadd_in 结构体的头文件
+#include<sys/ioctl.h>
+#include<errno.h>
+#include<sys/socket.h>
 #include"huayi_uci_fun.h"
-#include"cJSON.h"
-#include "huayi_atcmd.h"
+#include"huayi_atcmd.h"
+#include <fcntl.h>
+#include <sys/epoll.h>
 
-enum choose
-{
-	huayi_heartbeat=200,
-	huayi_switch_sim_before,
-	huayi_switch_sim_after,
-	huayi_sim_info,
-	huayi_product,
-	huayi_dial4g_init,
-	max_mgs_code
-}ch;
-
-enum res_choose
-{
-	res_huayi_heartbeat=300,
-	res_huayi_switch_sim_before,
-	res_huayi_switch_sim_after,
-	res_huayi_sim_info,
-	res_huayi_product,
-	res_huayi_dial4g_init,
-	res_max_mgs_code
-}res_ch;
-
-
-
-void client_product(); //保留
-void client_info(cJSON *infocjson);
-int write_client(int client_sockfd,int number);
-int read_client(int client_sockfd);
-int exe_client(int client_sockfd,int exe_tcp);
-int big_heartdata(char * heartData,int heartsize);
-
-
-
-#define SERVER_IP "192.168.64.1"  //客户端、服务端都在一台主机上，所以直接用本机IP地址
-#define SERVER_PORT 6666
-
+struct DataPacket datapacket;
+struct DataPacket receivePackets;
 
 int client_socket_init()
 {
    int client_sockfd;
    struct sockaddr_in server_address;
 
-   client_sockfd=socket(AF_INET,SOCK_STREAM,0);
-   if(client_sockfd < 0 )
-   		return -1;
+   if ((client_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        SERVER_SOCKET_LOG("Socket creation failed");
+        return -1;
+    }
+   
    memset(&server_address,0,sizeof(server_address));
    server_address.sin_family=AF_INET;
-   server_address.sin_port=htons(SERVER_PORT);
-   server_address.sin_addr.s_addr = inet_addr(SERVER_IP);
-   if (connect(client_sockfd,(struct sockaddr *)&server_address,sizeof(server_address)) < 0)
-   {
+   server_address.sin_port=htons(9595);
+   server_address.sin_addr.s_addr = inet_addr("192.168.64.1");
+
+
+   if (connect(client_sockfd,(struct sockaddr *)&server_address,sizeof(server_address)) == -1){
    		close(client_sockfd);
+        SERVER_SOCKET_LOG("Failed to connect to server");
    		return -1;
    }
+   SERVER_SOCKET_LOG("connect to server ...");
    return client_sockfd;
 }
 
-int read_client(int client_sockfd)
-{
+_BOOL RepeatWriteServer(int fd){
+    
+    int written = send(fd, &datapacket, sizeof(datapacket), 0);
+    if (written == -1) {
+    } else if (written < sizeof(datapacket)){
+        SERVER_SOCKET_LOG("Only partial data was written");
+    } else {
+        SERVER_SOCKET_LOG("Write#fd:%d# choose:%d# cmdBuf:%s# returnValue:%s#",datapacket.sockfd,datapacket.choose,datapacket.cmdBuf,datapacket.returnValue);
+        return _true;
+    }
+    return _false;
+}
 
-	int msg_code,count=0, ret = 0;
-	char str_msg_code[HEART_RES_BUFF_LEN]={0};
-	//memset(str_msg_code,0,sizeof(str_msg_code));
-	if ( LTE_TRUE != atcmd_check() )
-		ret = write_client(client_sockfd, huayi_dial4g_init);
-	else
-		ret = write_client(client_sockfd,huayi_heartbeat);
-	if(ret == -1 )
-			return ret;
-	while(1)
-	{
-		memset(str_msg_code,0,sizeof(str_msg_code));
-		read(client_sockfd,str_msg_code, sizeof(str_msg_code));
-		//当读到很大的数据时,表明数据传到client
-		huayi_uci_get_int(PKG_SYSTEM,"msg_code","hyid",&msg_code);
-		if(msg_code!=0)
-		{
-			ret=exe_client(client_sockfd,msg_code);
-			if(ret>0)
-			{
-				huayi_uci_set_int(PKG_SYSTEM,"msg_code","hyid",0);
-				huayi_uci_commit(PKG_SYSTEM);
-				huayi_uci_get_int(PKG_SYSTEM,"msg_code","hyid",&msg_code);
-				continue;
-			}
-		}
-		//
-		msg_code=atoi(str_msg_code);
-		switch (msg_code)
-		{
-			case -1:
-				//error,暂时不做修改
-				CON_LOG("read -1 ，error");
-			case huayi_heartbeat:
-				 //CON_LOG("huayi_heartbeat");
-				ret = write_client(client_sockfd,huayi_heartbeat);
-				break;
-			case huayi_switch_sim_before :
-				system("killall -9 huayi_atcmd_server");
-			    CON_LOG("killall -9 huayi_atcmd_server");
-				ret = write_client(client_sockfd, res_huayi_switch_sim_before);
-				break;
-			case huayi_switch_sim_after :
-				system("huayi_atcmd_server /dev/ttyUSB1 &");
-				CON_LOG("huayi_atcmd_server /dev/ttyUSB1 &");
-				ret = write_client(client_sockfd, res_huayi_switch_sim_after);
-				break;
-			case huayi_sim_info:
-				//client_info(cjson);
-				CON_LOG("huayi_sim_info");
-				ret = write_client(client_sockfd, res_huayi_sim_info);
-				break;
-			case huayi_product:
-				//client_product();
-				CON_LOG("huayi_product");
-				ret = write_client(client_sockfd, res_huayi_product);
-				break;
-			case huayi_dial4g_init:
-				system("/etc/init.d/huayi_dial4_init restart");
+_BOOL RepeatReceivingResultJudgment(int fd){
 
-				CON_LOG("/etc/init.d/huayi_dial4_init restart");
-				ret = write_client(client_sockfd, res_huayi_dial4g_init);
-				break;
-//无连接状态，进入default
-			default:
-				sleep(5);
-				//ret = write_client(client_sockfd,0);
-				CON_LOG("NO CONNECT");
-				close(client_sockfd);
-				return -1;
-		}
-
-		if(ret < 0)
-		{
-			return -1;
-		}
-
+    memset(&receivePackets, 0, sizeof(receivePackets));
+    int dataLen = recv(fd, &receivePackets, sizeof(receivePackets), 0);
+    if (dataLen > 0) {
+            SERVER_SOCKET_LOG("###read######fd:%d #choose:%d#cmdBuf:%s# returnValue:%s",receivePackets.sockfd,datapacket.choose,receivePackets.cmdBuf,receivePackets.returnValue);
+            return _true;
+        } else if (dataLen == 0) {
+            SERVER_SOCKET_LOG("Connection closed\n");
+        } else if (dataLen == -1) {
+            SERVER_SOCKET_LOG("Failed to receive data");
+        }
+    return _false;
+}
+_BOOL RepeatPerformServerTransfer(int fd){
+    int ret = 0;
+    char resultbuf[LONG_BUFF_LEN] = {0};
+    datapacket.choose=TcpStoCmd;
+    datapacket.sockfd=fd;
+    strncpy(datapacket.cmdBuf,"heartbeat", sizeof(datapacket.cmdBuf));
+    strncpy(datapacket.returnValue,"", sizeof(datapacket.returnValue));
+    if ( LTE_TRUE != atcmd_check()){
+		system("etc/init.d/huayi_dial4_init restart");
+        SERVER_SOCKET_LOG("one etc/init.d/huayi_dial4_init restart");
 	}
-
-	return 0;
+    SERVER_SOCKET_LOG("====");
+    RepeatWriteServer(fd);
+   do{
+    SERVER_SOCKET_LOG("====");
+        ret = RepeatReceivingResultJudgment(fd);
+        if(receivePackets.choose == TcpStoCmd){
+            SERVER_SOCKET_LOG("read %s resultbuf:%s",receivePackets.cmdBuf,resultbuf);
+            SERVER_SOCKET_LOG("====");
+            memset(resultbuf,0,sizeof(resultbuf));
+            SERVER_SOCKET_LOG("====");
+            memset(datapacket.returnValue,0,sizeof(datapacket.returnValue));
+            memset(datapacket.cmdBuf,0,sizeof(datapacket.cmdBuf));
+            if(strstr(receivePackets.cmdBuf,"&") == NULL){
+                            SERVER_SOCKET_LOG("====");
+                get_cmd_result(receivePackets.cmdBuf, resultbuf, sizeof(resultbuf));
+                SERVER_SOCKET_LOG("====");
+                strncpy(datapacket.returnValue,resultbuf, sizeof(datapacket.returnValue));
+                strncpy(datapacket.cmdBuf,"", sizeof(datapacket.returnValue));
+            }else{
+                            SERVER_SOCKET_LOG("====");
+                system(receivePackets.cmdBuf);
+                            SERVER_SOCKET_LOG("====");
+            }
+            SERVER_SOCKET_LOG("exe %s resultbuf:%s",receivePackets.cmdBuf,resultbuf);
+            ret = RepeatWriteServer(fd);
+            SERVER_SOCKET_LOG("====");
+        }
+    } while(ret == _true);
+    return _false;
 }
 
-int exe_client(int client_sockfd,int exe_tcp)
-{
-	int ret=0;
-
-	CON_LOG("exe_client");
-	switch(exe_tcp)
-	{
-		case huayi_sim_info:
-			CON_LOG("exe huayi_sim_info->%d",huayi_sim_info);
-			ret=write_client(client_sockfd,huayi_sim_info);
-			break;
-		default:
-			return -1;
-	}
-	if(ret < 0)
-			return -1;
-	return 1;
-}
-
-
-//新增功能仅仅做显示
-int big_heartdata(char * heartData,int heartsize)
-{
-	char outpur[HEART_RES_BUFF_LEN] = { 0 };
-	strcpy(outpur, heartData);
-	CON_LOG("heartdata:%s",outpur);
-
-	return huayi_sim_info;
-}
-
-
-
-
-
-
-int write_client(int client_sockfd,int number)
-{
-	char str_msg_code[SMALL_STR_LEN]={0};
-	int ret = 0;
-	//心跳时间
-	sleep(5);
-	memset(str_msg_code,0,sizeof(str_msg_code));
-	sprintf(str_msg_code,"%d",number);
-	ret = write(client_sockfd, str_msg_code,sizeof(str_msg_code));
-	if(ret != sizeof(str_msg_code))
-		return -1;
-
-	return 1;
-}
 
 int main(int argc, char *argv[])
 {
@@ -211,13 +121,15 @@ int main(int argc, char *argv[])
 	   client_sockfd=client_socket_init();
 	   if(client_sockfd == -1)
 	   {
+            SERVER_SOCKET_LOG("====");
 	   		sleep(2);
 			continue;
 	   }
-	   if(read_client(client_sockfd) < 0)
-	   {
-			sleep(2);
-			continue;
+	   if(RepeatPerformServerTransfer(client_sockfd) == _false){
+            sleep(2);
+            close(client_sockfd);
+            SERVER_SOCKET_LOG("====");
+            continue;
 	   }
 	}
    return 0;
