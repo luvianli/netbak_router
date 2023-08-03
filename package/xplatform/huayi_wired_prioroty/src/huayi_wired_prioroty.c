@@ -27,6 +27,7 @@ int main(int argc,char *argv[])
 
 	char wan_type[OPTION_STR_LEN] = {0};
 	char net_ipv4[IPV4_STR_LEN] = {0};
+	char wired_gateway[IPV4_STR_LEN] = {0},cpe_gateway [IPV4_STR_LEN] = {0};
 
 	int wired_status = 0;
 	int cpe_status = 0;
@@ -36,7 +37,8 @@ int main(int argc,char *argv[])
 	int now_int_mode = INTERNET_UNDEFINE;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
-	
+	int count = 1;
+
 	while(1)
 	{
 		sleep(10);
@@ -58,14 +60,22 @@ int main(int argc,char *argv[])
 		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "device", cpe_device);
 		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
 		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
-
+        huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wired_gateway);
+        huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", cpe_gateway);
+        if(strstr(wired_device,"eth0.2") == NULL || strlen(wired_gateway) <= strlen("0.0.0.0")){
+            wired_link = 0;
+        }
+        if(strstr(cpe_device,"eth1") == NULL || strlen(cpe_gateway) <= strlen("0.0.0.0"))
+		{
+            cpe_link = 0;
+        }
 		if(wired_link == 1 && cpe_link == 1)//同时在线时，使用有线优先策略
 		{
 			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
 			wired_status = first_internet_do_ping(detectip, wired_device,del_gateway);
 			if(wired_status == 0)
 			{
-				sleep(2);
+				count = (10 * 60);
                 DETECTION_NETWORK_LOG("wired internet error");
                 huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", del_gateway);
 				cpe_status = first_internet_do_ping(detectip, cpe_device,del_gateway);
@@ -189,6 +199,7 @@ int main(int argc,char *argv[])
 				{
 					system("ifup wan4g");
 					DETECTION_NETWORK_LOG("ifup wan4g");
+					sleep(count);
 				}else if(now_int_mode == INTERNET_WIRED)
 				{
 					system("ifup wan");

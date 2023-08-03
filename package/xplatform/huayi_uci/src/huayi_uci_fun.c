@@ -792,67 +792,92 @@ fail:
 	return 0;
 }
 
-int first_internet_do_ping(const char *host, char *ifname, char *del_gateway)
-{
-	char cmd[CMD_STR_LEN] = {0};
-	char wan_gateway[IPV4_STR_LEN] = {0};
-	char resultbuf[SHORT_STR_LEN] = {0};
-	int i = 0;
+int first_internet_do_ping(const char *host, char *ifname, char *del_gateway) {
+    char cmd[CMD_STR_LEN];
+    char wan_gateway[IPV4_STR_LEN];
+    char resultbuf[SHORT_STR_LEN];
+    int i,count = 3;
+    char strifname[OPTION_STR_LEN];
 
-	if ((NULL == host) || (strlen(host)<7))
-		goto fail;
+    if (host == NULL || strlen(host) < 7) {
+        goto fail;
+    }
 
-
-	if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
+    if (strncmp(del_gateway, "0.0.0.0", strlen("0.0.0.0"))) 
 	{
-		sprintf(cmd,"route del default gw %s",del_gateway);
-		system(cmd);
-		//printf("cmd_str = %s\n",cmd_str);
-		if(strcmp(ifname, "eth0.2") == 0)
-		{
-			huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wan_gateway);
-		}
-		else
-		{
-			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", wan_gateway);
-		}
-		memset(cmd,0,sizeof(cmd));
-		sprintf(cmd,"route -n | grep %s | grep UG | grep %s |wc -l", ifname, wan_gateway);
-		get_cmd_result(cmd, resultbuf, sizeof(resultbuf));
+        sprintf(cmd, "route del default gw %s", del_gateway);
+		DETECTION_NETWORK_LOG("%s",cmd);
+        system(cmd);
 
-		if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
+        if (strcmp(ifname, "eth0.2") == 0) 
 		{
-			memset(cmd,0,sizeof(cmd));
-			sprintf(cmd,"route add default gw %s dev %s",wan_gateway,ifname);
-			system(cmd);
-		}
-	}
-	else
-	{
-		goto fail;
-	}
+            huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wan_gateway);
+			count = 1;
+        } else 
+		{
+            huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", wan_gateway);
+        }
 
-	memset(cmd,0,sizeof(cmd));
-	for(i = 0;i < 3; i++)
+        memset(cmd, 0, sizeof(cmd));
+        sprintf(cmd, "route -n | grep %s | grep UG | grep %s | wc -l", ifname, wan_gateway);
+        get_cmd_result(cmd, resultbuf, sizeof(resultbuf));
+
+        if (atoi(resultbuf) == 0 && strncmp(wan_gateway, "0.0.0.0", strlen("0.0.0.0"))) {
+            memset(cmd, 0, sizeof(cmd));
+            sprintf(cmd, "route add default gw %s dev %s", wan_gateway, ifname);
+			DETECTION_NETWORK_LOG("%s",cmd);
+            system(cmd);
+            //sleep(2);
+        }
+    } 
+	else {
+        goto fail;
+    }
+
+    memset(cmd, 0, sizeof(cmd));
+    for (i = 0; i < count; i++) 
 	{
-		if (ifname == NULL)
+        if (ifname == NULL) {
+            snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
+        } else {
+            snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
+        }
+        system(cmd);
+        usleep(500);
+        if (access(PING_TMPFILE, F_OK) == 0) {
+            unlink(PING_TMPFILE);
+            return 1;
+        }
+    }
+fail: // 检查接口是否正常 
+	DETECTION_NETWORK_LOG("internet error");
+	if (check_interface(ifname))
+	{ 
+   		// 删除相应的 DNS 地址 
+    	if (strcmp(ifname, "eth0.2") == 0) 
 		{
-			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
-		}
-		else
-		{
-			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
-		}
-		system(cmd);
-		usleep(500);
-		if ( access(PING_TMPFILE, F_OK) == 0)
-		{
-			unlink(PING_TMPFILE);
-			return 1;
-		}
+        	DETECTION_NETWORK_LOG("====");       
+        	system(". /lib/netifd/hy_del_wisp.sh del");
+    	}
 	}
-fail:
 	return 0;
+}
+
+int check_interface(const char *ifname) {
+    char cmd[CMD_STR_LEN];
+    char resultbuf[SHORT_STR_LEN];
+
+    // 使用 ifconfig 命令检查接口的 inet addr Bcast Mask 是否正常
+    snprintf(cmd, sizeof(cmd), "ifconfig %s 2>/dev/null | grep 'inet addr' | wc -l", ifname);
+    FILE *fp = popen(cmd, "r");
+    if (fp == NULL) {
+        return 0;
+    }
+    fgets(resultbuf, sizeof(resultbuf), fp);
+    pclose(fp);
+
+    int count = atoi(resultbuf);
+    return count;
 }
 
 int parse_pingmsg(char *ping , char *file)

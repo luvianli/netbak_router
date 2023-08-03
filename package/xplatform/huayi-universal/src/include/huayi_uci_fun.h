@@ -79,7 +79,7 @@ typedef enum{
 #define CHECK_BACKUP_FILE_PATH							"/tmp/check_backup/"
 #define CHECK_PATH										"/tmp/check_backup/etc/config"
 
-#define PING_TMPFILE                                    "/tmp/.ping_success"
+#define PING_TMPFILE                                    "/tmp/ping.tmp"
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 #define WISP4G_TMPFILE                                  "/tmp/.wisp_success"
 #endif
