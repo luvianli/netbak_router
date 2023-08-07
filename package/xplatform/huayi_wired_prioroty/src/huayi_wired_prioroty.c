@@ -83,6 +83,8 @@ int main(int argc,char *argv[])
 				{
 					DETECTION_NETWORK_LOG("cpe internet error");
 					sprintf(section,"wired");
+					DETECTION_NETWORK_LOG("at+qpowd=1");
+					Atcmd("at+qpowd=1", strlen("at+qpowd=1"), 0);
 					now_int_mode = INTERNET_WIRED;
 					old_int_mode = INTERNET_UNDEFINE;
 				}else//使用4G上网方式
@@ -101,6 +103,9 @@ int main(int argc,char *argv[])
 		}
 		else if(cpe_link == 1)//使用4G上网方式
 		{	
+			cpe_status = internet_do_ping_detect(detectip, cpe_device);
+			if(cpe_status == 0)
+			Atcmd("at+qpowd=1", strlen("at+qpowd=1"), 0);
 			sprintf(section,"cpe");
 			now_int_mode = INTERNET_4G;
 		}else//使用有线上网方式
