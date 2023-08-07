@@ -796,8 +796,9 @@ int first_internet_do_ping(const char *host, char *ifname, char *del_gateway) {
     char cmd[CMD_STR_LEN];
     char wan_gateway[IPV4_STR_LEN];
     char resultbuf[SHORT_STR_LEN];
-    int i,count = 3;
+    int i,j=0,count = 3;
     char strifname[OPTION_STR_LEN];
+	char cgpipaddr[IPV4_STR_LEN] = { 0 }, cpe_ipaddr[IPV4_STR_LEN] = { 0 };
 
     if (host == NULL || strlen(host) < 7) {
         goto fail;
@@ -812,7 +813,7 @@ int first_internet_do_ping(const char *host, char *ifname, char *del_gateway) {
         if (strcmp(ifname, "eth0.2") == 0) 
 		{
             huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wan_gateway);
-			count = 1;
+			count = 3;
         } else 
 		{
             huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", wan_gateway);
@@ -837,7 +838,23 @@ int first_internet_do_ping(const char *host, char *ifname, char *del_gateway) {
     memset(cmd, 0, sizeof(cmd));
     for (i = 0; i < count; i++) 
 	{
-        if (ifname == NULL) {
+		if (strcmp(ifname, "eth1") == 0 && j<3) 
+		{
+			memset(cmd, 0, sizeof(cmd));
+			sprintf(cmd, "route -n | grep %s | grep UG | grep %s | wc -l", ifname, wan_gateway);
+			get_cmd_result(cmd, resultbuf, sizeof(resultbuf));
+			atcmd_get_cgpaddr(cgpipaddr);
+			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4",cpe_ipaddr);
+			if(strlen(cpe_ipaddr) > 7 && (strstr(cgpipaddr, cpe_ipaddr) == NULL||atoi(resultbuf) == 0))
+			{
+				i--;
+				j++;
+				sleep(10);
+				DETECTION_NETWORK_LOG("waite");
+				continue;
+			}
+		}
+		if (ifname == NULL) {
             snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
         } else {
             snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
