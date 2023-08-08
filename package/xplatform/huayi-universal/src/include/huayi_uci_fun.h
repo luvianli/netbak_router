@@ -205,6 +205,8 @@ int is_phyconnected(int portNum);
 int internet_do_ping_detect(const char *host, char *ifname);
 
 int HuayiSystem(char *command, int printFlag);
+int pingCheck(const char* host);
+int first_internet_do_ping(const char *host, char *ifname, char *del_gateway);
 
 void flush_arp_list(void);
 

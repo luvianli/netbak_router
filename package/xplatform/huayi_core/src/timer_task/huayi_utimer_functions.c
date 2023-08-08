@@ -493,7 +493,15 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 	}
 	else
 	{
-		network_status = 0;
+		if (internet_do_ping_detect(INTERNET_ABROAD_DOMAIN, NULL) == 1)
+		{
+			network_status = 1;	
+
+		}
+		else
+		{
+			network_status = 0;
+		}
 	}
 
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
@@ -972,13 +980,10 @@ void huayi_core_mount(void* arg)
 
 void huayi_core_ping(void* arg)
 {
-    int value = 0;
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
     
-	huayi_uci_get_int(PKG_SYSTEM,"Ping_tool","enabled",&value);
-    if(value == 0){
-	    system("huayi_detect_network www.baidu.com www.bjzhongyi.com www.haidilao.com");
-    }
+	system("huayi_detect_network www.baidu.com www.bjzhongyi.com www.haidilao.com");
+
 	huayi_core_add_task(20,HUAYI_RELOAD_MOUNT_TASK,huayi_core_ping,Agent);
 	return;
 }

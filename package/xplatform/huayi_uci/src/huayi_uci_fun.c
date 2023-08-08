@@ -812,6 +812,171 @@ int parse_pingmsg(char *ping , char *file)
 	return 0;
 }
 
+int check_interface(const char *ifname) {
+    char cmd[CMD_STR_LEN];
+    char resultbuf[SHORT_STR_LEN];
+
+    // 使用 ifconfig 命令检查接口的 inet addr Bcast Mask 是否正常
+    snprintf(cmd, sizeof(cmd), "ifconfig %s 2>/dev/null | grep 'inet addr' | wc -l", ifname);
+    FILE *fp = popen(cmd, "r");
+    if (fp == NULL) {
+        return 0;
+    }
+    fgets(resultbuf, sizeof(resultbuf), fp);
+    pclose(fp);
+
+    int count = atoi(resultbuf);
+    return count;
+}
+
+void delete_dns_entries(const char *filename, const char *interface) {
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        return;
+    }
+
+    char line[CMD_STR_LEN];
+    char temp_filename[CMD_STR_LEN];
+    snprintf(temp_filename, sizeof(temp_filename), "%s.tmp", filename);
+    FILE *temp_fp = fopen(temp_filename, "w");
+    if (temp_fp == NULL) {
+        fclose(fp);
+        return;
+    }
+
+    int interface_found = 0;
+    int delete_mode = 0; // 0: 删除指定接口的DNS地址，1: 删除指定接口下的全部nameserver
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        if (strncmp(line, "# Interface", strlen("# Interface")) == 0) {
+            if (strstr(line, interface) != NULL) {
+                interface_found = 1;
+                delete_mode = 1;
+            } else {
+                interface_found = 0;
+                delete_mode = 0;
+            }
+        }
+        //DETECTION_NETWORK_LOG("%s %s",)
+
+        if (interface_found && delete_mode) {
+            if (strncmp(line, "# Interface", strlen("# Interface")) == 0) {
+                delete_mode = 0;
+            }
+            continue;
+        }
+        
+        fputs(line, temp_fp);
+    }
+
+    fclose(fp);
+    fclose(temp_fp);
+
+    // 替换原始文件
+    remove(filename);
+    rename(temp_filename, filename);
+}
+
+int pingCheck(const char* host) {
+    char command[LONG_BUFF_LEN];
+    char buffer[LONG_BUFF_LEN];
+    FILE* fp;
+
+    sprintf(command, "ping -c 3 -W 1 %s 2>&1", host);
+
+    fp = popen(command, "r");
+    if (fp == NULL) {
+        perror("popen");
+        return -1;
+    }
+
+    size_t bytesRead = fread(buffer, sizeof(char), sizeof(buffer) - 1, fp);
+    buffer[bytesRead] = '\0';
+
+    pclose(fp);
+
+    if (strstr(buffer, "bad address") != NULL) {
+        return -1;
+    }
+
+    const char* delayStart = strstr(buffer, "time=");
+    if (delayStart != NULL) {
+        delayStart += 5;
+        float delay = strtof(delayStart, NULL);
+        return (int)delay;
+    }
+    return -1;
+}
+
+
+int first_internet_do_ping(const char *host, char *ifname, char *del_gateway) {
+    char cmd[CMD_STR_LEN];
+    char wan_gateway[IPV4_STR_LEN];
+    char resultbuf[SHORT_STR_LEN];
+    int i,count = 3,cpe_count = 0;
+    char strifname[OPTION_STR_LEN];
+    float delay =  0.0;
+
+    if (host == NULL || strlen(host) < 7) {
+        goto fail;
+    }
+
+    if (strncmp(del_gateway, "0.0.0.0", strlen("0.0.0.0"))) {
+        sprintf(cmd, "route del default gw %s", del_gateway);
+        system(cmd);
+
+        if (strcmp(ifname, "eth0.2") == 0) {
+            huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wan_gateway);
+            count = 2;
+        } else {
+            huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", wan_gateway);
+        }
+
+        memset(cmd, 0, sizeof(cmd));
+        sprintf(cmd, "route -n | grep %s | grep UG | grep %s | wc -l", ifname, wan_gateway);
+        get_cmd_result(cmd, resultbuf, sizeof(resultbuf));
+
+        if (atoi(resultbuf) == 0 && strncmp(wan_gateway, "0.0.0.0", strlen("0.0.0.0"))) {
+            memset(cmd, 0, sizeof(cmd));
+            sprintf(cmd, "route add default gw %s dev %s", wan_gateway, ifname);
+            system(cmd);
+            //sleep(2);
+        }
+    } else {
+        goto fail;
+    }
+agint:
+    memset(cmd, 0, sizeof(cmd));
+    for (i = 0; i < count; i++) {
+        if (ifname == NULL) {
+            snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
+        } else {
+            snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
+        }
+        system(cmd);
+        usleep(500);
+        if (access(PING_TMPFILE, F_OK) == 0) {
+            unlink(PING_TMPFILE);
+            return 1;
+        }
+    }
+fail: // 检查接口是否正常 
+
+
+    DETECTION_NETWORK_LOG("internet error");
+
+    if (check_interface(ifname)) { 
+        // 删除相应的 DNS 地址 
+        DETECTION_NETWORK_LOG("====");
+        
+        if (strcmp(ifname, "eth0.2") == 0) {
+            DETECTION_NETWORK_LOG(". /lib/netifd/hy_del_wisp.sh del");
+            system(". /lib/netifd/hy_del_wisp.sh del");
+        }
+    }
+    return 0;
+}
+
+
 int simcard_internet_check(char *host, char *ifname)
 {	
 	char one_ping_addr[CMD_STR_LEN] = {0};
