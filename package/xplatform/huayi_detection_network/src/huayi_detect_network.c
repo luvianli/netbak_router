@@ -28,21 +28,22 @@ int DetectConfigurationOfSimAndDns()
 	}
     memset(cmd, 0, sizeof(cmd));
     memset(lte_value, 0 ,sizeof(lte_value));
+    
 
     atcmd_get_cpin(&i_ready);
-    strncpy(cmd,sizeof(cmd), "ifconfig eth1 | grep -w \"inet\" | awk '{print $2}' | wc -l");
+    strcpy(cmd, "ifconfig eth1 | grep -w \"inet\" | awk '{print $2}' | wc -l");
     get_cmd_result(cmd, lte_value, sizeof(lte_value));
     memset(cmd, 0 ,sizeof(cmd));
     huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", gateway);
     sprintf(cmd, "route -n | grep eth1 | grep UG | grep %s | wc -l",gateway);
     get_cmd_result(cmd, route_state, sizeof(route_state));
     DETECTION_NETWORK_LOG("cpin:%d,ifconfig eth1 ient state:%d,route internet:%d",i_ready,atoi(lte_value),atoi(route_state));
-    if(i_ready == 1 && (atoi(lte_value) == 0 || atoi(route_state) == 1)){
-        
-        DETECTION_NETWORK_LOG("huayi_AT_cli AT+QPOWD=1");
-        system("huayi_AT_cli AT+QPOWD=1");
+    if(i_ready == 1){
+        if(atoi(lte_value) == 0 || atoi(route_state) == 1){
+            DETECTION_NETWORK_LOG("huayi_AT_cli AT+QPOWD=1");
+            system("huayi_AT_cli AT+QPOWD=1");
+        }
     }
-
 	memset(cmd, 0 ,sizeof(cmd));
 	memset(lte_value, 0 ,sizeof(lte_value));
 	strcpy(cmd, "grep '0.0.0.0\|8.8.8.8' /tmp/resolv.conf.auto  | sort");
@@ -56,6 +57,7 @@ int DetectConfigurationOfSimAndDns()
 
 
 }
+
 
 
 int simcard_internet_check(int count,char *host[], char *ifname)
@@ -72,7 +74,6 @@ int simcard_internet_check(int count,char *host[], char *ifname)
             DETECTION_NETWORK_LOG("max_delay =  %d. network is connect.\n",max_delay);
 			return 1;					
 		}
-        sleep(5);
 		i++;
 	}
     DetectConfigurationOfSimAndDns();
