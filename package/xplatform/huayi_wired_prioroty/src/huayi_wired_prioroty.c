@@ -168,7 +168,7 @@ int main(int argc,char *argv[])
 			}
 
 			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
-			if(strcmp(wan_ipv4,net_ipv4))
+		//	if(strcmp(wan_ipv4,net_ipv4))
 			{	
 				memset(cmd_str,0,sizeof(cmd_str));
 				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
@@ -197,18 +197,20 @@ int main(int argc,char *argv[])
 					//printf("cmd_str = %s\n",cmd_str);
 					system(cmd_str);
 				}
+                 if(strcmp(wan_ipv4,net_ipv4)){
 
-				 DETECTION_NETWORK_LOG("=====");
-				if(now_int_mode == INTERNET_4G){
-                huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
-                    if(wired_link == 0){
-                        system("ifup wan4g");
-                    }
-                }else if(now_int_mode == INTERNET_WIRED){
-					system("ifup wan");
-					DETECTION_NETWORK_LOG("ifup wan");
-				}
-			}
+    				DETECTION_NETWORK_LOG("=====");
+    				if(now_int_mode == INTERNET_4G){
+                    huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
+                        if(wired_link == 0){
+                            system("ifup wan4g");
+                        }
+                    }else if(now_int_mode == INTERNET_WIRED){
+    					system("ifup wan");
+    					DETECTION_NETWORK_LOG("ifup wan");
+    				}
+    			}
+		    }
             memset(cmd_str,0,sizeof(cmd_str));
             memset(resultbuf,0,sizeof(resultbuf));
             sprintf(cmd_str, "route -n | grep eth1 | grep UG | grep %s | wc -l",cpe_gateway);

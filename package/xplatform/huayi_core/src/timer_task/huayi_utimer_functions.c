@@ -984,7 +984,7 @@ void huayi_core_ping(void* arg)
     
 	system("huayi_detect_network www.baidu.com www.bjzhongyi.com www.haidilao.com");
 
-	huayi_core_add_task(20,HUAYI_RELOAD_MOUNT_TASK,huayi_core_ping,Agent);
+	huayi_core_add_task(60,HUAYI_RELOAD_MOUNT_TASK,huayi_core_ping,Agent);
 	return;
 }
 
