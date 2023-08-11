@@ -15,7 +15,7 @@
 
 int DetectConfigurationOfSimAndDns()
 {
-	char lte_value[OPTION_STR_LEN] = { 0 },state[OPTION_STR_LEN] = { 0 },route_state[OPTION_STR_LEN] = { 0 },gateway[OPTION_STR_LEN] = { 0 };
+	char lte_value[OPTION_STR_LEN] = { 0 },state[OPTION_STR_LEN] = { 0 },gateway[OPTION_STR_LEN] = { 0 };
 	char cmd[CMD_STR_LEN] = {0};
 	int ret=0, AsciiNum[22], j,i_ready = 0;
 	memset(lte_value, 0, OPTION_STR_LEN);
@@ -26,37 +26,34 @@ int DetectConfigurationOfSimAndDns()
 		DETECTION_NETWORK_LOG("SIM card cannot read");
 		return 0;
 	}
-    memset(cmd, 0, sizeof(cmd));
     memset(lte_value, 0 ,sizeof(lte_value));
     
 
     atcmd_get_cpin(&i_ready);
-    strcpy(cmd, "ifconfig eth1 | grep -w \"inet\" | awk '{print $2}' | wc -l");
-    get_cmd_result(cmd, lte_value, sizeof(lte_value));
     memset(cmd, 0 ,sizeof(cmd));
     huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", gateway);
     sprintf(cmd, "route -n | grep eth1 | grep UG | grep %s | wc -l",gateway);
-    get_cmd_result(cmd, route_state, sizeof(route_state));
-    DETECTION_NETWORK_LOG("cpin:%d,ifconfig eth1 ient state:%d,route internet:%d",i_ready,atoi(lte_value),atoi(route_state));
+
+    int ifconfig_state = executeCommand("ifconfig eth1 | grep -w \"inet\" | awk '{print $2}' | wc -l");
+    int route_state = executeCommand(cmd);
+    int dns_files = executeCommand("if grep -qE '0.0.0.0|8.8.8.8' /tmp/resolv.conf.auto; then echo 1; else [ -e /tmp/resolv.conf.auto ] && echo 0 || echo 0; fi");
+    
+    DETECTION_NETWORK_LOG("cpin:%d,ifconfig eth1 ient state:%d,route internet:%d,dns_files:%d",i_ready,ifconfig_state,route_state,dns_files);
+
     if(i_ready == 1){
-        if(atoi(lte_value) == 0 || atoi(route_state) == 1){
+        if(ifconfig_state == 0 || route_state == 1){
             DETECTION_NETWORK_LOG("huayi_AT_cli AT+QPOWD=1");
             system("huayi_AT_cli AT+QPOWD=1");
         }
     }
-	memset(cmd, 0 ,sizeof(cmd));
-	memset(lte_value, 0 ,sizeof(lte_value));
-	strcpy(cmd, "grep '0.0.0.0\|8.8.8.8' /tmp/resolv.conf.auto  | sort");
-	get_cmd_result(cmd, lte_value, sizeof(lte_value));
-	if(strlen(lte_value) < 1)
+
+	if(dns_files == 0)
 		return 0;
 	system("huayi-reset lte4g parameter 1");
 	DETECTION_NETWORK_LOG("huayi-reset lte4g parameter 1");
 	return 1;
-	
-
-
 }
+
 
 
 

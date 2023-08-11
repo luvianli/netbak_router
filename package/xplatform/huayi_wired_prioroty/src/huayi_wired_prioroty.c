@@ -211,15 +211,15 @@ int main(int argc,char *argv[])
     				}
     			}
 		    }
+
             memset(cmd_str,0,sizeof(cmd_str));
-            memset(resultbuf,0,sizeof(resultbuf));
+            huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
             sprintf(cmd_str, "route -n | grep eth1 | grep UG | grep %s | wc -l",cpe_gateway);
-            get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+            int route_state = 0;
             count = (10 * 60);
-            if(atoi(resultbuf) == 1){
-                DETECTION_NETWORK_LOG("=====");
-                if(wired_link == 1){
-                DETECTION_NETWORK_LOG("sleep %d",count);
+                DETECTION_NETWORK_LOG("route_state %d",route_state);
+                if(executeCommand(cmd_str) == 1 && wired_link == 1){
+                DETECTION_NETWORK_LOG("wirld link ==1&wirld internet error # sleep %d",count);
                     while(count != 0){
                        huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
                         if(wired_link == 0){
@@ -227,11 +227,17 @@ int main(int argc,char *argv[])
                             DETECTION_NETWORK_LOG(" break sleep");
                             break;
                         }
+                        route_state = executeCommand(cmd_str);
+                        if(route_state != 1){
+                            DETECTION_NETWORK_LOG("route_state %d",route_state);
+                            DETECTION_NETWORK_LOG("Route does not exist eth1");
+                            break;
+                        }
                         sleep(1);
                         count --;
                     }
                 }
-            }
+
 
 			old_int_mode = now_int_mode;
 		}

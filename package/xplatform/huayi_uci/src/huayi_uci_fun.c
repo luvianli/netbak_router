@@ -1329,5 +1329,33 @@ retry_getoperator:
 	return;
 }
 
+int executeCommand(const char *sendBuf) {
+    FILE *fp;
+    char path[1035];
+    int result = -1;
+
+    fp = popen(sendBuf, "r");
+    if (fp == NULL) {
+        FASTCGI_LOG("popen error\n");
+        return -1;
+    }
+
+    if (fgets(path, sizeof(path) - 1, fp) != NULL) {
+        int len = strlen(path);
+
+        if (len > 0 && path[len - 1] == '\n') {
+            path[len - 1] = '\0';
+        }
+
+        if (strcmp(path, "1") == 0) {
+            result = 1;
+        } else if (strcmp(path, "0") == 0) {
+            result = 0;
+        }
+    }
+
+    pclose(fp);
+    return result;
+}
 
 
