@@ -283,10 +283,10 @@ void get_activearp(int type, cJSON *stalist_array, int *number)
 	return;
 }
 
-void huayi_get_wireless_config(char *ssid, char *key, int *hidd, int *num)
+void huayi_get_wireless_config(char *ssid, char *key, int *hidd,int *num,int *channel,int *status)
 {
 	int hidden = 0;
-	int client_num = 0 ;
+	int client_num = 0,chann = 0,disable = 0;
 	
 	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","ssid",ssid);	
 	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","key", key);
@@ -294,77 +294,93 @@ void huayi_get_wireless_config(char *ssid, char *key, int *hidd, int *num)
 	*hidd = hidden;
 	get_activearp(1, NULL ,&client_num);
 	*num = client_num;
+	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&disable);
+	huayi_uci_get_int(PKG_WIRELESS,"radio0","channel",&chann);
+	*status = disable;
+	*channel = chann;
 	
 	return;
 }
+
+void huayi_get_wireless_5g_config(char *ssid, char *key, int *hidd,int *channel,int *status)
+{
+	int hidden = 0;
+	int chann = 0,disable = 0;
+	
+	huayi_uci_get_str(PKG_WIRELESS,"radio1_0","ssid",ssid);	
+	huayi_uci_get_str(PKG_WIRELESS,"radio1_0","key", key);
+	huayi_uci_get_int(PKG_WIRELESS,"radio1_0","hidden",&hidden);
+	*hidd = hidden;
+	huayi_uci_get_int(PKG_WIRELESS,"radio1_0","disabled",&disable);
+	huayi_uci_get_int(PKG_WIRELESS,"radio1","channel",&chann);
+	*status = disable;
+	*channel = chann;
+	
+	return;
+}
+
 
 void huayi_set_wifi_config(cJSON *response_root)
 {
 	char vap_section[OPTION_STR_LEN] = {0}, radio_section[OPTION_STR_LEN] = {0};	
 	char ssid[TEMP_STR_LEN] = {0}, key[TEMP_STR_LEN] = {0};
 	char oldssid[OPTION_STR_LEN] = {0}, oldkey[TEMP_STR_LEN] = {0};
-	int radio_id = 0, hidden = -1, oldhidden = -1;
+	int hidden = -1, oldhidden = -1;
+	int disabled = -1, olddisabled = -1;
+	int channel = -1, oldchannel = -1;
 	int wifireset_flag = 0;
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-	char vap_section5g[OPTION_STR_LEN] = {0};
-	char tmp[TEMP_STR_LEN] = { 0 };
-#endif
 
 	if(NULL == response_root) 
 	{
 		return ;
 	}
 
-	/*to do distinguish 2.4g or 5.8g*/
-	radio_id = 0; //2.4g
-	snprintf(vap_section, OPTION_STR_LEN,"radio%d_0",radio_id);
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-	snprintf(vap_section5g, OPTION_STR_LEN,"radio%d_0",1);
-#endif
+	snprintf(vap_section, OPTION_STR_LEN,"radio%d_0",0);
+	snprintf(radio_section,OPTION_STR_LEN,"radio%d",0);
+	huayi_uci_get_int(PKG_WIRELESS,vap_section,"disabled",&olddisabled);
+
+	if(huayi_json_get_int(response_root,"wifi_status",&disabled)) 
+	{
+		if((disabled == 0||disabled == 1)&& (disabled != olddisabled)) {
+			huayi_uci_set_int(PKG_WIRELESS,vap_section,"disabled",disabled);
+			wifireset_flag = 1;
+		}
+	}
+
 	huayi_uci_get_int(PKG_WIRELESS,vap_section,"hidden",&oldhidden);
 	huayi_uci_get_str(PKG_WIRELESS,vap_section,"ssid", oldssid);
 	huayi_uci_get_str(PKG_WIRELESS,vap_section,"key", oldkey);
-	//printf("%s, %d, oldhidden = %d, oldssid = %s oldkey = %s!\n", __FUNCTION__, __LINE__, oldhidden, oldssid, oldkey);
-	if(!huayi_json_get_int(response_root,"hidden",&hidden)) {
-		printf("wireless hidden param is not respon !\n");
-	} else {
-		if((-1 != hidden) && (hidden != oldhidden)) {
+	huayi_uci_get_int(PKG_WIRELESS,radio_section,"channel", &oldchannel);
+		
+	if(huayi_json_get_int(response_root,"hidden",&hidden)) 
+	{
+		if((hidden == 0||hidden == 1) && (hidden != oldhidden)) {
 			huayi_uci_set_int(PKG_WIRELESS,vap_section,"hidden",hidden);
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-			huayi_uci_set_int(PKG_WIRELESS,vap_section5g,"hidden",hidden);
-#endif
 			wifireset_flag = 1;
 		}
 	}
 		
-	if(!huayi_json_get_str(response_root,"ssid",ssid,OPTION_STR_LEN)) {
-		printf("wireless ssid param is not respon !\n");
-	} else {
+	if(huayi_json_get_str(response_root,"ssid",ssid,OPTION_STR_LEN)) {
 		if((0 != strlen(ssid)) && (0 != strcmp(oldssid, ssid))) {
 			huayi_uci_set_str(PKG_WIRELESS,vap_section,"ssid",ssid);
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-			snprintf(tmp, TEMP_STR_LEN, "%s_5.8g", ssid);
-			huayi_uci_set_int(PKG_WIRELESS,vap_section5g,"ssid",tmp);
-#endif
-
 			wifireset_flag = 1;
 		}
 	}
 	
-	if(!huayi_json_get_str(response_root,"password",key,TEMP_STR_LEN)) {
-		printf("wireless password param is not respon !\n");;
-	} else {
-		if(0 != strlen(ssid) && (0 != strcmp(key, oldkey))) {
+	if(huayi_json_get_str(response_root,"password",key,TEMP_STR_LEN)) {
+		if((strlen(key) >= 8) && (0 != strcmp(key, oldkey))) {
 			huayi_uci_set_str(PKG_WIRELESS,vap_section,"key", key);
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-			huayi_uci_set_str(PKG_WIRELESS,vap_section5g,"key", key);
-#endif
-
 			wifireset_flag = 1;
 		}
 	}	
-	
-	//printf("%s, %d, hidden = %d, ssid = %s key = %s!\n", __FUNCTION__, __LINE__, hidden, ssid, key);
+
+	if(huayi_json_get_int(response_root,"channel",&channel)) {
+		if((channel >= 0 && channel < 14) && (channel != oldchannel)) {
+			huayi_uci_set_int(PKG_WIRELESS,radio_section,"channel",channel);
+			wifireset_flag = 1;
+		}
+	}
+
 	if(1 == wifireset_flag ) {
 		huayi_uci_commit(PKG_WIRELESS);	
 		system("huayi-reset wireless");
@@ -372,4 +388,73 @@ void huayi_set_wifi_config(cJSON *response_root)
 	
 	return;
 }
+
+void huayi_set_5gwifi_config(cJSON *response_root)
+{
+	char vap_section[OPTION_STR_LEN] = {0};	
+	char ssid[TEMP_STR_LEN] = {0}, key[TEMP_STR_LEN] = {0};
+	char oldssid[OPTION_STR_LEN] = {0}, oldkey[TEMP_STR_LEN] = {0};
+	int hidden = -1, oldhidden = -1;
+	int disabled = -1, olddisabled = -1;
+	int channel = -1, oldchannel = -1;
+	int wifireset_flag = 0;
+
+	if(NULL == response_root) 
+	{
+		return ;
+	}
+
+	snprintf(vap_section, OPTION_STR_LEN,"radio%d_0",1);
+	huayi_uci_get_int(PKG_WIRELESS,vap_section,"disabled",&olddisabled);
+	huayi_uci_get_int(PKG_WIRELESS,vap_section,"hidden",&oldhidden);
+	huayi_uci_get_str(PKG_WIRELESS,vap_section,"ssid", oldssid);
+	huayi_uci_get_str(PKG_WIRELESS,vap_section,"key", oldkey);
+	huayi_uci_get_int(PKG_WIRELESS,"radio1","channel", &oldchannel);
+
+	if(huayi_json_get_int(response_root,"wifi_5g",&disabled)) {
+		if((disabled == 0||disabled == 1) && (disabled != olddisabled)) {
+			huayi_uci_set_int(PKG_WIRELESS,vap_section,"disabled",disabled);
+			wifireset_flag = 1;
+		}
+	}
+
+	if(disabled == 1||olddisabled == 1)
+	{
+		if(huayi_json_get_int(response_root,"hidden_5g",&hidden)) {
+			if((hidden == 0||hidden == 1) && (hidden != oldhidden)) {
+				huayi_uci_set_int(PKG_WIRELESS,vap_section,"hidden",hidden);
+				wifireset_flag = 1;
+			}
+		}
+			
+		if(huayi_json_get_str(response_root,"ssid_5g",ssid,OPTION_STR_LEN)) {
+			if((0 != strlen(ssid)) && (0 != strcmp(oldssid, ssid))) {
+				huayi_uci_set_str(PKG_WIRELESS,vap_section,"ssid",ssid);
+				wifireset_flag = 1;
+			}
+		}
+		
+		if(huayi_json_get_str(response_root,"password_5g",key,TEMP_STR_LEN)) {
+			if(strlen(key) >= 8 && (0 != strcmp(key, oldkey))) {
+				huayi_uci_set_str(PKG_WIRELESS,vap_section,"key", key);
+				wifireset_flag = 1;
+			}
+		}	
+
+		if(huayi_json_get_int(response_root,"channel_5g",&channel)) {
+			if((channel > 144) && (channel != oldchannel)) {
+				huayi_uci_set_int(PKG_WIRELESS,"radio1","channel",channel);
+				wifireset_flag = 1;
+			}
+		}
+	}
+
+	if(1 == wifireset_flag ) {
+		huayi_uci_commit(PKG_WIRELESS);	
+		system("huayi-reset wireless");
+	}
+	
+	return;
+}
+
 
