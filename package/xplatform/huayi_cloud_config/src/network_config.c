@@ -87,36 +87,6 @@ void huayi_get_lan_confign(char *ip,char *netmask,int *dhcp,char *startip,char *
 	return;
 }
 
-void huayi_get_lan_confign(char *ip,char *netmask,int *dhcp,char *startip,char *endip,int *time)
-{
-	int start = 0,limit = 0,ipp = 0,net = 0;
-	int min = 0,max = 0,status = 0,leasetime = 0;
-	huayi_uci_get_int(PKG_DHCP,"lan","ignore",&status);
-	huayi_uci_get_str(PKG_NETWORK,"lan","ipaddr",ip);
-	huayi_uci_get_str(PKG_NETWORK,"lan","netmask",netmask);
-	huayi_uci_get_int(PKG_DHCP,"lan","start",&start);
-	huayi_uci_get_int(PKG_DHCP,"lan","limit",&limit);
-	huayi_uci_get_int(PKG_DHCP,"lan","leasetime",&leasetime);
-	*dhcp = status;
-	*time = leasetime;
-
-	inet_pton(AF_INET,ip, &ipp);
-	inet_pton(AF_INET,netmask, &net);
-	ipp = htonl(ipp);
-	net = htonl(net);
-
-	min = htonl((ipp & net) +1);
-	max = htonl((ipp | ~net) -1);
-
-	start = htonl(ntohl(min)+start-1);
-	limit = htonl(htonl(start)+limit - 1);
-
-	inet_ntop(AF_INET, &start, startip, IPV4_STR_LEN);
-	inet_ntop(AF_INET, &limit, endip, IPV4_STR_LEN);
-
-	return;
-}
-
 void huayi_set_lan_config(cJSON *response_root)
 {
 	char ipaddr[IPV4_STR_LEN] = {0},oldipaddr[IPV4_STR_LEN] = {0};
