@@ -51,6 +51,13 @@ int init_curl(CURL **curl, char *url, char *post_fields, int post_size ,callback
 		CLOUD_CLIENT_LOG("set url fail\n");
 		return -1;
 	}
+
+	code=curl_easy_setopt(*curl,CURLOPT_SSL_VERIFYPEER,false);
+	if(code != CURLE_OK) {
+		CLOUD_CLIENT_LOG("set CURLOPT_SSL_VERIFYPEER fail\n");
+		return -1;
+	}
+	
 	if(strlen(post_fields) != 0) {
 		// 设置http发送的内容类型为JSON  
 		struct curl_slist *plist = NULL;
@@ -100,13 +107,12 @@ void* heart_handle()
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "registStatus", registStatus);
 		if (strcmp(registStatus ,"connected") != 0) {
 			CLOUD_CLIENT_LOG("%s, modem is not connected; registStatus is : %d\n",__FUNCTION__, registStatus);
-			sleep(5);
+			sleep(10);
 			continue;
 		}
 		memset(heartData, 0, sizeof(heartData));
 		memset(url, 0, sizeof(url));
 		get_url(url);
-		//printf("heart url:%s\n",url);
 		msg_content(heartData, &heartSize);
 		CLOUD_CLIENT_LOG("===  %s, %d, heartData = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartData, heartSize);
 #if TEST
@@ -165,11 +171,11 @@ int main(int argc, char *argv[])
 	
 	(void) signal(SIGTERM, huayi_client_main_graceful_exit);
 
-	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
+	/*huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 	if (0 != strcmp(wan_type,WAN_TYPE_4G))
 	{
 		return 0;
-	}
+	}*/
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	pthread_create(&heartTid, NULL, heart_handle, NULL);

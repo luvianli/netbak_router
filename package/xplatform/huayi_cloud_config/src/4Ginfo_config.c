@@ -11,7 +11,7 @@
 #include <signal.h>
 
 
-void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char *cellid)
+void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char *cellid,char *sn)
 {
 	int  signal = -121;
 
@@ -19,12 +19,13 @@ void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","iccid",iccid);
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","lac",lac);
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","ci",cellid);
+	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","imei",sn);
 	atcmd_get_signal_for_cloud(&signal);
 	//huayi_uci_get_int(PKG_STATUS_MODEM,"modem","signal",&signal);
 	//signal = signal/5 - 120;
 
 	*sig = signal;
-	
+
 	return;
 }
 
