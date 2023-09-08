@@ -177,7 +177,7 @@ void huayi_set_dhcp_config(cJSON *response_root)
 out:
 	if(huayi_json_get_int(response_root,"lease_time",&leasetime))
 	{
-		if((leasetime > 300 && leasetime < 604800) && (leasetime != oldleasetime)) 
+		if((leasetime >= 300 && leasetime <= 604800) && (leasetime != oldleasetime)) 
 		{
 			huayi_uci_set_int(PKG_DHCP,"lan","leasetime",leasetime);
 			dhcpset_flag = 1;
