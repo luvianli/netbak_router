@@ -354,6 +354,7 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 	huayi_set_5gwifi_config(format);
 #endif
 	huayi_set_lan_config(format);
+	huayi_set_dhcp_config(format);
 	huayi_set_qos_config(format);
 	huayi_set_sche_reboot_config(format);
 	huayi_set_wan_config(format);

@@ -87,10 +87,65 @@ void huayi_get_lan_confign(char *ip,char *netmask,int *dhcp,char *startip,char *
 	return;
 }
 
+void huayi_get_lan_confign(char *ip,char *netmask,int *dhcp,char *startip,char *endip,int *time)
+{
+	int start = 0,limit = 0,ipp = 0,net = 0;
+	int min = 0,max = 0,status = 0,leasetime = 0;
+	huayi_uci_get_int(PKG_DHCP,"lan","ignore",&status);
+	huayi_uci_get_str(PKG_NETWORK,"lan","ipaddr",ip);
+	huayi_uci_get_str(PKG_NETWORK,"lan","netmask",netmask);
+	huayi_uci_get_int(PKG_DHCP,"lan","start",&start);
+	huayi_uci_get_int(PKG_DHCP,"lan","limit",&limit);
+	huayi_uci_get_int(PKG_DHCP,"lan","leasetime",&leasetime);
+	*dhcp = status;
+	*time = leasetime;
+
+	inet_pton(AF_INET,ip, &ipp);
+	inet_pton(AF_INET,netmask, &net);
+	ipp = htonl(ipp);
+	net = htonl(net);
+
+	min = htonl((ipp & net) +1);
+	max = htonl((ipp | ~net) -1);
+
+	start = htonl(ntohl(min)+start-1);
+	limit = htonl(htonl(start)+limit - 1);
+
+	inet_ntop(AF_INET, &start, startip, IPV4_STR_LEN);
+	inet_ntop(AF_INET, &limit, endip, IPV4_STR_LEN);
+
+	return;
+}
+
 void huayi_set_lan_config(cJSON *response_root)
 {
 	char ipaddr[IPV4_STR_LEN] = {0},oldipaddr[IPV4_STR_LEN] = {0};
-	char netmask[IPV4_STR_LEN] = {0};
+
+	if(NULL == response_root) 
+	{
+		return ;
+	}
+
+	huayi_uci_get_str(PKG_NETWORK,"lan","ipaddr",oldipaddr);
+
+	if(huayi_json_get_str(response_root,"lan_ip",ipaddr,OPTION_STR_LEN)) 
+	{
+		if (is_ipv4_addr(ipaddr) == 0 && 0!=strcmp(oldipaddr,ipaddr)) {
+			huayi_uci_set_str(PKG_NETWORK,"lan","ipaddr",ipaddr);
+			huayi_uci_commit(PKG_NETWORK);
+			system("huayi-reset network");
+		} 
+		else {
+			CLOUD_CLIENT_LOG("ipaddr error\n");
+		}
+	}
+
+	return;
+}
+
+void huayi_set_dhcp_config(cJSON *response_root)
+{
+	char ipaddr[IPV4_STR_LEN] = {0},netmask[IPV4_STR_LEN] = {0};
 	int lanset_flag = 0,dhcpset_flag = 0;
 	char startip[IPV4_STR_LEN] = {0},endip[IPV4_STR_LEN] = {0};
 	int ignore	= -1,oldignore = -1,leasetime = 0,config_start = 0;
@@ -102,38 +157,26 @@ void huayi_set_lan_config(cJSON *response_root)
 		return ;
 	}
 
-	huayi_uci_get_str(PKG_NETWORK,"lan","ipaddr",oldipaddr);
+	huayi_uci_get_str(PKG_NETWORK,"lan","ipaddr",ipaddr);
 	huayi_uci_get_str(PKG_NETWORK,"lan","netmask",netmask);
 	huayi_uci_get_int(PKG_DHCP,"lan","ignore",&oldignore);
 	huayi_uci_get_int(PKG_DHCP,"lan","leasetime",&oldleasetime);
 
-	if(huayi_json_get_str(response_root,"lan_ip",ipaddr,OPTION_STR_LEN)) 
+	if(huayi_json_get_int(response_root,"lan_dhcp",&ignore))
 	{
-		if((0 != strlen(ipaddr))&& (0 != strcmp(oldipaddr, ipaddr)))
-		{
-			if (is_ipv4_addr(ipaddr) == 0) {
-				huayi_uci_set_str(PKG_NETWORK,"lan","ipaddr",ipaddr);
-				lanset_flag = 1;
-			} else {
-				CLOUD_CLIENT_LOG("ipaddr error\n");
-			}
-		}
-	}
-
-	if(huayi_json_get_int(response_root,"dhcpstatus",&ignore))
-	{
-		if((-1 != ignore) && (ignore != oldignore)&&((ignore == 0)||(ignore == 1))) 
+		if((ignore != oldignore)&&((ignore == 0)||(ignore == 1))) 
 		{
 			huayi_uci_set_int(PKG_DHCP,"lan","ignore",ignore);
 			dhcpset_flag = 1;
 		}
 	}
-
+	
 	if(huayi_json_get_str(response_root,"start_ip",startip,IPV4_STR_LEN)&&
 		huayi_json_get_str(response_root,"end_ip",endip,IPV4_STR_LEN))
 	{
 		huayi_uci_get_int(PKG_DHCP,"lan","start",&oldstart);
 		huayi_uci_get_int(PKG_DHCP,"lan","limit",&oldlimit);
+		
 		inet_pton(AF_INET,ipaddr, &ip);
 		inet_pton(AF_INET,netmask, &net);
 		inet_pton(AF_INET,startip, &start);
@@ -166,15 +209,9 @@ out:
 	{
 		if((leasetime > 300 && leasetime < 604800) && (leasetime != oldleasetime)) 
 		{
-			huayi_uci_set_int(PKG_DHCP,"lan","leasetime",&leasetime);
+			huayi_uci_set_int(PKG_DHCP,"lan","leasetime",leasetime);
 			dhcpset_flag = 1;
 		}
-	}
-	
-	if(lanset_flag ==1)
-	{
-		huayi_uci_commit(PKG_NETWORK);
-		system("huayi-reset network");
 	}
 
 	if(dhcpset_flag ==1)
@@ -185,6 +222,7 @@ out:
 
 	return;
 }
+
 
 void huayi_get_wan_or_wan4g_config(int *type,char *mode,char *access,char *name,int *dial_way
 ,char *ipaddr,char *netmask,char *gateway,char *dns1,char *dns2
