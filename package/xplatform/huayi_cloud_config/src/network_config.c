@@ -259,7 +259,7 @@ void huayi_set_wan_config(cJSON *response_root)
 	int  dial_way = -1,olddial_way = 0;
 	char auth_type[OPTION_STR_LEN] = {0},apn_name[OPTION_STR_LEN] = {0},username[OPTION_STR_LEN] = {0},password[OPTION_STR_LEN] = {0};
 	char hostname[OPTION_STR_LEN] = {0};
-	int  modeset = 1,opmode = 5;
+	int  opmode = 5,wanset = 0,dialset = 0;
 	
 
 	if(NULL == response_root) 
@@ -268,8 +268,7 @@ void huayi_set_wan_config(cJSON *response_root)
 	}
 
 	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",oldwan_mode);
-	if(!huayi_json_get_str(response_root,"wan_mode",wan_mode,RESULT_STR_LEN)){	
-		modeset = 0;
+	if(!huayi_json_get_str(response_root,"wan_mode",wan_mode,RESULT_STR_LEN)){
 		goto set4g;
 	}
 
@@ -283,7 +282,7 @@ void huayi_set_wan_config(cJSON *response_root)
 			CLOUD_CLIENT_LOG("wan_mode error\n");
 			goto set4g;
 		}
-	}else if (opmode == 1)
+	}else if (opmode == 0)
 	{
 		if(!strcmp(wan_mode, "prior")||!strcmp(wan_mode, "wired")||!strcmp(wan_mode, "mobile")){
 			goto setwan ;
@@ -292,7 +291,8 @@ void huayi_set_wan_config(cJSON *response_root)
 			goto set4g;
 		}
 	}else return ;
-	
+
+
 setwan:
 	if((0 != strlen(wan_mode)) && (0 != strcmp(oldwan_mode, wan_mode))) 
 	{
@@ -327,6 +327,7 @@ setwan:
 				huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"disabled","1"); //off
 				huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"apcli_enable","1");
             #endif
+			wanset = 1;
 		}
 	}
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
@@ -343,21 +344,21 @@ setwan:
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend wired_device %s",wan_ifname);
 		system(cmd);
 	
-		if(!strcmp(proto,HUAYI_NET_PROTO_STATIC))
+		if(!strcmp(proto,"static"))
 		{
 			if(!huayi_set_static_config(response_root,"wan"))
 			{
 				huayi_uci_revert(PKG_NETWORK);
 				return ;
 			}
-		}else if(!strcmp(proto,HUAYI_NET_PROTO_PPPOE))
+		}else if(!strcmp(proto,"pppoe"))
 		{
 			if(!huayi_set_pppoe_config(response_root,"wan"))
 			{
 				huayi_uci_revert(PKG_NETWORK);
 				return ;
 			}
-		}else if(!strcmp(proto,HUAYI_NET_PROTO_DHCP))
+		}else if(!strcmp(proto,"dhcp"))
 		{
 			huayi_json_get_str(response_root,"host_name",hostname,OPTION_STR_LEN);
 			if(strlen(hostname)>0)
@@ -365,6 +366,10 @@ setwan:
 				huayi_uci_set_str(PKG_NETWORK, "wan", "hostname",hostname);
 			}
 			huayi_uci_delete_option(PKG_NETWORK, "wan", "dns");
+		}else
+		{
+			CLOUD_CLIENT_LOG("proto error\n");
+			goto set4g;
 		}
 	
 		huayi_uci_set_str(PKG_NETWORK,"wan","proto",proto);
@@ -384,6 +389,7 @@ setwan:
 			}
 			system(cmd);
 		}
+		wanset = 1;
 	}
 #endif
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
@@ -415,6 +421,7 @@ setwan:
 
 			huayi_uci_set_str(PKG_NETWORK,"wan","proto", "dhcp");
 			huayi_uci_set_str(PKG_NETWORK,"wan4g","proto", "dhcp");
+			wanset = 1;
 		}
 	}
 #endif
@@ -430,6 +437,7 @@ setwan:
 			snprintf(cmd,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
 			system(cmd);
 			huayi_uci_set_str(PKG_NETWORK,"wan","proto", "dhcp");
+			wanset = 1;
 		}
 	}
 #else
@@ -446,21 +454,21 @@ setwan:
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend wired_device %s",wan_ifname);
 		system(cmd);
 			
-		if(!strcmp(proto,HUAYI_NET_PROTO_STATIC))
+		if(!strcmp(proto,"static"))
 		{
 			if(!huayi_set_static_config(response_root,"wan"))
 			{
 				huayi_uci_revert(PKG_NETWORK);
 				return ;
 			}
-		}else if(!strcmp(proto,HUAYI_NET_PROTO_PPPOE))
+		}else if(!strcmp(proto,"pppoe"))
 		{
 			if(!huayi_set_pppoe_config(response_root,"wan"))
 			{
 				huayi_uci_revert(PKG_NETWORK);
 				return ;
 			}
-		}else if(!strcmp(proto,HUAYI_NET_PROTO_DHCP))
+		}else if(!strcmp(proto,"dhcp"))
 		{
 			huayi_json_get_str(response_root,"host_name",hostname,OPTION_STR_LEN);
 			if(strlen(hostname)>0)
@@ -468,11 +476,15 @@ setwan:
 				huayi_uci_set_str(PKG_NETWORK, "wan", "hostname",hostname);
 			}
 			huayi_uci_delete_option(PKG_NETWORK, "wan", "dns");
+		}else
+		{
+			CLOUD_CLIENT_LOG("proto error\n");
+			goto set4g;
 		}
 		huayi_uci_set_str(PKG_NETWORK,"wan","proto",proto);
+		wanset = 1;
 	}
 #endif
-
 
 set4g:
 	if(huayi_json_get_int(response_root,"dial_way",&dial_way))
@@ -480,6 +492,7 @@ set4g:
 		huayi_uci_get_int(PKG_MODEM,"status","mode",&olddial_way);
 		if((dial_way == 0 || dial_way == 1) && (dial_way != olddial_way)) {
 			huayi_uci_set_int(PKG_MODEM,"status","mode",&dial_way);
+			dialset = 1;
 		}
 
 		if(dial_way == 1)
@@ -493,24 +506,27 @@ set4g:
 		huayi_uci_set_str(PKG_MODEM,"status","apn",apn_name);
 		huayi_uci_set_str(PKG_MODEM,"status","user4g",username);
 		huayi_uci_set_str(PKG_MODEM,"status","pass4g",password);
+		dialset = 1;
 		}
 	}
-	else if(modeset == 0){
-		return ;
-	}
-	
-	huayi_uci_commit(PKG_SYSTEM);
-	huayi_uci_commit(PKG_NETWORK);
-	huayi_uci_commit(PKG_MODEM);
-	huayi_uci_commit(PKG_WIRELESS);
-	
-	if (!strcmp(wan_mode, "mobile")||!strcmp(wan_mode, "prior")||
-		!strcmp(wan_mode, "rep4g"))
+
+	if(wanset == 1)
 	{
-		system("huayi-reset lte4g parameter 0");
+		huayi_uci_commit(PKG_SYSTEM);
+		huayi_uci_commit(PKG_NETWORK);
+		huayi_uci_commit(PKG_WIRELESS);
+		if (!strcmp(wan_mode, "mobile")||!strcmp(wan_mode, "prior")||
+			!strcmp(wan_mode, "rep4g"))
+		{
+			system("huayi-reset lte4g parameter 0");
+		}
 	}
 
-	system("huayi-reset network");
+	if(dialset == 1)
+		huayi_uci_commit(PKG_MODEM);
+	
+	if(wanset == 1 ||dialset == 1)
+		system("huayi-reset network");
 
 	return ;
 }
@@ -533,14 +549,21 @@ int huayi_set_static_config(cJSON *response_root,char *iface)
 		return 0;
 	}
 	
+	if(!is_ipv4_addr(ipaddr) == 0||!is_ipv4_addr(netmask) == 0||!is_ipv4_addr(gateway) == 0||
+		!is_ipv4_addr(dns1) == 0)
+	{
+		CLOUD_CLIENT_LOG("ipaddr error\n");
+		return 0;
+	}
+		
 	huayi_uci_set_str(PKG_NETWORK,iface,"ipaddr",ipaddr);
 	huayi_uci_set_str(PKG_NETWORK,iface,"netmask",netmask);
 	huayi_uci_set_str(PKG_NETWORK,iface,"gateway",gateway);
 
 	huayi_uci_delete_option(PKG_NETWORK,iface,"dns");
-	huayi_uci_add_list(PKG_NETWORK,iface,"dns","dns1");
+	huayi_uci_add_list(PKG_NETWORK,iface,"dns",dns1);
 	if(huayi_json_get_str(response_root,"dns2",dns2,IPV4_STR_LEN))
-	huayi_uci_add_list(PKG_NETWORK,iface,"dns","dns2");
+	huayi_uci_add_list(PKG_NETWORK,iface,"dns",dns2);
 
 	return 1;
 }
