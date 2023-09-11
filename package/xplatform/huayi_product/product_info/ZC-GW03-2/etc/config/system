@@ -51,7 +51,7 @@ config upgrade upgrade
 
 config server server
 	option interval 180000
-	option urldomain 'https://zmp-test1.nbm2m.com/api/device/post/uploadData/industryRouting'
+	option urldomain 'https://up.aiotzy.com/api/device/post/uploadData/industryRouting'
 	option clientlog   '1'
 
 	
