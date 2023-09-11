@@ -31,7 +31,10 @@ void huayi_client_main_graceful_exit(int sig)
 static int heart_call_back(char *data, size_t size, size_t nmemb,
 		char *writerData)
 {
-	memcpy(heartContent, data, size*nmemb);
+	char Content[HEART_RES_DATALEN] = {0};
+	memset(Content,0,sizeof(Content));
+	memcpy(Content, data, size*nmemb);
+	strcat(heartContent,Content);
 	heartContentLen = size*nmemb;
 	
 	return heartContentLen;
