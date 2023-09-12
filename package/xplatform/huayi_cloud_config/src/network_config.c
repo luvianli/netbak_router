@@ -449,6 +449,7 @@ setwan:
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_ifname",lan_ifname);
 		huayi_uci_set_str(PKG_NETWORK,"lan","ifname",lan_ifname);
+		huayi_uci_delete_option(PKG_NETWORK,"wan4g","ifname");
 		huayi_uci_set_str(PKG_NETWORK,"wan","ifname",wan_ifname);
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set blend wired_device %s",wan_ifname);
 		system(cmd);

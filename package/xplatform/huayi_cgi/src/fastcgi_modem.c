@@ -2255,7 +2255,11 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	}
 #else
 	else
-	{
+	{	
+		if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
+		{
+			return FCGI_RESP_CODE_DATA_MISS;
+		}
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
 
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_ifname",lan_ifname);
