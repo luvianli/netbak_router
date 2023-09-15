@@ -296,14 +296,22 @@ int main(int argc,char *argv[])
 	int cpe_link = 0;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
-    int simReady = 0;
+	char pmodel[RESULT_STR_LEN]={0};
 	delaycount = 1;
 	while(1)
 	{
 		sleep(10);
 		memset(wan_type,0,sizeof(wan_type));
 		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
-
+		if(strcmp(wan_type,"rep4g") == 0||strcmp(wan_type,"mobile") != 0)
+		{
+			if(!huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel))
+			{
+				system("huayi-reset lte4g parameter 0");
+			}
+		}
+		memset(wan_type,0,sizeof(wan_type));
+		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 		if(strcmp(wan_type,"rep4g") != 0)
 		{
 			continue;
@@ -325,28 +333,6 @@ int main(int argc,char *argv[])
 		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4", wan4g_ipv4);
 		if(wired_link == 0 && cpe_link == 0)
 			continue;
-
-    	atcmd_get_cpin(&simReady);
-    	if(simReady == 1)
-    	{
-			memset(cmd_str,0,sizeof(cmd_str));
-			memset(resultbuf, 0, sizeof(resultbuf));
-			strcpy(cmd_str,"ifconfig wwan0 | grep inet | awk {'print $1'}");
-			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
-			if(!strstr(resultbuf, "inet"))
-			{
-				system("quectel-CM &");
-                if(cpe_link == 0){
-                    system("huayi_cmd set blend cpe_link 1");
-                }
-			}
-    	}
-        else{
-            if(cpe_link == 1){
-                system("huayi_cmd set blend cpe_link 0");
-                system("ifup wan");
-            }
-        }
 
 		if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0
 			&& strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
