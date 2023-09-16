@@ -296,20 +296,10 @@ int main(int argc,char *argv[])
 	int cpe_link = 0;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
-	char pmodel[RESULT_STR_LEN]={0};
 	delaycount = 1;
 	while(1)
 	{
 		sleep(10);
-		memset(wan_type,0,sizeof(wan_type));
-		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
-		if(strcmp(wan_type,"rep4g") == 0||strcmp(wan_type,"mobile") != 0)
-		{
-			if(!huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel))
-			{
-				system("huayi-reset lte4g parameter 0");
-			}
-		}
 		memset(wan_type,0,sizeof(wan_type));
 		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 		if(strcmp(wan_type,"rep4g") != 0)
