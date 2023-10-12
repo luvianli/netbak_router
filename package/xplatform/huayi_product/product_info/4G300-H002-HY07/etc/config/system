@@ -4,6 +4,7 @@ config mode	mode
 	option simchange '0'
 	option detect_ip 'www.baidu.com'
 	option detect_time 300
+	option device_type '0' # 0 聚合,1 单卡
 
 config system system
 	option hostname	ROUTE
@@ -56,6 +57,10 @@ config mysocket mysocket
 config settings settings
 	option heartbeat_restart_enabled 10
 
-
+config server server
+	option interval 180000
+	option urldomain 'https://up.aiotzy.com/api/device/post/uploadData/industryRouting'
+	option clientlog   '1'
+	
 	
 	

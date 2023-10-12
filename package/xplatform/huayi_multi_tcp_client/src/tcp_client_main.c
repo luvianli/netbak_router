@@ -30,7 +30,7 @@ int client_socket_init()
    
    memset(&server_address,0,sizeof(server_address));
    server_address.sin_family=AF_INET;
-   server_address.sin_port=htons(9595);
+   server_address.sin_port=htons(6666);
    server_address.sin_addr.s_addr = inet_addr("192.168.64.1");
 
 

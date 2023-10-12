@@ -11,7 +11,7 @@
 #include <signal.h>
 
 
-void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char *cellid)
+void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char *cellid,char *sn)
 {
 	int  signal = -121;
 
@@ -19,16 +19,22 @@ void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","iccid",iccid);
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","lac",lac);
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","ci",cellid);
+	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","imei",sn);
 	atcmd_get_signal_for_cloud(&signal);
 	//huayi_uci_get_int(PKG_STATUS_MODEM,"modem","signal",&signal);
 	//signal = signal/5 - 120;
 
 	*sig = signal;
+
+	/*CustomCommunicationClient("echo `uci get m_system.usesiminfo.card_slot`",usesiminfoBuf);
+	if(!(toParsing(usesiminfoBuf, 1,&sim_slot))){
+        CLOUD_CLIENT_LOG("usesiminfoBuf error\n");
+     }else *simSwitch = sim_slot;*/
 	
 	return;
 }
 
-void huayi_set_4g_config(cJSON *response_root)
+/*void huayi_set_4g_config(cJSON *response_root)
 {
 	int  switchSim = -1, autoSlot = -1;
 	//int  oldswitchSim = -1;
@@ -62,6 +68,52 @@ void huayi_set_4g_config(cJSON *response_root)
 	}
 	//printf("%s, %d, sim = %d, slot = %d !\n", __FUNCTION__, __LINE__, switchSim, autoSlot);	
 	return;
+}*/
+
+void huayi_set_4g_config(cJSON *response_root)
+{
+	int sim_slot = 0,lock = 0,simSwitch = 0,Simnum = 0;
+	char usesiminfoBuf[1024] = {0},siminfoBuf[512] = {0},cmd[OPTION_STR_LEN]={0};
+	char iccid[OPTION_STR_LEN]={0};
+
+	if(NULL == response_root) 
+	{
+		return ;
+	}
+
+	if(!huayi_json_get_int(response_root, "simSwitch", &simSwitch)) 
+	{
+		return;
+	}
+
+	CustomCommunicationClient("echo `uci get m_system.usesiminfo.card_slot;uci get m_system.usesiminfo.lock;uci get m_system.system.simnum;`",usesiminfoBuf);
+	if(!(toParsing(usesiminfoBuf,3,&sim_slot,&lock,&Simnum))){
+        CLOUD_CLIENT_LOG("usesiminfoBuf error\n");
+		return ;
+     }
+
+	if(simSwitch > 0 && simSwitch <= Simnum && lock == 0 && simSwitch != sim_slot)
+	{
+		if(simSwitch == 4)
+		{
+			CustomCommunicationClient("echo `uci get m_system.sim4.iccid`",siminfoBuf);
+			if(!(toParsing(siminfoBuf,1,iccid))){
+        		CLOUD_CLIENT_LOG("get sim4 error\n");
+				return ;
+     		}
+			if (strlen(iccid) < 5 || !isStringValid(iccid)) {
+            	CLOUD_CLIENT_LOG("sim4 iccid Invalid");
+            	return ;
+        	} 
+		}
+		snprintf(cmd,OPTION_STR_LEN,"custom_switch_sim %d %d &",simSwitch,lock);
+		huayi_uci_set_str(PKG_SYSTEM,"mysocket","send",cmd);
+		huayi_uci_commit(PKG_SYSTEM);
+		system("huayi-reset switch_sim");
+	}else CLOUD_CLIENT_LOG("simSwitch error\n");
+	
+	return ;
 }
+
 
 

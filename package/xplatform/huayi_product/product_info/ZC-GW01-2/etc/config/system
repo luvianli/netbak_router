@@ -51,5 +51,16 @@ config upgrade upgrade
 	
 config msg_code msg_code
 	option hyid 0
-	
+
+config mysocket mysocket
+	option send '0'
+	option enabled 0
+
+config settings settings
+	option heartbeat_restart_enabled 10
+
+config server server
+	option interval 180000
+	option urldomain 'https://up.aiotzy.com/api/device/post/uploadData/industryRouting'
+	option clientlog   '1'	
 	
