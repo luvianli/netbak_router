@@ -356,6 +356,10 @@ int main(int argc, char *argv[])
 	{
 		neoway_RNDIS_handler(&Agent);
 	}
+    else if(strncmp("SLM770U",pmodel, 9) == 0)
+    {
+        slm_ECM_handler(&Agent);
+    }
 	else
 	{
 		printf("Unidentified modem module!!!\n");

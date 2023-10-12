@@ -92,6 +92,9 @@ ZC-MCA4-C1:
 
 ZC-GW01-2:
 	@$(MAKE) $(t) product=$@ product_name=ZC-GW01-2 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
+
+ZC-MEIGE:
+	@$(MAKE) $(t) product=$@ product_name=ZC-MEIGE Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
 	
 help:
 	@echo "make target   -- target maybe product model"

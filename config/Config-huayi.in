@@ -122,6 +122,15 @@ config HUAYI_WPS_LED_SUPPORT
 	int "Which on or off the wps gpio status for AP mode and Router mode"
 	depends on HUAYI_WPS_LED_SUPPORT
 	default 0
+	
+config HUAYI_MODULE_SUPPORT
+	bool	"Support Module connection"
+	depends on HUAYI_SUPPORT_GPIO_EVENT
+	bool
+	
+	config HUAYI_MODULE_GPIO_NUM
+	int "Which Number of Module connection gpio"
+	depends on HUAYI_MODULE_SUPPORT
 
 config HUAYI_MT7628_EXTERNAL_PA
 	bool	"Support MT7628 external PA"

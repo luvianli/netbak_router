@@ -6,6 +6,8 @@
 USE_PROCD=1
 PROG=/usr/bin/huayi_dial4g
 
+meige_SLM770U="2dee:4d42"
+quectel_model_5_support=`lsusb | grep $meige_SLM770U`
 
 start_service() {
 #	strategy=`uci get system.opmode.strategy`
@@ -15,6 +17,13 @@ start_service() {
 #	then
 #		return
 #	fi
+	if [ -n "$quectel_model_5_support" ]; then
+		huayi_AT_cli AT
+		huayi_AT_cli AT+SFUN=4
+		huayi_AT_cli AT+CGDCONT=1,\"IPV4V6\",\"cmnet\",\"\",0,0
+		huayi_AT_cli AT+CGDATA=\"M-ETHER\",1
+		huayi_AT_cli AT^SPTETHER=\"gadget\",\"on\",1
+	fi	
 	echo "procd_open_instance"
     procd_open_instance
 	echo "procd_set_param command /usr/bin/huayi_dial4g"

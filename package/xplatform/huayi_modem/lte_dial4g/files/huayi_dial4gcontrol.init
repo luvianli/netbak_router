@@ -18,12 +18,14 @@ quectel_VID="2c7c:0125"
 quectel_E200T="2c7c:6026"
 quectel_E200A="2c7c:6005"
 neoway_N720V5_V1="2949:8700"
+meige_SLM770U="2dee:4d42"
 
 
 quectel_model_1_support=`lsusb | grep $quectel_VID`
 quectel_model_2_support=`lsusb | grep $quectel_EC20`
 quectel_model_3_support=`lsusb | grep $quectel_E200T`
 quectel_model_4_support=`lsusb | grep $quectel_E200A`
+quectel_model_5_support=`lsusb | grep $meige_SLM770U`
 neoway_model_1_support=`lsusb | grep $neoway_N720V5_V1`
 
 quectel_dev_name=`ifconfig -a | grep usb0`
@@ -31,7 +33,6 @@ quectel_dev_name=`ifconfig -a | grep usb0`
 
 start_service() {
 	wan_type=`uci get system.mode.wan_type`
-	
 	if [ "$wan_type" == "mobile" ]; then
 		echo "huayi_cmd set network wan_link 0"
 		huayi_cmd set network wan_link 0
@@ -78,6 +79,12 @@ start_service() {
 		DEV_ATC="/dev/ttyUSB1"
 		NET_IFACE="eth1"
 		huayi_cmd set modem modemModel 'EC200A'
+	elif [ -n "$quectel_model_5_support" ]; then
+		echo "detect quectel_ECxx modem"
+		#insmod quectel_GobiNet.ko
+		DEV_ATC="/dev/ttyUSB0"
+		NET_IFACE="eth1"
+		huayi_cmd set modem modemModel 'SLM770U'
 	else
 		echo "no detect modem"
 		huayi_cmd set modem registStatus noModem

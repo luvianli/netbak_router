@@ -104,6 +104,25 @@ void huayi_to_ext_simcard()
 	return;
 }
 
+void module_init()
+{
+	char resultbuf[OPTION_STR_LEN] = {0};
+	int ret = 0, count = 0;
+    
+#if defined(CONFIG_HUAYI_MODULE_SUPPORT)
+        char cmd[CMD_STR_LEN] = {0};
+        //system("devmem 0x10000060 32 0x4110441");
+        //sleep(2);
+        //snprintf(cmd, sizeof(cmd), "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_MODULE_GPIO_NUM);
+        //CON_LOG("%s",cmd);
+        system("/usr/bin/gpio l 1 0 4000 0 0 4000 &");
+        //sleep(10);
+        CON_LOG("gpio start");
+	    //system("/etc/init.d/huayi_dial4gcontrol restart");
+      
+#endif
+
+}
 
 int main(int argc, char *argv[])
 {
@@ -115,7 +134,7 @@ int main(int argc, char *argv[])
 	char product_model[OPTION_STR_LEN] = {0};
 	char resultbuf[OPTION_STR_LEN] = {0};
 	int ret = 0, count = 0;
-
+    int i = 0;
 	(void) signal(SIGTERM, huayi_4g_init_exit);
 
 	/*针对这个型号的产品特殊处理，硬件设计模块电路时，启动需要软件连通电路*/
@@ -130,16 +149,28 @@ int main(int argc, char *argv[])
 		huayi_to_ext_simcard();
 		return 0;
 	}
+    CON_LOG("===");
+     if(!strcmp(product_model, "ZC-MEIGE"))
+    {
+        CON_LOG("===");
+        //module_init();
+        CON_LOG("===");
+    }
+
+
 	while(1) 
 	{
 		ret = get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
 		if(ret == HUAYI_TRUE)
 		{
+            CON_LOG("===");
 			if((strstr(resultbuf,"2c7c:") != NULL) ||
 				(strstr(resultbuf,"05c6:") != NULL) ||
-				(strstr(resultbuf,"2949:") != NULL))
+				(strstr(resultbuf,"2949:") != NULL) ||
+				(strstr(resultbuf,"2dee:") !=NULL))
 			{
 				if(count == 3) {
+                    CON_LOG("/etc/init.d/huayi_dial4gcontrol restart");
 					system("/etc/init.d/huayi_dial4gcontrol restart");
 					break;
 				} else {
@@ -149,6 +180,11 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
+                CON_LOG("%d",i);
+                if(i == 5){
+                    system("reboot");
+                }
+                i++;
 				sleep(1);
 			}
 
