@@ -49,4 +49,8 @@ config wifi_sche wifi_sche
 config upgrade upgrade
 	option check_model ZC-MCA4-G1
 	
-	
+config server server
+	option interval 180000
+	option urldomain 'https://up.aiotzy.com/api/device/post/uploadData/industryRouting'
+	option clientlog   '1'	
+
