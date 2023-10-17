@@ -101,16 +101,19 @@ void* heart_handle()
 	int ret= -1, interval = 0;
 	int heartSize = 0;
 	char registStatus[LONG_BUFF_LEN]={0};
+	int  wan_link = 0;
 
 	huayi_uci_get_int(PKG_SYSTEM,"server","interval", &interval);
 	gTimeWait = interval;
 	while(1) {
+		huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","link",&wan_link);
+		if(wan_link != 1){
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "registStatus", registStatus);
 		if (strcmp(registStatus ,"connected") != 0) {
 			CLOUD_CLIENT_LOG("%s, modem is not connected; registStatus is : %d\n",__FUNCTION__, registStatus);
 			sleep(20);
 			continue;
-		}
+		}}
 
 		memset(heartData, 0, sizeof(heartData));
 		memset(url, 0, sizeof(url));
