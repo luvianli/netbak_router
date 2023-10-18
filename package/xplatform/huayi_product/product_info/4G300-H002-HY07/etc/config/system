@@ -58,7 +58,7 @@ config settings settings
 	option heartbeat_restart_enabled 10
 
 config server server
-	option interval 180000
+	option interval 60000
 	option urldomain 'https://up.aiotzy.com/api/device/post/uploadData/industryRouting'
 	option clientlog   '1'
 	
