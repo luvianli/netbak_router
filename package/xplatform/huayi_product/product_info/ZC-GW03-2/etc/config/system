@@ -50,7 +50,7 @@ config upgrade upgrade
 	option check_model ZC-GW03-2
 
 config server server
-	option interval 180000
+	option interval 60000
 	option urldomain 'https://up.aiotzy.com/api/device/post/uploadData/industryRouting'
 	option clientlog   '1'
 
