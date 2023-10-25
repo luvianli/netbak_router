@@ -157,6 +157,14 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 		{
 			system("huayi_AT_cli AT+CFUN=1,1");
 		}
+        else if(strncmp("N720V5_V1",pmodel, 9) == 0)
+		{
+			system("huayi_AT_cli AT+CFUN=1,1");
+		}
+        else if(strncmp("SLM770U",pmodel, 7) == 0)
+		{
+			system("huayi_AT_cli AT+CFUN=1,1");
+		}
 		else
 		{
 			printf("Unidentified modem module!!!\n");

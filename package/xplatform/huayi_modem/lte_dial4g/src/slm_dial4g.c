@@ -17,10 +17,16 @@ int slm_init_set_modem_status(void)
 {
 	char lte_value[OPTION_STR_LEN] = {0};
 	char mobile_network[OPTION_STR_LEN] = {0};
+	char operator_str[OPTION_STR_LEN] = {0};
 	char cmd[CMD_STR_LEN] = {0};
-	
+	int signal = 0;
+
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_EC20_imei(lte_value);
+	if(strlen(lte_value) < 5)
+	{
+		strcpy(lte_value, "");
+	}
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem imei %s",lte_value);
 	system(cmd);
 
@@ -29,33 +35,49 @@ int slm_init_set_modem_status(void)
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem imsi %s",lte_value);
 	system(cmd);
 
-	if (strncmp(lte_value,"46000",5) == 0 || strncmp(lte_value,"46002",5) == 0 || strncmp(lte_value,"46007",5) == 0)
+	if (strncmp(lte_value,"46000",5) == 0 || strncmp(lte_value,"46002",5) == 0 || strncmp(lte_value,"46004",5) == 0 ||
+		strncmp(lte_value,"46007",5) == 0 || strncmp(lte_value,"46008",5) == 0 || strncmp(lte_value,"46013",5) == 0)
 	{
 		strcpy(mobile_network,"CHINA MOBILE CMCC");
 	}
-	else if (strncmp(lte_value,"46001",5) == 0 || strncmp(lte_value,"46006",5) == 0)
+	else if (strncmp(lte_value,"46001",5) == 0 || strncmp(lte_value,"46006",5) == 0 || strncmp(lte_value,"46009",5) == 0 ||
+		strncmp(lte_value,"46010",5) == 0 )
 	{
 		strcpy(mobile_network,"CHN-UNICOM");
 	}
-	else if (strncmp(lte_value,"46003",5) == 0 || strncmp(lte_value,"46005",5) == 0 || strncmp(lte_value,"46011",5) == 0)
+	else if (strncmp(lte_value,"46003",5) == 0 || strncmp(lte_value,"46005",5) == 0 || strncmp(lte_value,"46011",5) == 0 ||
+		strncmp(lte_value,"460012",5) == 0 )
 	{
 		strcpy(mobile_network,"CHN-CT");
+	}
+	else
+	{
+		strcpy(lte_value, "");
+		strcpy(mobile_network, "");
 	}
 
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem network \"%s\"",mobile_network);
 	system(cmd);
 
+	memcpy(operator_str, lte_value, 5);
+	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem operator %s", operator_str);
+	system(cmd);
+
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_EC20_phoneNumber(lte_value);
+	if(strlen(lte_value) < 5)
+	{
+		strcpy(lte_value, "");
+	}
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem phoneNumber +%s",lte_value);
 	system(cmd);
 
 	memset(lte_value,0,OPTION_STR_LEN);
-	atcmd_get_neoway_bandLte(lte_value);
-	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem bandLte %s",lte_value);
-	system(cmd);
+	//atcmd_get_slm_mobile_type(lte_value);
+	//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem bandLte %s",lte_value);
+	//system(cmd);
 
-	if (strstr(lte_value,"LTE") != NULL)	
+	if (atcmd_get_slm_mobile_type(lte_value) == LTE_TRUE)
 	{
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem mobile_type 4G");
 	}
@@ -65,12 +87,46 @@ int slm_init_set_modem_status(void)
 	}
 	system(cmd);
 
-	
+
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_center_number(lte_value);
+	if(strlen(lte_value) < 5)
+	{
+		strcpy(lte_value, "");
+	}
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem center_number %s",lte_value);
 	system(cmd);
 
+	memset(lte_value, 0, OPTION_STR_LEN);
+	atcmd_get_iccid(lte_value);
+	if(strlen(lte_value) < 5)
+	{
+		strcpy(lte_value, "");
+	}
+	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem iccid %s",lte_value);
+	system(cmd);
+
+	memset(lte_value, 0, OPTION_STR_LEN);
+	atcmd_get_lac(lte_value);
+	if(strlen(lte_value) < 2)
+	{
+		strcpy(lte_value, "");
+	}
+	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem lac %s",lte_value);
+	system(cmd);
+
+	memset(lte_value, 0, OPTION_STR_LEN);
+	atcmd_get_ci(lte_value);
+	if(strlen(lte_value) < 2)
+	{
+		strcpy(lte_value, "");
+	}
+	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem ci %s",lte_value);
+	system(cmd);
+
+	atcmd_get_signal(&signal);
+	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem signal %d",signal);
+	system(cmd);
 	return 0;
 }
 
@@ -106,13 +162,20 @@ int slm_ECM_handler(struct SMSAgent *Agent)
 	int signal_count=0;
 	char cmd[CMD_STR_LEN] = {0};
 
-    
-	slm_init_set_modem_status();
+	while ( LTE_TRUE != atcmd_check() )
+	{
+		sleep(1);
+	}
+
+
+
+
 
 	//i_dail_check = slm_RNDIS_connect();
 	
     while (VS_TRUE == gRunAgent )
     {
+        slm_init_set_modem_status();
     	modem_led_control(Agent);
         sleep(GET_SMS_INTERVAL);
 		

@@ -52,7 +52,7 @@ clean:
 
 def_config:
 	cd $(Topdir); \
-	cp -rf $(COMPILE_PRODUCT_DIR)/$(product)/target_patches/ $(Topdir)/target/linux/ramips/patches; \
+	cp -rf $(COMPILE_PRODUCT_DIR)/$(product)/target_patches/* $(Topdir)/target/linux/ramips/patches; \
 	cp -rf $(COMPILE_CONFIG_DIR)/$(product)/$(product).kernel_config $(Topdir)/target/linux/ramips/$(hardware)/config-3.10; \
 	if [ "$(FlashKey)" = "0" ];then \
 		cp -rf $(COMPILE_CONFIG_DIR)/$(product)/$(product).config .config; \
@@ -93,8 +93,8 @@ ZC-MCA4-C1:
 ZC-GW01-2:
 	@$(MAKE) $(t) product=$@ product_name=ZC-GW01-2 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
 
-ZC-MEIGE:
-	@$(MAKE) $(t) product=$@ product_name=ZC-MEIGE Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
+WYX3C-1:
+	@$(MAKE) $(t) product=$@ product_name=WYX3C-1 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
 	
 help:
 	@echo "make target   -- target maybe product model"
@@ -102,3 +102,4 @@ help:
 	@echo "eg:  make 4G300-H002-HY07 -- for 7620N Router 300M 4G ,wisp+4g"
 	@echo "eg:  make ZC-MCA4-C1 -- for 7628DA Router 300M 4G, support juhe modem, wisp+4g"
 	@echo "eg:  make ZC-GW01-2 -- for 7628DA Router 300M 4G, support juhe modem, wisp+4g"
+	@echo "eg:  make WYX3C-1 -- for 7628NN Router 300M 4G, Integrated aggregation module, support juhe modem, wisp+4g"

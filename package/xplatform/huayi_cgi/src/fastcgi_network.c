@@ -4175,4 +4175,39 @@ int set_hbp_config(cJSON *request_root, cJSON *response_root,int *lock_time){
 
 }
 
+int get_external_card_config(cJSON *request_root, cJSON *response_root,int *lock_time){
+    cJSON   *result_root = NULL;
+    int enable = 0;
+    if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+    result_root = cJSON_CreateObject();
+    huayi_uci_get_int(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
+    cJSON_AddNumberToObject(result_root,"enable",enable);
+    cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
+    return FCGI_RESP_CODE_SUCCESS;
+
+
+}
+int set_external_card_config(cJSON *request_root, cJSON *response_root,int *lock_time){
+    int enable = 0;
+
+    if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+    if(!huayi_json_get_int(request_root,"enable",&enable))
+    {
+        return FCGI_RESP_CODE_DATA_MISS;
+    }
+    
+    huayi_uci_set_int(PKG_M_SYSTEM,"system","external_card_enable",enable);
+    huayi_uci_commit(PKG_M_SYSTEM);
+    return FCGI_RESP_CODE_SUCCESS; 
+
+
+}
+
+
 

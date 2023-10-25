@@ -1351,5 +1351,333 @@ check:
 }
 
 
+void save_useing_siminfo(int i)
+{
+	char cmd[OPTION_STR_LEN] = {0};
+	int  netoperator = 0;
+	char tmp[OPTION_STR_LEN] = {0};
+	int ret = 0, count = 0, gpio = 0;
+	int i_ready = 0, i_signal = 0;
+	char lte_value[OPTION_STR_LEN] = {0};
+    int AsciiNum[22], j;
+
+	sprintf(cmd, "sim%d", i);
+    /*
+	huayi_uci_get_int(PKG_M_SYSTEM, cmd, "gpio", &gpio);
+	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", gpio);
+	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
+*/
+	count = 0;
+retry_getccid:
+    memset(lte_value, 0, OPTION_STR_LEN);
+	atcmd_get_iccid(lte_value);
+	for(j=0;j<strlen(lte_value) ,AsciiNum[j]=lte_value[j];j++)		
+	if(strlen(lte_value) < 5 || (strstr(lte_value,"ERR")!= NULL) ||!((AsciiNum[j]>=48 && AsciiNum[j]<=58) || (AsciiNum[j]>=65 && AsciiNum[j]<=90) || (AsciiNum[j]>=97 && AsciiNum[j]<=122)))
+	{
+		count += 1;
+        strcpy(lte_value,"");
+        usleep(800);
+        if(count < 10)
+            goto retry_getccid;
+	}
+    count = 0;
+	huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "iccid", lte_value);
+
+
+retry_getlac:     //尽最大可能取到LAC
+    memset(lte_value, 0, OPTION_STR_LEN);
+    atcmd_get_lac(lte_value);
+    //printf("rex ====   %s, %d  ---lac = %s-\n", __FUNCTION__, __LINE__, lte_value);
+    if(strlen(lte_value) < 2)
+    {
+        strcpy(lte_value, "");
+        count+=1;
+        if(count < 10)
+            goto retry_getlac;
+    }
+    huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "lac", lte_value);
+    count = 0;
+
+retry_getci:      //尽最大可能取到ci
+    memset(lte_value, 0, OPTION_STR_LEN);
+    atcmd_get_ci(lte_value);
+    //printf("rex ====   %s, %d  --ci =%s--\n", __FUNCTION__, __LINE__, lte_value);
+    if(strlen(lte_value) < 2)
+    {
+        strcpy(lte_value, "");
+        count+=1;
+        if(count < 10)
+            goto retry_getci;
+    }
+    huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "ci", lte_value);
+    count = 0;
+
+
+retry_getoperator:    //尽最大可能取到operator info
+    memset(lte_value,0,OPTION_STR_LEN);
+    atcmd_get_imsi(lte_value);
+    //printf("rex ====   %s, %d  ---operator = %s-\n", __FUNCTION__, __LINE__, lte_value);
+    if (strncmp(lte_value,"46000",5) == 0 || strncmp(lte_value,"46002",5) == 0 || strncmp(lte_value,"46004",5) == 0 ||
+        strncmp(lte_value,"46007",5) == 0 || strncmp(lte_value,"46008",5) == 0 || strncmp(lte_value,"46013",5) == 0)
+    {
+        netoperator = 3;
+    }
+    else if (strncmp(lte_value,"46001",5) == 0 || strncmp(lte_value,"46006",5) == 0 || strncmp(lte_value,"46009",5) == 0 ||
+        strncmp(lte_value,"46010",5) == 0 )
+    {
+        netoperator = 2;
+    }
+    else if (strncmp(lte_value,"46003",5) == 0 || strncmp(lte_value,"46005",5) == 0 || strncmp(lte_value,"46011",5) == 0 ||
+        strncmp(lte_value,"460012",5) == 0 )
+    {
+        netoperator = 1;
+    }
+    else
+    {
+        netoperator = 0;
+        count+=1;
+        if(count < 10)
+            goto retry_getoperator;
+    }
+    huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "operator", netoperator);
+    count = 0;
+
+
+
+	memset(tmp, 0, OPTION_STR_LEN);
+	memset(lte_value, 0, OPTION_STR_LEN);
+	huayi_uci_get_str(PKG_M_SYSTEM, cmd, "speedcmd", tmp);
+	if(strlen(tmp) > 5)
+	{
+		ret = get_cmd_result(tmp, lte_value, sizeof(lte_value));
+		if(ret == HUAYI_TRUE)
+		{
+			//todo iperf
+			huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "speedcmd", tmp);
+		}
+		else
+		{
+			huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeddownlink", 0);
+			huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeduplink", 0);
+		}
+	}
+	else
+	{
+		huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeddownlink", 0);
+		huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeduplink", 0);
+		huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "speedcmd", "");
+	}
+
+	huayi_uci_commit(PKG_M_SYSTEM);
+
+	return;
+}
+int isAlphanumeric(char *str) {
+    int i;
+
+    for (i = 0; str[i] != '\0'; i++) {
+        if (!isalnum(str[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+float pingCheck(const char* host) {
+    char command[MAX_BUFFER_SIZE];
+    char buffer[MAX_BUFFER_SIZE];
+    FILE* fp;
+
+    sprintf(command, "ping -c 3 -W 1 %s 2>&1", host);
+
+    fp = popen(command, "r");
+    if (fp == NULL) {
+        perror("popen");
+        return -1.0;
+    }
+
+    size_t bytesRead = fread(buffer, sizeof(char), sizeof(buffer) - 1, fp);
+    buffer[bytesRead] = '\0';
+
+    pclose(fp);
+
+    if (strstr(buffer, "bad address") != NULL) {
+        return -1.0;
+    }
+
+    const char* delayStart = strstr(buffer, "time=");
+    if (delayStart != NULL) {
+        delayStart += 5;
+        float delay = strtof(delayStart, NULL);
+        return delay;
+    }
+
+    return -1.0;
+}
+
+
+
+
+int networkCheck(const char* hosts) {
+    const char* addresses[MAX_HOSTS];
+    int num_addresses = 0;
+    char hosts_copy[256];
+    char* token;
+    char value[RESULT_STR_LEN] = {0};
+
+    strcpy(hosts_copy, hosts);
+    token = strtok(hosts_copy, ";");
+
+    while (token != NULL && num_addresses < MAX_HOSTS) {
+        addresses[num_addresses++] = token;
+        token = strtok(NULL, ";");
+    }
+
+    static int prevNetworkStatus = -1;
+
+    int networkStatus = 0;
+    float pingDelay =0.0;
+    int i = 0;
+
+    for (i = 0; i < num_addresses; i++) {
+        //INTERNET_LOG("Checking %s...\n", addresses[i]);
+
+
+        pingDelay = pingCheck(addresses[i]);
+        if (pingDelay >= 0.0) {
+            networkStatus = 1;
+            sprintf(value,"%.2f",pingDelay);
+            huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "maxdelay",value);
+            huayi_uci_commit(PKG_M_SYSTEM);
+            break;
+        }
+    }
+    
+    if (networkStatus != prevNetworkStatus) {
+        if (networkStatus == 1) {
+            INTERNET_LOG("Checking %s Internet available\n",addresses[i]);
+            INTERNET_LOG("Network is available (ping check). Delay: %.2f ms\n", pingDelay);
+        } else {
+            INTERNET_LOG("Internet error\n");
+        }
+        prevNetworkStatus = networkStatus;
+    }
+
+
+    return networkStatus;
+}
+
+
+
+void rc4_init(unsigned char* s, unsigned char* key, unsigned long Len_k) {
+    int i, j = 0;
+    unsigned char tmp;
+    unsigned char k[256] = {0};
+
+    for (i = 0; i < 256; i++) {
+        s[i] = (unsigned char)i;
+        k[i] = key[i % Len_k];
+    }
+
+    for (i = 0; i < 256; i++) {
+        j = (j + s[i] + k[i]) % 256;
+        tmp = s[i];
+        s[i] = s[j];
+        s[j] = tmp;
+    }
+}
+
+void rc4_crypt(unsigned char* Data, unsigned long Len_D, unsigned char* key, unsigned long Len_k) {
+    unsigned char s[256];
+    rc4_init(s, key, Len_k);
+    int i = 0, j = 0, t = 0;
+    unsigned long k = 0;
+    unsigned char tmp;
+
+    for (k = 0; k < Len_D; k++) {
+        i = (i + 1) % 256;
+        j = (j + s[i]) % 256;
+        tmp = s[i];
+        s[i] = s[j];
+        s[j] = tmp;
+        t = (s[i] + s[j]) % 256;
+        Data[k] = Data[k] ^ s[t];
+    }
+}
+
+
+int base64_encode(const unsigned char *bindata, char *base64, int binlength) {
+    if (bindata == NULL || base64 == NULL || binlength <= 0) {
+        return 0; // 返回0表示失败
+    }
+    
+    char base64char[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    int i, j;
+    unsigned char current;
+
+    for (i = 0, j = 0; i < binlength; i += 3) {
+        current = (bindata[i] >> 2);
+        current &= 0x3F;
+        base64[j++] = base64char[(int)current];
+
+        current = ((unsigned char)(bindata[i] << 4)) & 0x30;
+        if (i + 1 >= binlength) {
+            base64[j++] = base64char[(int)current];
+            base64[j++] = '=';
+            base64[j++] = '=';
+        } else {
+            current |= (bindata[i + 1] >> 4) & 0x0F;
+            base64[j++] = base64char[(int)current];
+
+            current = ((unsigned char)(bindata[i + 1] << 2)) & 0x3C;
+            if (i + 2 >= binlength) {
+                base64[j++] = base64char[(int)current];
+                base64[j++] = '=';
+            } else {
+                current |= (bindata[i + 2] >> 6) & 0x03;
+                base64[j++] = base64char[(int)current];
+
+                current = bindata[i + 2] & 0x3F;
+                base64[j++] = base64char[(int)current];
+            }
+        }
+    }
+    base64[j] = '\0';
+    return 1;
+}
+
+int rc4_SLM770U() {
+    int count;
+    char encoded_data[512] = {0}, encoded_key[100];
+    unsigned char key[] = "zstuctf";
+    unsigned long key_len = sizeof(key) - 1;
+    char lte_value[CMD_STR_LEN] = {0}, cmd[1024] = {0};
+
+againt:
+    while (LTE_TRUE != atcmd_check()) {
+        sleep(1);
+    }
+    atcmd_get_EC20_imei(lte_value);
+    if (strlen(lte_value) < 5) {
+        goto againt;
+    }
+    long lte_len = sizeof(lte_value) - 1;
+    rc4_crypt((unsigned char *)lte_value, lte_len, key, key_len);
+
+    int encoded_len = base64_encode((unsigned char *)lte_value, encoded_data, lte_len);
+
+    if (encoded_len <= 0 || encoded_len >= sizeof(encoded_data)) {
+        CON_LOG("Error: Base64 encoding overflow.");
+        return -1;
+    }
+
+    sprintf(cmd, "AT+RZY=\"%s\",\"%s\"", "zstuctf", encoded_data);
+    atcmd_start_rzy(cmd, strlen(cmd));
+    sleep(2);
+    if(atcmd_get_rzy() == LTE_FALSE)
+        return 0;
+    return 1;
+}
+
 
 

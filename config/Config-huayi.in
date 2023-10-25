@@ -179,7 +179,16 @@ config HUAYI_INTERNET_LED_SUPPORT
 	config HUAYI_INTERNET_LED_GPIO_NUM
 	int "Which Number of internet led gpio"
 	depends on HUAYI_INTERNET_LED_SUPPORT
-	
+
+config HUAYI_4G_SIGNAL_LED_SUPPORT
+	bool	"Support 4g signal led"
+	depends on (HUAYI_PLATFORM_SUPPORT && !HUAYI_SPECIAL_LED_SUPPORT)
+	bool
+
+	config HUAYI_4G_SIGNAL_LED_GPIO_NUM
+	int "Which Number of 4g signal led gpio"
+	depends on HUAYI_4G_SIGNAL_LED_SUPPORT
+
 config HUAYI_REPEATER_LED_SUPPORT
 	bool	"Support repeater led"
 	depends on HUAYI_REPEATER_MODE_SUPPORT

@@ -482,6 +482,7 @@ void huayi_core_delay_start_special_led(struct VcoreAgent *Agent)
 void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 {
 	int network_status = 0;
+    char product_model[OPTION_STR_LEN] = {0};
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	int i_ready = 0; 
 #endif
@@ -525,6 +526,20 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 	return;
 }
 #endif
+
+void huayi_core_start_4g_signal_led(struct VcoreAgent *Agent)
+{
+    char cmd_str[CMD_STR_LEN] = {0};
+    int signal = 0,i_ready = 0;
+    huayi_uci_get_int(PKG_STATUS_MODEM, "modem", "sim_ready", &i_ready);
+	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","signal",&signal);
+
+    huayi_core_add_task(HUAYI_4G_SIGNAL_LED_DELAY_TIME,HUAYI_START_CHECK_4G_SIGNAL_LED_TASK,huayi_core_start_4g_signal_led,Agent);
+
+}
+
+
+
 
 void huayi_core_update_led_status(struct VcoreAgent *Agent)
 {
@@ -990,6 +1005,11 @@ void huayi_utimer_functions_start(struct VcoreAgent *Agent)
 #if defined(CONFIG_HUAYI_INTERNET_LED_SUPPORT)
 	huayi_core_start_internet_led(Agent);
 #endif
+/*
+#if defined(CONFIG_HUAYI_INTERNET_LED_SUPPORT)
+    huayi_core_start_4g_signal_led(Agent);
+#endif
+*/
 
 #if defined(CONFIG_HUAYI_SUPPORT_FLUSH_ARP)
 	huayi_core_flush_arp_list(Agent);

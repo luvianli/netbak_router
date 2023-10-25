@@ -263,6 +263,8 @@ typedef enum
 	HYID_GET_WANMODE_INFO				= 186,
 	HYID_GET_HBP_CONFIG                 = 189,
 	HYID_SET_HBP_CONFIG                 = 190,
+	HYID_GET_EXTERNAL_CARRD_CONFIG      = 191,
+	HYID_SET_EXTERNAL_CARRD_CONFIG      = 192,
 	MAX_HUAYI_HYID,
 }FCGI_HYID_ENUM;
 
@@ -445,6 +447,8 @@ int set_force_fix_dhcp(cJSON *request_root, cJSON *response_root,int *lock_time)
 int get_wanmode_info(cJSON *request_root, cJSON *response_root,int *lock_time);
 int get_hbp_config(cJSON *request_root, cJSON *response_root,int *lock_time);
 int set_hbp_config(cJSON *request_root, cJSON *response_root,int *lock_time);
+int get_external_card_config(cJSON *request_root, cJSON *response_root,int *lock_time);
+int set_external_card_config(cJSON *request_root, cJSON *response_root,int *lock_time);
 
 
 

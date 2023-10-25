@@ -327,6 +327,8 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 	FastCgiHandleFunction[HYID_GET_WANMODE_INFO] = get_wanmode_info;
     FastCgiHandleFunction[HYID_GET_HBP_CONFIG] = get_hbp_config;
     FastCgiHandleFunction[HYID_SET_HBP_CONFIG] = set_hbp_config;
+    FastCgiHandleFunction[HYID_GET_EXTERNAL_CARRD_CONFIG] = get_external_card_config;
+    FastCgiHandleFunction[HYID_SET_EXTERNAL_CARRD_CONFIG] = set_external_card_config;
 
 	return FCGI_TRUE;
 	

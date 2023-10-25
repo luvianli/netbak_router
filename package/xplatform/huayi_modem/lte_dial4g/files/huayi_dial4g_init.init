@@ -12,7 +12,6 @@ start_service() {
 	#procd_set_param command "$PROG" 
 	#procd_set_param respawn 0
 	#procd_close_instance
-	/usr/bin/gpio l 1 0 4000 0 0 4000 &
 	/usr/bin/huayi_dial4g_init &
 }
 

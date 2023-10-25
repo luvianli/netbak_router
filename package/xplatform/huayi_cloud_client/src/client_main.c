@@ -31,13 +31,12 @@ void huayi_client_main_graceful_exit(int sig)
 static int heart_call_back(char *data, size_t size, size_t nmemb,
 		char *writerData)
 {
-	char Content[HEART_RES_DATALEN] = {0};
-	memset(Content,0,sizeof(Content));
-	memcpy(Content, data, size*nmemb);
-	strcat(heartContent,Content);
+	memcpy(heartContent, data, size*nmemb);
 	heartContentLen = size*nmemb;
+
 	return heartContentLen;
 }
+
 
 int init_curl(CURL **curl, char *url, char *post_fields, int post_size ,callback_func *action)
 {
@@ -82,6 +81,56 @@ int init_curl(CURL **curl, char *url, char *post_fields, int post_size ,callback
 
 	return 0;
 }
+
+int init_curl_https(CURL **curl, char *url, char *post_fields, int post_size, callback_func *action)
+{
+    CURLcode code;
+    *curl = curl_easy_init();
+
+    if (*curl == NULL) {
+        CLOUD_CLIENT_LOG("can't create curl connection\n");
+        return -1;
+    }
+
+    code = curl_easy_setopt(*curl, CURLOPT_URL, url);
+    if (code != CURLE_OK) {
+        CLOUD_CLIENT_LOG("set url fail\n");
+        return -1;
+    }
+
+    // 启用SSL验证
+    curl_easy_setopt(*curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    curl_easy_setopt(*curl, CURLOPT_SSL_VERIFYHOST, 2L);
+
+    // 设置SSL证书路径
+    //curl_easy_setopt(*curl, CURLOPT_CAINFO, "/etc/in/your/certificate.pem");
+    curl_easy_setopt(*curl, CURLOPT_CAINFO, "");
+
+    if (strlen(post_fields) != 0) {
+        // 设置http发送的内容类型为JSON  
+        struct curl_slist *plist = NULL;
+        plist = curl_slist_append(plist, "Content-Type:application/json;charset=UTF-8");
+        curl_easy_setopt(*curl, CURLOPT_HTTPHEADER, plist);
+        code = curl_easy_setopt(*curl, CURLOPT_POSTFIELDS, post_fields);
+        //printf("post size:%d\n",post_size);
+        curl_easy_setopt(*curl, CURLOPT_POSTFIELDSIZE, post_size);
+        curl_easy_setopt(*curl, CURLOPT_CONNECTTIMEOUT, 60);
+        if (code != CURLE_OK) {
+            CLOUD_CLIENT_LOG("set post field fail\n");
+            return -1;
+        }
+    }
+    code = curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, action);
+    if (code != CURLE_OK) {
+        CLOUD_CLIENT_LOG("set writefunction fail\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+
+
 #define TEST 0
 #if TEST
 char req_teststr[1024] = "{\"opname\":\"46011\",\"dbm\":100,\"iccid\":\"89860321247553074190\",\"cell_id\":\
@@ -123,7 +172,12 @@ void* heart_handle()
 		printf("===  %s, %d, heartContent = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartContent, heartContentLen);
 		msg_parse(heartContent, heartContentLen);
 #else
-		ret = init_curl(&curl, (char*)url, heartData, heartSize, heart_call_back);
+        if(strstr(url,"http"))
+		    ret = init_curl(&curl, (char*)url, heartData, heartSize, heart_call_back);
+        else{
+            CLOUD_CLIENT_LOG("https:");
+            ret = init_curl_https(&curl, (char*)url, heartData, heartSize, heart_call_back);
+        }
 		if(ret == -1) {
 			CLOUD_CLIENT_LOG(" %s init curl fail\n",__FUNCTION__);
 			if(curl != NULL) {

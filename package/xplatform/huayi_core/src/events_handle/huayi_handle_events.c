@@ -1283,6 +1283,9 @@ void do_internet_led_off(void)
 	return;
 }
 
+
+
+
 void do_internet_led_slowly(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
@@ -1314,4 +1317,30 @@ void do_internet_led_slowly(void)
 }
 #endif
 
+
+
+#if defined(CONFIG_HUAYI_4G_SIGNAL_LED_SUPPORT)
+
+void do_4g_signal_led_off(void){
+	char cmd[CMD_STR_LEN] = {0};
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_4G_SIGNAL_LED_GPIO_NUM);
+
+	system(cmd);
+
+    return;
+
+}
+
+void do_4g_signal_led_on(void){
+	char cmd[CMD_STR_LEN] = {0};
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_4G_SIGNAL_LED_GPIO_NUM);
+
+	system(cmd);
+
+    return;
+
+}
+#endif
 

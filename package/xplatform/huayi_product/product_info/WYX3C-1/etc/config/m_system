@@ -1,0 +1,97 @@
+config system system
+	option simnum	3
+	option imei ''
+	option switchres 0
+	option clientlog 1
+	option productmodel 'ZC-MEIGE'
+	option version '001'
+	#option urldomain 'https://zmp-test1.nbm2m.com/api/device/post/juHeApi/uploadData'
+	#option urldomain 'https://zmp-test.nbm2m.com/manage-api/device/post/juHeApi/uploadData'
+	option urldomain 'https://up.aiotzy.com/api/device/post/juHeApi/uploadData'
+	#option urldomain 'https://zmp-test.nbm2m.com/api/device/post/juHeApi/uploadData'
+	option interval 60000
+	option firmwareurl ''
+	option firmwaremd5 ''
+	option msg_code  0
+	option network_is_ok 0
+	option send_fd 0
+	option transport 'NULL'
+	option returnValue ''
+	option external_card_enable 0
+	
+config usesiminfo usesiminfo
+	option operator ''
+	option usegpio 26
+	option iccid ''
+	option switchreq 0
+	option rebootact 0
+	option speedcmd ''
+	option checksignalips '223.5.5.5;www.baidu.com;www.qq.com'
+	option default_checkip '223.5.5.5;www.baidu.com;www.qq.com'
+	option maxdelay ''
+	option card_slot 0
+	option lock 0
+	
+#gpio number和sim几对应关系
+config s26 s26
+	option simn 1
+	
+config s25 s25
+	option simn 2
+	
+config s24 s24
+	option simn 3
+	
+config s27 s27
+	option simn 4
+
+config sim1 sim1
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 26
+	option iccid_gpio ''
+	option card_slot 1
+	option state ''
+
+config sim2 sim2
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 25
+	option iccid_gpio ''
+	option card_slot 2
+	option state ''
+
+config sim3 sim3
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 24
+	option iccid_gpio ''
+	option card_slot 3
+	option state ''
+
+config sim4 sim4
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 27
+	option iccid_gpio ''
+	option card_slot 4
+	option state ''
+	
+
+

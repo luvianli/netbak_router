@@ -1057,6 +1057,58 @@ LTE_BOOL atcmd_get_cpin(int *value)
     return LTE_TRUE;
 }
 
+LTE_BOOL atcmd_get_rzy()
+{
+    char *ptr = NULL;
+    
+    if ( Atcmd("AT+RZY?", strlen("AT+RZY?"), ATCMD_GET) == LTE_FALSE )
+    {
+        return LTE_FALSE;
+    }
+	
+    ptr = ATret;
+    yprintf("ATret[%s]\n", ATret);
+    if(strstr(ptr, "1") != NULL)
+    {
+        yprintf("+RZY: 1\n");
+        return LTE_TRUE;
+    }
+    else
+    {
+        yprintf("Unknow\n");
+        return LTE_FALSE;
+    }
+    return LTE_FALSE;
+}
+
+LTE_BOOL atcmd_start_rzy(char *at,int len)
+{
+    char *ptr = NULL;
+    
+    if ( Atcmd(at, len, ATCMD_GET) == LTE_FALSE )
+    {
+        return LTE_FALSE;
+    }
+	
+    ptr = ATret;
+    yprintf("ATret[%s]\n", ATret);
+    if(strstr(ptr, "") != NULL)
+    {
+        //yprintf("+RZY: 1\n");
+        //CON_LOG("------- rzy ok");
+        return LTE_TRUE;
+    }
+    
+    else
+    {
+        yprintf("SIM Unknow\n");
+        return LTE_FALSE;
+    }
+    return LTE_FALSE;
+}
+
+
+
 LTE_BOOL atcmd_sim_is_exist()
 {
     char *ptr = NULL;
@@ -1525,6 +1577,30 @@ LTE_BOOL atcmd_get_quectel_bandLte(char *vlaue)
 	
 	return LTE_FALSE;
 }
+
+LTE_BOOL atcmd_get_slm_mobile_type(char *vlaue)
+{
+	char *ptr = NULL;
+	char *pKey = NULL;
+	char infoValue[AT_CMD_BUFF_LEN] = {0};
+
+	if ( AtcmdSendDelay("AT+cops?", strlen("AT+cops?"), 0) == LTE_FALSE )
+	{
+		return LTE_FALSE;
+	}
+
+	ptr = ATret;
+	
+    if ((pKey = strstr(ptr, ",7")) != NULL )
+    {
+        at_value_get(infoValue, pKey, sizeof(infoValue), '\n');
+		huayi_get_nth_value(2, infoValue, ',', vlaue, AT_VALUE_BUFF_LEN);
+		return LTE_TRUE;
+    }
+	
+	return LTE_FALSE;
+}
+
 
 LTE_BOOL atcmd_get_neoway_bandLte(char *vlaue)
 {

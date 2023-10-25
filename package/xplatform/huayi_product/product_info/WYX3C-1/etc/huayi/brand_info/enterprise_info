@@ -1,6 +1,6 @@
 config about about_soft
-	option product_name		'ZC-MEIGE'
-	option product_model	'ZC-MEIGE'
+	option product_name		'WYX3C-1'
+	option product_model	'WYX3C-1'
 	option product_desc		'300M 4G Wireless Router'
 	option company_name		'WIFI ROUTE'
 	option webui_version	'V1.0'
