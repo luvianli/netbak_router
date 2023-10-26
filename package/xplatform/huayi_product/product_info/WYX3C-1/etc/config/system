@@ -57,7 +57,7 @@ config settings settings
 	
 config server server
 	option interval 40000
-	option urldomain 'http://120.25.165.86:8080/admin/ylapi/uploadData'
+	option urldomain 'http://device.10086group.com/admin/ylapi/uploadData'
 	option clientlog   '1'
 	
 	
