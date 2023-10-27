@@ -29,7 +29,7 @@ config usesiminfo usesiminfo
 	option checksignalips '223.5.5.5;www.baidu.com;www.qq.com'
 	option default_checkip '223.5.5.5;www.baidu.com;www.qq.com'
 	option maxdelay ''
-	option card_slot 0
+	option card_slot 1
 	option lock 0
 	
 #gpio number和sim几对应关系

@@ -170,8 +170,8 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 			printf("Unidentified modem module!!!\n");
 		}
 
-		sleep(28);
-		system("/etc/init.d/huayi_multi_tcp_client restart");
+		sleep(20);
+		system("/etc/init.d/huayi_dial4gcontrol restart");
 	}
 	else
 	{

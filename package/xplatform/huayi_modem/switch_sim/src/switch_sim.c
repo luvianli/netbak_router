@@ -33,16 +33,14 @@ int main(int argc, char* argv[])
     	switch(iSel)
     	{
     	   case 0 :
-    		    printf("switch sim1;0 Set High=3.3V & 2 Set LOW=2.7V\n" );
-    			system("gpio l 0 0 4000 0 0 4000");
-                system("gpio l 2 4000 0 0 0 4000");
-
+                 printf("switch sim2;0 Set LOW=2.7V & 2 Set High=3.3V" );
+                 system("gpio l 0 0 4000 0 0 4000");
+                 system("gpio l 2 0 4000 0 0 4000");
     		  break;
     	   case 1 :
-    		    printf("switch sim2;0 Set LOW=2.7V & 2 Set High=3.3V" );
-                system("gpio l 0 0 4000 0 0 4000");
-                system("gpio l 2 0 4000 0 0 4000");
-
+                printf("switch sim1;0 Set High=3.3V & 2 Set LOW=2.7V\n" );
+    			system("gpio l 0 0 4000 0 0 4000");
+                system("gpio l 2 4000 0 0 0 4000");
     		  break;
               /*
     	   case 2 :
