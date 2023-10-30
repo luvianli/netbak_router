@@ -131,12 +131,12 @@ int hy_mtd_read(char **value)
 #endif
 	else if (!strncmp(*value, "port", 4))
 	{	
-		for( i = 0; i < 5; i ++) {
+		for( i = 0; i < 4; i ++) {
 			port_link = is_phyconnected(i);
 			portstatus[i] = port_link;
 		}
 		
-		for( i = 0; i < 5; i ++) {
+		for( i = 0; i < 4; i ++) {
 			printf("port%d=0x%d;", i, portstatus[i]);
 		}	
 		printf("\n");
@@ -245,20 +245,29 @@ int hy_change_simcard( char **value)
 	if ( !strncmp(*value, "extsim", 6) )	
 	{	
 		system("/etc/init.d/hy_sc stop 2>/dev/null");
-		system("/etc/init.d/huayi_dial4g stop 2>/dev/null");
-		
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_SIM_CHANGE_GPIO_NUM);
-		system(cmd);
-		system("huayi_AT_cli at+cfun=0,1");	
+		//system("/etc/init.d/huayi_dial4g stop 2>/dev/null");
+        //system("killall -9 check_sim");
+        //system("devmem 0x10000060 32 0x4110441");
+        //system("gpio l 0 0 4000 0 0 4000");
+        //system("gpio l 2 0 4000 0 0 4000");
+		system("switch_sim 1");
+		//snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_SIM_CHANGE_GPIO_NUM);
+		//system(cmd);
+		//system("huayi_AT_cli at+cfun=1,1");	
 	}	
 	else if ( !strncmp(*value, "insim", 5) )	
 	{		
 		system("/etc/init.d/hy_sc stop 2>/dev/null");
-		system("/etc/init.d/huayi_dial4g stop 2>/dev/null");
-		
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_SIM_CHANGE_GPIO_NUM);
-		system(cmd);
-		system("huayi_AT_cli at+cfun=0,1");
+		//system("/etc/init.d/huayi_dial4g stop 2>/dev/null");
+        //system("killall -9 check_sim");
+        system("switch_sim 0");
+        //system("devmem 0x10000060 32 0x4110441");
+
+        //system("gpio l 0 0 4000 0 0 4000");
+        //system("gpio l 2 4000 0 0 0 4000");
+		//snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_SIM_CHANGE_GPIO_NUM);
+		//system(cmd);
+		//system("huayi_AT_cli at+cfun=1,1");
 	}		
 	else	
 	{		

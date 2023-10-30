@@ -409,7 +409,7 @@ void production_test()
 
 
 void SLM_init(){
-    char lte_value[OPTION_STR_LEN] = {0},iccid_value[OPTION_STR_LEN] = {0};
+    char lte_value[OPTION_STR_LEN] = {0},lod_sn[OPTION_STR_LEN] = {0},iccid_value[OPTION_STR_LEN] = {0};
     char def_ssid[OPTION_STR_LEN] = {0};
     char imei_6[RESULT_STR_LEN] = {0};
 	char cmd[OPTION_STR_LEN] = {0};
@@ -421,12 +421,13 @@ void SLM_init(){
 	}
     memset(lte_value,0,OPTION_STR_LEN);
     atcmd_get_EC20_imei(lte_value);
+    huayi_uci_get_str(PKG_M_SYSTEM, "system", "imei", lod_sn);
     huayi_uci_set_str(PKG_M_SYSTEM, "system", "imei", lte_value);
     huayi_uci_commit(PKG_M_SYSTEM);
 
     //rc4_SLM770U();
 
-    if(!huayi_uci_get_str(PKG_WIRELESS,"radio0_0","def_ssid",def_ssid))
+    if(!huayi_uci_get_str(PKG_WIRELESS,"radio0_0","def_ssid",def_ssid) || (strlen(lod_sn) > 8 && strncmp(lod_sn,lte_value,strlen(lod_sn))) )
     {
         memset(cmd,0,OPTION_STR_LEN);
         strcpy(cmd,"uci -q -c /etc/huayi/brand_info get capability.cap.def_ssid_prefix");

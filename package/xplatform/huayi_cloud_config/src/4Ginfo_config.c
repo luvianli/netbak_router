@@ -93,6 +93,8 @@ void huayi_set_4g_config(cJSON *response_root)
     }
     CON_LOG("switch sim %d",simSwitch);
     sprintf(cmd, "switch_sim %d", simSwitch);
+     huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot",simSwitch);
+     huayi_uci_commit(PKG_M_SYSTEM);
     system(cmd);
     sleep(30);
     save_useing_siminfo(simSwitch);

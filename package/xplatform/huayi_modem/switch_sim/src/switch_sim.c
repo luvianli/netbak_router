@@ -74,8 +74,8 @@ int main(int argc, char* argv[])
                 const char* command = "huayi_AT_cli AT+SFUN=4;huayi_AT_cli AT+CGDCONT=1,\\\"IPV4V6\\\",\\\"cmnet\\\",\\\"\\\",0,0;huayi_AT_cli AT+CGDATA=\\\"M-ETHER\\\",1;huayi_AT_cli AT^SPTETHER=\\\"gadget\\\",\\\"on\\\",1";
                 system(command);
                 CON_LOG("===switch sim%s   OK===\n\n",argv[1]);
-                huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot",iSel);
-                huayi_uci_commit(PKG_M_SYSTEM);
+              //  huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot",iSel);
+               // huayi_uci_commit(PKG_M_SYSTEM);
                 return 0;
             }
             CON_LOG("Card cutting activation failed");
