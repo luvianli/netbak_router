@@ -93,6 +93,23 @@ int hy_mtd_read(char **value)
 		printf("sn oristr : ");
 		printf("%s; \n", sn);	
 	}	
+    
+	else if ( !strncmp(*value, "imei", 2) )	
+	{	
+        char imei[OPTION_STR_LEN] = { 0 };
+        huayi_uci_get_str(PKG_M_SYSTEM, "system", "imei", imei);
+		if (strlen(imei) < 5) 
+		{
+			strcpy(imei, " ");
+		}
+		if(strncmp(imei, "FFFFFFFFFFFF", strlen(imei)) == 0)
+		{
+			strcpy(imei, " ");
+		}
+		printf("sn oristr : ");
+		printf("%s; \n", imei);	
+	}
+    
 	else if ( !strncmp(*value, "info", 4) )	
 	{		
 		system("iwconfig ra0 > /tmp/iwconfigra0");
@@ -107,11 +124,15 @@ int hy_mtd_read(char **value)
 			strcpy(sn, " ");
 		}
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
+        char iccid1[OPTION_STR_LEN] = { 0 },iccid2[OPTION_STR_LEN] = { 0 };
+		huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid1);
+        huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid2);
+
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
-		huayi_uci_get_str(PKG_STATUS_MODEM,"modem", "iccid", iccid);
+		//huayi_uci_get_str(PKG_STATUS_MODEM,"modem", "iccid", iccid);
 		get_cmd_result("cat /tmp/iwconfigra0 | grep 'Access Point' | awk '{print $5}'", mac, sizeof(mac));
-		printf("%s;%s;%s;%s;%s;%s;%s;\n", sn, imei, iccid, pmodel, mac, ssid, key);
+		printf("%s;%s;%s;%s;%s;%s;%s;%s;\n", sn, imei, pmodel, mac, ssid, key,iccid1,iccid2);
 #else
 		get_cmd_result("cat /tmp/iwconfigra0 | grep 'Access Point' | awk '{print $5}'", mac, sizeof(mac));
 		printf("%s;%s;%s;%s;\n", sn, mac, ssid, key);
@@ -168,6 +189,18 @@ int hy_mtd_read(char **value)
 		{
 			printf("0;\n");
 		}
+	}
+    else if (!strncmp(*value, "iccid", 5))
+	{	
+        char iccid1[OPTION_STR_LEN] = { 0 },iccid2[OPTION_STR_LEN] = { 0 },iccid3[OPTION_STR_LEN] = { 0 };
+		huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid1);
+        huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid2);
+        huayi_uci_get_str(PKG_M_SYSTEM, "sim2", "iccid", iccid3);
+        if(strlen(iccid1)>5 && strlen(iccid2)>5 && strlen(iccid2)>5){
+            printf("%s;%s;%s;\n", iccid1, iccid2, iccid3);
+        }else{
+            printf("ERROR;ERROR;ERROR;\n");
+        }
 	}
 	else	
 	{		

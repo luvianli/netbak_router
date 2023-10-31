@@ -185,41 +185,18 @@ void set_siminfo()
 	{
 		strcpy(lte_value, "");
 	}
-    huayi_uci_get_str(PKG_WIRELESS,"radio0_0","def_ssid",def_ssid);
-    strcpy(cmd,"uci -q -c /etc/huayi/brand_info get capability.cap.def_ssid_prefix");
-    get_cmd_result(cmd, iccid_value, sizeof(iccid_value));
-    if(strcmp(iccid_value,def_ssid) == 0)
-        {
-        huayi_uci_get_str(PKG_WIRELESS,"radio0_0","def_ssid",def_ssid);
-        //appendLast6Digits(def_ssid, lte_value, sizeof(def_ssid));
-        strcpy(imei_6,lte_value + strlen(lte_value) - 6);
-        strncat(def_ssid, imei_6, sizeof(def_ssid) - strlen(def_ssid) - 1);
-        
-        huayi_uci_set_str(PKG_WIRELESS,W24G_IFACE,"ssid",def_ssid);
-        huayi_uci_set_str(PKG_WIRELESS,W24G_IFACE,"def_ssid",def_ssid);
-
-        //strcat(def_ssid, "_5g");
-        
-        //huayi_uci_set_str(PKG_WIRELESS,W58G_IFACE,"ssid",def_ssid);
-        //huayi_uci_set_str(PKG_WIRELESS,W58G_IFACE,"def_ssid",def_ssid);
-        sprintf(cmd,"echo %s >> /tmp/dat2uci.log",imei_6);
-        system(cmd);
-        huayi_uci_commit(PKG_WIRELESS);
-        system("huayi-reset wireless");
-        sleep(12);
-        CON_LOG("------> %s",def_ssid);
-    }
-    
-
 	huayi_uci_set_str(PKG_M_SYSTEM, "system", "imei", lte_value);
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
 
-	for(i = 1; i < simnum+1; i++ )
+	for(i = 0; i < simnum; i++ )
 	{
 		sprintf(cmd, "sim%d", i);
 		huayi_uci_get_int(PKG_M_SYSTEM, cmd, "gpio", &gpio);
+        
+
         memset(lte_value,0,sizeof(lte_value));
         huayi_uci_get_str(PKG_M_SYSTEM,cmd, "iccid",lte_value);
+        /*
 		printf("rex ====   %s, %d  --gpio =%d--, usegpio = %d\n", __FUNCTION__, __LINE__, gpio, usegpio);
 		if(gpio == usegpio)
 		{
@@ -228,6 +205,7 @@ void set_siminfo()
             CON_LOG("default sim:%d", flag);
 			continue;
 		}
+		*/
         if(strlen(lte_value) < 5){
     		memset(tmp, 0, OPTION_STR_LEN);
     		sprintf(tmp, "switch_sim %d", i);
@@ -238,6 +216,7 @@ void set_siminfo()
         }
 		
 	}
+    /*
 	huayi_uci_get_str(PKG_M_SYSTEM,InitialSim, "iccid",lte_value);
 	memset(tmp, 0, OPTION_STR_LEN);
 	sprintf(tmp, "switch_sim %d", flag);
@@ -248,11 +227,7 @@ void set_siminfo()
     }else{
         CON_LOG("Sim information already exists");
     }
-
-	//system("/etc/init.d/cm.init start");
-	//sleep(1);
-	//ret = AtcmdSendDelay("at+qnetdevctl=3,1,1",strlen("at+qnetdevctl=3,1,1"),0);
-
+ */   
 	return;
 }
 
@@ -306,7 +281,7 @@ check_net:
 		if(i == simn)
 			continue;
         //ÍâÖÃ¿¨
-        if(i == totalsimnum -1){
+        if(i == 2){
             huayi_uci_get_str(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
             if(!enable){
                 CON_LOG("external_card_enable     0");
@@ -452,10 +427,30 @@ void SLM_init(){
 
 }
 
+Production_testing_mode(){
+   int mode = 0 ;
+   huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+   if(mode == 0){
+    CON_LOG("enter Production");
+    set_siminfo();
+   check_network();
+    do{
+        CON_LOG("Information collection completed, waiting for production testing");
+        huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+        sleep(2);
+    }while(mode == 0);
+   }
+    CON_LOG("exit Production");
+
+}
+
+
 int main(int argc, char *argv[])
 {
     
     SLM_init();
+
+    Production_testing_mode();
     
     check_network();
 	init_cloud_client();

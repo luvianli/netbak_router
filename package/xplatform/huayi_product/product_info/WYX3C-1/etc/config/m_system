@@ -1,9 +1,10 @@
 config system system
+	option working_mode	1
 	option simnum	3
 	option imei ''
 	option switchres 0
 	option clientlog 1
-	option productmodel 'ZC-MEIGE'
+	option productmodel 'WYX3C-1'
 	option version '001'
 	#option urldomain 'https://zmp-test1.nbm2m.com/api/device/post/juHeApi/uploadData'
 	#option urldomain 'https://zmp-test.nbm2m.com/manage-api/device/post/juHeApi/uploadData'
@@ -34,18 +35,18 @@ config usesiminfo usesiminfo
 	
 #gpio number和sim几对应关系
 config s26 s26
-	option simn 1
+	option simn 0
 	
 config s25 s25
-	option simn 2
+	option simn 1
 	
 config s24 s24
-	option simn 3
+	option simn 2
 	
 config s27 s27
-	option simn 4
+	option simn 3
 
-config sim1 sim1
+config sim1 sim0
 	option operator ''
 	option checksignalips 'www.baidu.com'
 	option networktype ''
@@ -54,10 +55,10 @@ config sim1 sim1
 	option iccid ''
 	option gpio 26
 	option iccid_gpio ''
-	option card_slot 1
+	option card_slot 0
 	option state ''
 
-config sim2 sim2
+config sim2 sim1
 	option operator ''
 	option checksignalips 'www.baidu.com'
 	option networktype ''
@@ -66,10 +67,10 @@ config sim2 sim2
 	option iccid ''
 	option gpio 25
 	option iccid_gpio ''
-	option card_slot 2
+	option card_slot 1
 	option state ''
 
-config sim3 sim3
+config sim3 sim2
 	option operator ''
 	option checksignalips 'www.baidu.com'
 	option networktype ''
@@ -78,10 +79,10 @@ config sim3 sim3
 	option iccid ''
 	option gpio 24
 	option iccid_gpio ''
-	option card_slot 3
+	option card_slot 2
 	option state ''
 
-config sim4 sim4
+config sim4 sim3
 	option operator ''
 	option checksignalips 'www.baidu.com'
 	option networktype ''
@@ -90,7 +91,7 @@ config sim4 sim4
 	option iccid ''
 	option gpio 27
 	option iccid_gpio ''
-	option card_slot 4
+	option card_slot 3
 	option state ''
 	
 
