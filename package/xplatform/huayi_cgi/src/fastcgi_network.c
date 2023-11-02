@@ -537,7 +537,12 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 		cJSON_AddStringToObject(wan_obj,"net_type", "Wired");
 	}
 	else
-	{
+	{		
+		int wired_link = 0;
+		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
+		if(wired_link ==1)
+			cJSON_AddStringToObject(wan_obj,"net_type", "Wired");
+		else
 		cJSON_AddStringToObject(wan_obj,"net_type", "4G");
 	}
 	cJSON_AddItemToObject(result_root,"wan_infos",wan_obj);

@@ -62,7 +62,7 @@ int main(int argc,char *argv[])
 		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
         huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wired_gateway);
         huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", cpe_gateway);
-        if(strstr(wired_device,"eth0.2") == NULL || strlen(wired_gateway) <= strlen("0.0.0.0")){
+        if(strlen(wired_gateway) <= strlen("0.0.0.0")){
             wired_link = 0;
         }
         if(strstr(cpe_device,"eth1") == NULL || strlen(cpe_gateway) <= strlen("0.0.0.0"))
