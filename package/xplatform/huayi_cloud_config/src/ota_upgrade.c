@@ -121,7 +121,7 @@ static int process_downloadimage(char *fwurl, char *md5)
     char *fileMd5 = NULL;
     char szCmd[CMD_STR_LEN];
 	
-    if ((strlen(fwurl) == 0) || (strlen(md5) == 0))
+    if ((strlen(fwurl) == 0))
 		return -1;
 	need_upgrade = 1;
 	/*dowload timeout is 60s*/
@@ -130,6 +130,7 @@ static int process_downloadimage(char *fwurl, char *md5)
     
     if ((WIFEXITED(iState)) && (WEXITSTATUS(iState) == 0) && (iState != -1))
     {
+        /*
     	fileMd5  = MD5_file(IMAGE_PATH_STOR, 32);
 		if(fileMd5 == NULL) 
 			return -1;
@@ -138,7 +139,9 @@ static int process_downloadimage(char *fwurl, char *md5)
 			free(fileMd5);
 			fileMd5 = NULL;
 			return -1;
-		} else {
+		} else 
+            */
+       {
 			CLOUD_CLIENT_LOG("%s check firmware md5 ok\n",__FUNCTION__);
 			len = get_file_size(IMAGE_PATH_STOR);
 			if(!huayi_check_clound_firmware(IMAGE_PATH_STOR, 0, len))
@@ -167,6 +170,7 @@ void huayi_remote_upgrade(cJSON *response_root)
 		return ;
 	}
 	/*OTA upgrade is doing...*/
+    CLOUD_CLIENT_LOG("OTA upgrade is doing...");
 	if(1 == need_upgrade)
 		return;
 	if(!huayi_json_get_str(response_root,"firmware_url", firmware_url, LIST_STR_LEN)) {
@@ -175,12 +179,13 @@ void huayi_remote_upgrade(cJSON *response_root)
 	} else {
 		if(0 == strlen(firmware_url)) {
 			printf("firmware_url len is %d !\n", strlen(firmware_url));
+            CON_LOG("firmware_url len is %d !\n", strlen(firmware_url));
 			return;
 		} else {
 			huayi_uci_set_str(PKG_SYSTEM, "server","firmwareurl", firmware_url);
 		}
 	}
-	
+	/*
 	if(!huayi_json_get_str(response_root,"firmware_md5", firmware_md5, OPTION_STR_LEN)) {
 		printf("firmware_md5 param is not respon !\n");
 		return;
@@ -194,6 +199,8 @@ void huayi_remote_upgrade(cJSON *response_root)
 	}	
 	huayi_uci_commit(PKG_SYSTEM);
 	CLOUD_CLIENT_LOG("%s, %d, url = %s md5 = %d!\n", __FUNCTION__, __LINE__, firmware_url, firmware_md5);
+	*/
+	CLOUD_CLIENT_LOG("%s, %d, url = %s \n", __FUNCTION__, __LINE__, firmware_url);
 	ret = process_downloadimage(firmware_url, firmware_md5);
     if ( 0 != ret) {
 		need_upgrade = 0;
