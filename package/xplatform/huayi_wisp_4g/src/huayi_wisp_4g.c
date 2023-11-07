@@ -1,6 +1,25 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip_icmp.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+
 #include <huayi_uci_fun.h>
+
+#define PACKET_SIZE 64
+#define MAX_PACKET_SIZE 1024
+
+struct ping_packet {
+    struct icmphdr header;
+    char msg[PACKET_SIZE - sizeof(struct icmphdr)];
+};
+
 
 typedef enum{
 	INTERNET_UNDEFINE = 0,
@@ -23,17 +42,17 @@ void get_maxdelay(char *checksignalips, char *ifname)
 	{
 		sprintf(cmd, "ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk '{print $7}' > /tmp/pingtmp.txt", checksignalips, ifname);
 		system(cmd);
-		CON_LOG("cmd = %s\n", cmd);
+		WISP_NETWORK_LOG("cmd = %s\n", cmd);
 		
 		memset(cmd, 0, TEMP_STR_LEN);
 		memset(value, 0, sizeof(value));
 		strcpy(cmd, "cat /tmp/pingtmp.txt | awk -F \" \" '{print $1}'");
 		get_cmd_result(cmd, value, sizeof(value));
-		CON_LOG("ping time value  = %s\n", value);
+		WISP_NETWORK_LOG("ping time value  = %s\n", value);
 		timevalue = atoi(value+strlen("time="));
 		if(timevalue != 0)
 		{
-			CON_LOG("ping time value  = %d, maxdelay = %d\n", timevalue, maxdelay);
+			WISP_NETWORK_LOG("ping time value  = %d, maxdelay = %d\n", timevalue, maxdelay);
 			if(timevalue > maxdelay)
 			{
 				delaycount += 1;
@@ -41,12 +60,169 @@ void get_maxdelay(char *checksignalips, char *ifname)
 		}
 		else
 		{
-			CON_LOG("strlen(value) = %d , ping time value  = %s \n", strlen(value), value);
+			WISP_NETWORK_LOG("strlen(value) = %d , ping time value  = %s \n", strlen(value), value);
 			delaycount += 1;
 		}
 	}
 
 	return;
+}
+
+unsigned short icmp_checksum(unsigned short* buffer, int size) {
+    unsigned long sum = 0;
+
+    while (size > 1) {
+        sum += *buffer++;
+        size -= sizeof(unsigned short);
+    }
+
+    if (size == 1) {
+        sum += *(unsigned char*)buffer;
+    }
+
+    sum = (sum >> 16) + (sum & 0xffff);
+    sum += (sum >> 16);
+
+    return (unsigned short)(~sum);
+}
+
+
+int IcmpnetworkConnect(const char* interface, const char* ipAddress) {
+    int sockfd;
+    int i = 0;
+    struct ifreq ifr;
+    struct sockaddr_in* sin;
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        WISP_NETWORK_LOG("socket");
+        return -1;
+    }
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, interface, IFNAMSIZ - 1);
+
+    if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
+        perror("ioctl");
+        close(sockfd);
+        return -1;
+    }
+
+
+    if (ifr.ifr_addr.sa_family == AF_INET) {
+    sin = (struct sockaddr_in*)&ifr.ifr_addr;
+    char ipAddr[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &(sin->sin_addr), ipAddr, INET_ADDRSTRLEN) == NULL) {
+        WISP_NETWORK_LOG("inet_ntop");
+        close(sockfd);
+        return -1;
+    }
+    WISP_NETWORK_LOG("Network interface %s is up.\n", interface);
+    WISP_NETWORK_LOG("IP address: %s\n", ipAddr);
+    } else {
+        WISP_NETWORK_LOG("Network interface %s does not have an IPv4 address.\n", interface);
+        close(sockfd);
+        return -1;
+    }
+
+    close(sockfd);
+
+    struct sockaddr_in server;
+    server.sin_family = AF_INET;
+    server.sin_port = 0;
+    struct in_addr ip;
+    if (inet_pton(AF_INET, ipAddress, &ip) <= 0) {
+        WISP_NETWORK_LOG("Invalid IP address: %s\n", ipAddress);
+        return -1;
+    }
+    server.sin_addr = ip;
+
+
+    int sd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sd < 0) {
+        WISP_NETWORK_LOG("socket");
+        return -1;
+    }
+
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    if (setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0) {
+        WISP_NETWORK_LOG("setsockopt");
+        close(sd);
+        return -1;
+    }
+
+    struct ping_packet packet;
+    memset(&packet, 0, sizeof(packet));
+    packet.header.type = ICMP_ECHO;
+    packet.header.code = 0;
+    packet.header.checksum = htons(~(ICMP_ECHO << 8));
+
+    int seq = 0;
+    int count = 4;  // ÂèëÈÄÅ ICMP ËØ∑Ê±ÇÁöÑÊ¨°Êï∞
+    int successCount = 0;
+
+    for (i = 0; i < count; i++) {
+        seq++;
+        packet.header.un.echo.sequence = htons(seq);
+        packet.header.checksum = 0;
+        packet.header.checksum = htons(~icmp_checksum((unsigned short*)&packet, sizeof(packet)));
+
+        if (sendto(sd, &packet, sizeof(packet), 0, (struct sockaddr*)&server, sizeof(server)) <= 0) {
+            WISP_NETWORK_LOG("sendto");
+            close(sd);
+            return -1;
+        }
+
+        struct sockaddr_in response;
+        socklen_t responseLength = sizeof(response);
+        unsigned char buffer[MAX_PACKET_SIZE];
+        memset(buffer, 0, MAX_PACKET_SIZE);
+
+        if (recvfrom(sd, buffer, MAX_PACKET_SIZE, 0, (struct sockaddr*)&response, &responseLength) <= 0) {
+            WISP_NETWORK_LOG("Request timed out.\n");
+        } else {
+            WISP_NETWORK_LOG("Received ICMP response from %s\n", inet_ntoa(response.sin_addr));
+            successCount++;
+        }
+    }
+
+    close(sd);
+
+    if (successCount == count) {
+        WISP_NETWORK_LOG("Network is reachable.\n");
+        return 0;
+    } else {
+        WISP_NETWORK_LOG("Network is unreachable.\n");
+        return -1;
+    }
+}
+
+int networkCheck(const char* interface, const char* ipAddress) {
+    int i = 0;
+    char command[100];
+    snprintf(command, sizeof(command), "ping -c 1 -W 1 %s -I %s > /dev/null 2>&1", ipAddress, interface);
+    for (i=0;i<3;i++)
+    {
+        if (IcmpnetworkConnect(interface,ipAddress) == 0) {
+            WISP_NETWORK_LOG("Network is reachable.\n");
+            goto succeed;
+        }
+        int status = system(command);
+        if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+            WISP_NETWORK_LOG("Network is reachable.\n");
+            goto succeed;
+        }
+        usleep(500);
+    }
+    WISP_NETWORK_LOG("Network is unreachable.\n");
+    goto fail;
+succeed:
+    return 0;
+fail:
+    return -1;
+
 }
 
 
@@ -89,26 +265,14 @@ int wisp4g_internet_do_ping(const char *host, char *ifname, char *del_gateway)
 	{
 		goto fail;
 	}
-
-	memset(cmd,0,sizeof(cmd));
-	for(i = 0;i < 3; i++)
-	{
-		if (ifname == NULL)
-		{
-			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
-		}
-		else
-		{
-			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
-		}
-		system(cmd);
-		usleep(500);
-		if ( access(PING_TMPFILE, F_OK) == 0)
-		{
-			unlink(PING_TMPFILE);
-			return 1;
-		}
+	
+	if(networkCheck(ifname,host) == 0){
+		return 1;
+	}else{
+		goto fail;
 	}
+
+	
 fail:
 	return 0;
 }
@@ -138,8 +302,8 @@ int main(int argc,char *argv[])
 	int cpe_link = 0;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
-
 	delaycount = 1;
+	
 	while(1)
 	{
 		sleep(10);
@@ -179,11 +343,13 @@ int main(int argc,char *argv[])
 			wired_status = wisp4g_internet_do_ping(detectip, wired_device, del_gateway);
 			if(wired_status == 0)
 			{
+				system(". /lib/netifd/hy_del_wisp.sh del");
 				memset(del_gateway, 0, sizeof(del_gateway));
 				huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
 				cpe_status = wisp4g_internet_do_ping(detectip, cpe_device, del_gateway);
 				if(cpe_status == 0)// π”√wisp…œÕ¯∑Ω Ω
 				{
+					system("ifup wan");
 					sprintf(section,"wisp");
 				}else// π”√4G…œÕ¯∑Ω Ω
 				{

@@ -2414,8 +2414,12 @@ int cgi_get_4g_signal(cJSON *request_root, cJSON *response_root,int *lock_time)
 int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 {
 	cJSON 	*result_root =NULL;
-	char *lte_value[OPTION_STR_LEN]={0},checksignalips[OPTION_STR_LEN]={0};
+	char lte_value[OPTION_STR_LEN]={0},checksignalips[OPTION_STR_LEN]={0};
 	int i_ready=0,i_signal=0,is_ok=0;
+	int radio_id = 0;
+	int rep_status = 0, rep_24g_status = 0, rep_58g_status = 0;
+	char section[OPTION_STR_LEN] = {0};
+	char apclissid[OPTION_STR_LEN] = {0};
 	
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
@@ -2455,12 +2459,20 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 		cJSON_AddStringToObject(result_root,"net_type", "4G");
 	}
 
+	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_24g_status",&rep_24g_status);
+	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","sim_ready",&i_ready);
+	if(rep_24g_status == 1 || i_ready == 1)
+	{
+		//strcpy(checksignalips,"114.114.114.114");
+		memset(lte_value,0,sizeof(lte_value));
+		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip", checksignalips);
+		is_ok = internet_do_ping_detect(checksignalips, NULL);
+	}
+	else
+	{
+		is_ok = 0;
+	}
 
-	//上网是否成功
-	//strcpy(checksignalips,"114.114.114.114");
-	memset(lte_value,0,sizeof(lte_value));
-	huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip", checksignalips);
-	is_ok = internet_do_ping_detect(checksignalips, NULL);
 	if(is_ok == 1)
 	{
 		get_maxdelay(checksignalips,lte_value);
@@ -2472,10 +2484,10 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 	}
 	cJSON_AddNumberToObject(result_root,"intelnet_ok",is_ok);
 	
-	atcmd_get_cpin(&i_ready);
+	//atcmd_get_cpin(&i_ready);
 	if(i_ready == 1)
 	{
-		atcmd_get_signal(&i_signal);
+		huayi_uci_get_int(PKG_STATUS_MODEM,"modem","signal",&i_signal);//atcmd_get_signal(&i_signal);
 	}
 	else
 	{
@@ -2484,9 +2496,20 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 	cJSON_AddNumberToObject(result_root,"4g_signal",i_signal);
 	
 	memset(lte_value,0,sizeof(lte_value));
-	get_relay_wf(lte_value);
+	//get_relay_wf(lte_value);
+	if(rep_24g_status == 0)
+	{
+		strcpy(apclissid, "");
+		strcpy(lte_value, "");
+	}
+	else
+	{
+		get_relay_wf(lte_value);
+		snprintf(section,OPTION_STR_LEN,"radio%d_cli0",radio_id);
+		huayi_uci_get_str(PKG_WIRELESS,section,"apcli_ssid", apclissid);
+	}
 	cJSON_AddStringToObject(result_root,"wifi_rssi",lte_value);	
-
+	cJSON_AddStringToObject(result_root,"apcli_ssid", apclissid);
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
 	return FCGI_RESP_CODE_SUCCESS;
