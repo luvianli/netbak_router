@@ -282,7 +282,7 @@ check_net:
 			continue;
         //Õ‚÷√ø®
         if(i == 2){
-            huayi_uci_get_str(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
+            huayi_uci_get_int(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
             if(!enable){
                 CON_LOG("external_card_enable     0");
                 //system("reboot");
