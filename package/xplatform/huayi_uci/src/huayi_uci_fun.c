@@ -1680,4 +1680,28 @@ againt:
 }
 
 
+int isProcessRunning(const char *processName) {
+    FILE *fp;
+    char buffer[1024];
+
+    // Run ps command and read the output
+    fp = popen("ps", "r");
+    if (fp == NULL) {
+        perror("popen");
+        exit(EXIT_FAILURE);
+    }
+
+    // Check if the processName is present in the output
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        if (strstr(buffer, processName) != NULL) {
+            pclose(fp);
+            return 1; // Process is running
+        }
+    }
+
+    pclose(fp);
+    return 0; // Process is not running
+}
+
+
 

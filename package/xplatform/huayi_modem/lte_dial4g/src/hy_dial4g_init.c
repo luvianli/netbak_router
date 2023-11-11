@@ -108,6 +108,15 @@ void module_init()
 {
 	char resultbuf[OPTION_STR_LEN] = {0};
 	int ret = 0, count = 0;
+
+    while (isProcessRunning("ated")) {
+        printf("Process ated is running. Waiting for 3 seconds...\n");
+        CON_LOG("Process ated is running. Waiting for 3 seconds...\n");
+        sleep(3);
+    }
+
+
+
     
 #if defined(CONFIG_HUAYI_MODULE_SUPPORT)
         char cmd[CMD_STR_LEN] = {0};

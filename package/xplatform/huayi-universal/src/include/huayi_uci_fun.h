@@ -259,5 +259,6 @@ int base64_encode(const unsigned char *bindata, char *base64, int binlength);
 void rc4_crypt(unsigned char* Data, unsigned long Len_D, unsigned char* key, unsigned long Len_k);
 
 int rc4_SLM770U();
+int isProcessRunning(const char *processName);
 
 

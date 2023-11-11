@@ -196,17 +196,10 @@ void set_siminfo()
 
         memset(lte_value,0,sizeof(lte_value));
         huayi_uci_get_str(PKG_M_SYSTEM,cmd, "iccid",lte_value);
-        /*
-		printf("rex ====   %s, %d  --gpio =%d--, usegpio = %d\n", __FUNCTION__, __LINE__, gpio, usegpio);
-		if(gpio == usegpio)
-		{
-			flag = i;
-            strcpy(InitialSim,cmd);
-            CON_LOG("default sim:%d", flag);
-			continue;
-		}
-		*/
         if(strlen(lte_value) < 5){
+
+           isProductionMode();
+
     		memset(tmp, 0, OPTION_STR_LEN);
     		sprintf(tmp, "switch_sim %d", i);
     		system(tmp);
@@ -216,18 +209,6 @@ void set_siminfo()
         }
 		
 	}
-    /*
-	huayi_uci_get_str(PKG_M_SYSTEM,InitialSim, "iccid",lte_value);
-	memset(tmp, 0, OPTION_STR_LEN);
-	sprintf(tmp, "switch_sim %d", flag);
-	system(tmp);
-
-    if(strlen(lte_value) < 5){
-        save_siminfo(flag, usegpio);
-    }else{
-        CON_LOG("Sim information already exists");
-    }
- */   
 	return;
 }
 
@@ -248,12 +229,16 @@ void check_network()
 
     
 
-	/*check use sim is connect network  检测上一次使用的卡是否可以上网(出厂时上一次使用的卡为默认卡)*/
-/*	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", &usegpio);
-	memset(tmp, 0, OPTION_STR_LEN);
-	sprintf(tmp, "s%d", usegpio);
-	huayi_uci_get_int(PKG_M_SYSTEM, tmp, "simn", &simn);
-	*/
+    isProductionMode();
+
+    huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+    sprintf(cmd, "switch_sim %d", simn);
+    system(cmd);
+    sleep(25);
+
+
+
+    
 	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
 cretry1:
 	memset(check_ip, 0, OPTION_STR_LEN);
@@ -290,7 +275,7 @@ check_net:
             }
         }
         CON_LOG("network error ,switch sim%d",i);
-
+        isProductionMode();
 		memset(tmp, 0, OPTION_STR_LEN);
 		sprintf(tmp, "switch_sim %d", i);
 		system(tmp);
@@ -419,21 +404,34 @@ void SLM_init(){
         sleep(12);
         CON_LOG("------> %s",iccid_value);
     }
-    huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
-    sprintf(cmd, "switch_sim %d", simn);
-    system(cmd);
-    sleep(25);
+}
 
+int isProductionMode(){
+    int mode = 0 ;
+
+    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+    if(mode == 0){
+        while (isProcessRunning("ated")) {
+        printf("ated Process ated is running. Waiting for 3 seconds...\n");
+        CON_LOG("ated Process ated is running. Waiting for 3 seconds...\n");
+        sleep(3);
+        }
+    }
+    printf("ated not start");
+    CON_LOG("ated not start");
+    return 1;
 
 }
 
-Production_testing_mode(){
+
+
+void Production_testing_mode(){
    int mode = 0 ;
    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
    if(mode == 0){
     CON_LOG("enter Production");
     set_siminfo();
-   check_network();
+    check_network();
     do{
         CON_LOG("Information collection completed, waiting for production testing");
         huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
