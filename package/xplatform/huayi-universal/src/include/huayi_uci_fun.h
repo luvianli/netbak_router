@@ -214,5 +214,7 @@ unsigned long __attribute__((stdcall)) huayi_hex_string(char *to, const char *fr
 
 void HexStrToStr(const char* source, unsigned char* dest, int sourceLen);
 void Str2Hex( const char *sSrc,  char *sDest, int nSrcLen );
+
+
 #endif
 

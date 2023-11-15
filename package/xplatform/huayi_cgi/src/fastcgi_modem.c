@@ -1842,14 +1842,16 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	huayi_uci_get_str(PKG_NETWORK,"wan","gateway",gateway);
 	cJSON_AddStringToObject(result_root,"gateway",gateway);
 
-	huayi_uci_get_str(PKG_NETWORK,"wan","dns",temp_dns);
+	huayi_uci_get_str(PKG_NETWORK,"wan1","dns",temp_dns);
 		
 	dns_array = cJSON_CreateArray();
 	while(huayi_get_nth_value(i++, temp_dns, WEB_SPACE_DELIMIT, dns, sizeof(dns)))
 	{
 		cJSON_AddItemToArray(dns_array,cJSON_CreateString(dns));
 	}
-	cJSON_AddItemToObject(result_root,"dns_arr",dns_array);
+	//cJSON_AddItemToObject(result_root,"dns_arr",dns_array);
+    cJSON_AddItemToObject(result_root,"dns_usb_arr",dns_array);
+    
 
 	huayi_uci_get_str(PKG_NETWORK,"wan","username",username);
 	cJSON_AddStringToObject(result_root,"usr",username);
@@ -1885,6 +1887,39 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 	
 	return FCGI_RESP_CODE_SUCCESS;
+}
+int	set_net_dhcp_config_by_index(cJSON *wan_obj,char *section)
+{
+	char	hostname[OPTION_STR_LEN] = {0};
+	char 	temp_dns[OPTION_STR_LEN] = {0};
+	char	dns[IPV4_STR_LEN] = {0};
+	int		i = 0;
+    cJSON	*dns_array = NULL;
+    cJSON	*dns_obj = NULL;
+    int dns_count;
+    /*
+	huayi_json_get_str(wan_obj,"hostname",hostname,OPTION_STR_LEN);
+	if(strlen(hostname)>0)
+	{
+		huayi_uci_set_str(PKG_NETWORK,section,"hostname",hostname);
+	}
+*/
+	//huayi_uci_delete_option(PKG_NETWORK,section,"dns");
+	dns_array = cJSON_GetObjectItem(wan_obj, "dns_usb_arr");
+            
+    if(dns_array == NULL)
+    {
+        return FCGI_FALSE;
+    }
+    
+    dns_count = cJSON_GetArraySize(dns_array);
+    huayi_uci_delete_option(PKG_NETWORK,"wan1","dns");
+    for(i=0;i<dns_count;i++)
+    {
+        dns_obj = cJSON_GetArrayItem(dns_array,i);
+        huayi_uci_add_list(PKG_NETWORK,"wan1","dns",dns_obj->valuestring);
+    }
+	return FCGI_TRUE;
 }
 
 int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *lock_time)
@@ -2116,7 +2151,6 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			else
 			{
 				if(!huayi_json_get_str(request_root,"mac_addr",macaddr,MAC_STR_LEN))
-				
 				{
 					return FCGI_RESP_CODE_DATA_MISS;
 				}
@@ -2125,10 +2159,8 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 				{
 					return FCGI_FALSE;
 				}
-
 				huayi_uci_set_int(PKG_NETWORK,"wan4g","cc_mtu",cc_mtu);
 				huayi_uci_set_int(PKG_NETWORK,"wan4g","mtu",cc_mtu);
-
 				huayi_json_get_str(request_root,"hostname",hostname,OPTION_STR_LEN);
 				if(strlen(hostname)>0)
 				{
@@ -2235,6 +2267,32 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		huayi_uci_set_int(PKG_MODEM,"status","mode",use_apn);
 	}
 #endif
+#if 1
+	else if(!strcmp(wan_type,HUAYI_NET_PROTO_USBNET))
+	{
+        CON_LOG("enter usb-net");
+        huayi_uci_get_int(PKG_NETWORK,"wan1","ppp_mtu",&ppp_mtu);
+	    huayi_uci_get_int(PKG_NETWORK,"wan1","cc_mtu",&cc_mtu);
+        if(!huayi_json_get_str(request_root,"proto_usb",proto,OPTION_STR_LEN))
+        {
+            return FCGI_RESP_CODE_DATA_MISS;
+        }
+        if(!strcmp(proto,"dhcp"))
+    	{
+            if(!set_net_dhcp_config_by_index(request_root,"wan1"))
+            {
+                huayi_uci_revert(PKG_NETWORK);
+                return FCGI_RESP_CODE_DATA_MISS;
+            }
+            huayi_uci_set_int(PKG_NETWORK,"wan1","mtu",cc_mtu);
+            huayi_uci_set_str(PKG_NETWORK,"wan1","proto","dhcp");
+            huayi_uci_set_int(PKG_SYSTEM,"global","first_boot",0);
+
+
+    	}
+	}
+#endif 
+
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	else
 	{
@@ -2308,7 +2366,6 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 			{
 				huayi_uci_set_str(PKG_NETWORK, "wan", "hostname",hostname);
 			}
-			
 			huayi_uci_delete_option(PKG_NETWORK, "wan", "dns");
 			huayi_uci_set_int(PKG_NETWORK,"wan","cc_mtu",cc_mtu);
 			huayi_uci_set_int(PKG_NETWORK,"wan","mtu",cc_mtu);

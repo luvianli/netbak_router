@@ -13,6 +13,11 @@
 #define WAN_TYPE_WIRED_PRIOROTY						"prior"
 #define WAN_TYPE_REP4G_PRIOROTY						"rep4g"
 #define WAN_TYPE_REP								"rep"
+//#define HUAYI_NET_PROTO_USBNET						"usb-net"
+#define HUAYI_NET_PROTO_USBNET						"usb"
+
+
+
 
 
 typedef enum

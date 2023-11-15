@@ -23,6 +23,9 @@ VTBool huayi_reload_network(void * arg,cJSON *input_root)
 	{
 		system("/etc/init.d/huayi_dial4_init start");
 	} 
+    else if(0 == strcmp(product_model, "ZC-AP")){
+    	system("/etc/init.d/usbmuxd restart");
+    }
 
 	//system("ifdown wan");
 	system("/etc/init.d/network restart");
