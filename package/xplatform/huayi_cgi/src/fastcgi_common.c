@@ -859,7 +859,7 @@ void get_relay_wf(char *lte_vaule)
 	char cmd[OPTION_STR_LEN]={0},value[OPTION_STR_LEN]={0};
 	//iwpriv apcli0 stat | grep RSSI | awk '{print $3}'
 	sprintf(cmd,"iwpriv apcli0 stat | grep RSSI | awk '{print $3}'");
-	system(cmd);
+	//system(cmd);
 	get_cmd_result(cmd,value,sizeof(value));
 	sprintf(lte_vaule,"%s",value);
 

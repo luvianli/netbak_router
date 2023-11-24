@@ -205,6 +205,8 @@ int is_phyconnected(int portNum);
 int internet_do_ping_detect(const char *host, char *ifname);
 
 int HuayiSystem(char *command, int printFlag);
+int pingCheck(const char* host);
+int first_internet_do_ping(const char *host, char *ifname, char *del_gateway);
 
 void flush_arp_list(void);
 
@@ -215,6 +217,11 @@ unsigned long __attribute__((stdcall)) huayi_hex_string(char *to, const char *fr
 void HexStrToStr(const char* source, unsigned char* dest, int sourceLen);
 void Str2Hex( const char *sSrc,  char *sDest, int nSrcLen );
 
+<<<<<<< HEAD
+=======
+int executeCommand(const char *sendBuf);
+
+>>>>>>> new_dan
 
 #endif
 

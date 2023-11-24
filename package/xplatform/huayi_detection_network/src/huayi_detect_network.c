@@ -15,9 +15,9 @@
 
 int DetectConfigurationOfSimAndDns()
 {
-	char lte_value[OPTION_STR_LEN] = { 0 };
+	char lte_value[OPTION_STR_LEN] = { 0 },state[OPTION_STR_LEN] = { 0 },gateway[OPTION_STR_LEN] = { 0 };
 	char cmd[CMD_STR_LEN] = {0};
-	int ret=0, AsciiNum[22], j;
+	int ret=0, AsciiNum[22], j,i_ready = 0;
 	memset(lte_value, 0, OPTION_STR_LEN);
 	atcmd_get_iccid(lte_value);
 	for(j=0;j<strlen(lte_value) ,AsciiNum[j]=lte_value[j];j++)		
@@ -26,66 +26,56 @@ int DetectConfigurationOfSimAndDns()
 		DETECTION_NETWORK_LOG("SIM card cannot read");
 		return 0;
 	}
-	memset(cmd, 0 ,sizeof(cmd));
-	memset(lte_value, 0 ,sizeof(lte_value));
-	strcpy(cmd, "grep '0.0.0.0\|8.8.8.8' /tmp/resolv.conf.auto  | sort");
-	get_cmd_result(cmd, lte_value, sizeof(lte_value));
-	if(strlen(lte_value) <1)
+    memset(lte_value, 0 ,sizeof(lte_value));
+    
+
+    atcmd_get_cpin(&i_ready);
+    memset(cmd, 0 ,sizeof(cmd));
+    huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", gateway);
+    sprintf(cmd, "route -n | grep eth1 | grep UG | grep %s | wc -l",gateway);
+
+    int ifconfig_state = executeCommand("ifconfig eth1 | grep -w \"inet\" | awk '{print $2}' | wc -l");
+    int route_state = executeCommand(cmd);
+    int dns_files = executeCommand("if grep -qE '0.0.0.0|8.8.8.8' /tmp/resolv.conf.auto; then echo 1; else [ -e /tmp/resolv.conf.auto ] && echo 0 || echo 0; fi");
+    
+    DETECTION_NETWORK_LOG("cpin:%d,ifconfig eth1 ient state:%d,route internet:%d,dns_files:%d",i_ready,ifconfig_state,route_state,dns_files);
+
+    if(i_ready == 1){
+        if(ifconfig_state == 0 || route_state == 1){
+            DETECTION_NETWORK_LOG("huayi_AT_cli AT+QPOWD=1");
+            system("huayi_AT_cli AT+QPOWD=1");
+        }
+    }
+
+	if(dns_files == 0)
 		return 0;
 	system("huayi-reset lte4g parameter 1");
 	DETECTION_NETWORK_LOG("huayi-reset lte4g parameter 1");
 	return 1;
-	
-
-
 }
 
 
-int parse_pingmsg(char *ping , char *file)
-{
-	char cmd[CMD_STR_LEN] = {0};
-	char iccid[OPTION_STR_LEN] = { 0 };
-	char value[OPTION_STR_LEN] = {0};
-	int ret=0;
-	sprintf(cmd, "%s > %s", ping,file);
-	system(cmd);
-	sleep(1);
-	
-	memset(cmd, 0 ,sizeof(cmd));
-	sprintf(cmd, "cat %s | awk -F \" \" '{print $1}'", file);
-	get_cmd_result(cmd, value, sizeof(value));
-	if(strlen(value) >= 1)
-	{
-		DETECTION_NETWORK_LOG("value =  %s\n", value);
-		unlink(file);
-		return 1;
-	}
-	else
-		ret=DetectConfigurationOfSimAndDns();
-	DETECTION_NETWORK_LOG("value =  %s. network is not connect.\n",value);
 
-	return ret;
-}
 
 int simcard_internet_check(int count,char *host[], char *ifname)
 {	
 	char ping_addr[CMD_STR_LEN] = {0};
-	int i=1;
+	int i=1,max_delay = 0;
 
 	if ((NULL == host) || (strlen(host)<7))
 		return 0;
-	
 	while(i<count)
 	{
-		if (ifname == NULL)
-			sprintf(ping_addr,"ping -c 1 -W 1 %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ", host[i]);
-		else
-			sprintf(ping_addr,"ping -c 1 -W 1 %s -I %s | grep \"time=\" | awk -F \"=\" '{print $NF}' ", host[i],ifname);
-		if(parse_pingmsg(ping_addr, PING_FILE)==1)
+        max_delay = pingCheck(host[i]);
+		if (max_delay != -1){
+            DETECTION_NETWORK_LOG("max_delay =  %d. network is connect.\n",max_delay);
 			return 1;					
+		}
 		i++;
 	}
-	unlink(PING_FILE);
+    DetectConfigurationOfSimAndDns();
+	DETECTION_NETWORK_LOG("network is not error");
+    
 	return 0;
 
 

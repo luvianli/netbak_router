@@ -3,6 +3,7 @@ config mode	mode
 	option wan_type 'prior'
 	option simchange '0'
 	option detect_ip 'www.baidu.com'
+	option device_type '1' # 0 聚合,1 单卡
 
 config system system
 	option hostname	ROUTE
@@ -47,5 +48,11 @@ config wifi_sche wifi_sche
 
 config upgrade upgrade
 	option check_model ZC-GW03-2
+
+config server server
+	option interval 60000
+	option urldomain 'https://up.aiotzy.com/api/device/post/uploadData/industryRouting'
+	option clientlog   '1'
+
 	
 	

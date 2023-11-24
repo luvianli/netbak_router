@@ -13,7 +13,6 @@
 #include "dial4g.h"
 #include "huayi_uci_fun.h"
 
-
 int get_quectel_status(char *mobile_type, int *dial_link)
 {
 	char buf[128] = {0};
@@ -614,7 +613,7 @@ retry_signal:
 				Agent->lte_led_status = MODEM_NO_CONN;
 			}
 
-			//huayi_sms_agent_loop(&Agent);
+			huayi_sms_agent_loop(&Agent);
             //continue;
 		}
 		else
@@ -624,7 +623,7 @@ retry_signal:
 		atcmd_get_signal(&Agent->i_signal);
 		if ( Agent->i_signal <= 10 )
 			continue;
-		/*atcmd_get_qeng(qeng_state);
+		atcmd_get_qeng(qeng_state);
 		if(NULL != strstr(qeng_state, "LIMSRV") || NULL != strstr(qeng_state, "SEARCH"))
 		{
 			huayi_uci_get_int(PKG_STATUS_MODEM,"modem","dialresetcount", &dialresetcount);
@@ -634,6 +633,7 @@ retry_signal:
 				system("huayi-reset lte4g parameter 1");
 			}
 		}
+        /*
 		atcmd_get_cgact(&actstate);
 		if(0 == actstate)
 		{
@@ -669,20 +669,17 @@ retry_signal:
 					{
                         
                         DETECTION_NETWORK_LOG("cgpipaddr =  %s   wan_ipaddr = %s\n", cgpipaddr, wan_ipaddr);
-						AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
+						//AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
 						sleep(3);
 						system("huayi-reset small4gfunc");
 						ip_count = 0;
 					}
 					ip_count += 1;
 				}
-			}
-            else
-            {
-                DETECTION_NETWORK_LOG("cgpipaddr =  %s. 4G ipaddr is not ok.\n", cgpipaddr);
-            }
+			}else
 #endif
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+
 			huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 
 			if (!strcmp(wan_type,"rep4g"))
@@ -707,12 +704,15 @@ retry_signal:
 			{	
 				if(strlen(wan_ipaddr) > 7 && NULL == strstr(cgpipaddr, wan_ipaddr))
 				{
+                    DETECTION_NETWORK_LOG("cgpipaddr =  %s   wan_ipaddr = %s\n", cgpipaddr, wan_ipaddr);
 					AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
 					sleep(3);
 					system("huayi-reset small4gfunc");
 				}
 			}
-		}
+		}else{
+                DETECTION_NETWORK_LOG("cgpipaddr =  %s. 4G ipaddr is not ok.\n", cgpipaddr);
+            }
     }
 
 out:	

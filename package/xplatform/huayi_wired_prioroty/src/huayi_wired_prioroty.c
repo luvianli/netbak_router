@@ -27,6 +27,7 @@ int main(int argc,char *argv[])
 
 	char wan_type[OPTION_STR_LEN] = {0};
 	char net_ipv4[IPV4_STR_LEN] = {0};
+	char wired_gateway[IPV4_STR_LEN] = {0},cpe_gateway [IPV4_STR_LEN] = {0};
 
 	int wired_status = 0;
 	int cpe_status = 0;
@@ -36,7 +37,8 @@ int main(int argc,char *argv[])
 	int now_int_mode = INTERNET_UNDEFINE;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
-	
+	int count = 1;
+
 	while(1)
 	{
 		sleep(10);
@@ -58,30 +60,45 @@ int main(int argc,char *argv[])
 		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "device", cpe_device);
 		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
 		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
-
+        huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wired_gateway);
+        huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", cpe_gateway);
+        if(strlen(wired_gateway) <= strlen("0.0.0.0")){
+            wired_link = 0;
+        }
+        if(strstr(cpe_device,"eth1") == NULL || strlen(cpe_gateway) <= strlen("0.0.0.0"))
+		{
+            cpe_link = 0;
+        }
 		if(wired_link == 1 && cpe_link == 1)//同时在线时，使用有线优先策略
 		{
-			wired_status = internet_do_ping_detect(detectip, wired_device);
+			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
+			wired_status = first_internet_do_ping(detectip, wired_device,del_gateway);
 			if(wired_status == 0)
 			{
-				cpe_status = internet_do_ping_detect(detectip, cpe_device);
+                DETECTION_NETWORK_LOG("wired internet error");
+                huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", del_gateway);
+				cpe_status = first_internet_do_ping(detectip, cpe_device,del_gateway);
 				if(cpe_status == 0)//使用有线上网方式
 				{
+					DETECTION_NETWORK_LOG("cpe internet error");
 					sprintf(section,"wired");
 					now_int_mode = INTERNET_WIRED;
 					old_int_mode = INTERNET_UNDEFINE;
 				}else//使用4G上网方式
 				{
+				 	DETECTION_NETWORK_LOG("cpe internet");
 					sprintf(section,"cpe");
 					now_int_mode = INTERNET_4G;
 				}
 			}else//使用有线上网方式
 			{
+				DETECTION_NETWORK_LOG("wired internet");
 				sprintf(section,"wired");
 				now_int_mode = INTERNET_WIRED;
 			}
 
-		}else if(cpe_link == 1)//使用4G上网方式
+		}
+		else if(cpe_link == 1)//使用4G上网方式
 		{	
 			sprintf(section,"cpe");
 			now_int_mode = INTERNET_4G;
@@ -114,23 +131,36 @@ int main(int argc,char *argv[])
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "netmask", wan_netmask);
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "gateway", wan_gateway);
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "dns_server",temp_dns);
-			//printf("del_gateway = %s\n",del_gateway);
 			if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
 			{
 				sprintf(cmd_str,"route del default gw %s",del_gateway);
+				DETECTION_NETWORK_LOG("%s",cmd_str);
 				system(cmd_str);
 				//printf("cmd_str = %s\n",cmd_str);
+			}else{
+    			/*锟叫断碉拷前使锟矫碉拷默锟斤拷路锟斤拷锟角凤拷为0.0.0.0锟斤拷锟斤拷锟轿?0.0.0.0锟斤拷锟斤拷删锟斤拷*/
+    			memset(cmd_str,0,sizeof(cmd_str));
+    			memset(resultbuf, 0, sizeof(resultbuf));
+    			strcpy(cmd_str,"route | grep \"default\" | awk {'print $2'}");
+    			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+    			if(strstr(resultbuf, "0.0.0.0"))
+    			{
+    				system("route del default");
+    				sleep(1);
+    				system("route del default");
+                    DETECTION_NETWORK_LOG("route del default");
+    			}
+        	}
+			memset(cmd_str,0,sizeof(cmd_str));
+			sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
 
+			if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
+			{
 				memset(cmd_str,0,sizeof(cmd_str));
-				sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
-				get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
-
-				if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
-				{
-					memset(cmd_str,0,sizeof(cmd_str));
-					sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
-					system(cmd_str);
-				}
+				sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
+				DETECTION_NETWORK_LOG("%s",cmd_str);
+				system(cmd_str);
 			}
 
 			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
@@ -163,15 +193,43 @@ int main(int argc,char *argv[])
 					//printf("cmd_str = %s\n",cmd_str);
 					system(cmd_str);
 				}
+    			if(now_int_mode == INTERNET_4G){
+                   huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
+                      if(wired_link == 0){
+					  		system("ifup wan4g");
+                      }
+                    }else if(now_int_mode == INTERNET_WIRED){
+    					system("ifup wan");
+    					DETECTION_NETWORK_LOG("ifup wan");
+    				}
+		    }
 
-				if(now_int_mode == INTERNET_4G)
-				{
-					system("ifup wan4g");
-				}else if(now_int_mode == INTERNET_WIRED)
-				{
-					system("ifup wan");
-				}
-			}
+            memset(cmd_str,0,sizeof(cmd_str));
+            huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
+            sprintf(cmd_str, "route -n | grep eth1 | grep UG | grep %s | wc -l",cpe_gateway);
+            int route_state = 0;
+            count = (10 * 60);
+                DETECTION_NETWORK_LOG("route_state %d",route_state);
+                if(executeCommand(cmd_str) == 1 && wired_link == 1){
+                DETECTION_NETWORK_LOG("wirld link ==1&wirld internet error # sleep %d",count);
+                    while(count != 0){
+                       huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
+                        if(wired_link == 0){
+                            system("ifup wan4g");
+                            DETECTION_NETWORK_LOG(" break sleep");
+                            break;
+                        }
+                        route_state = executeCommand(cmd_str);
+                        if(route_state != 1){
+                            DETECTION_NETWORK_LOG("route_state %d",route_state);
+                            DETECTION_NETWORK_LOG("Route does not exist eth1");
+                            break;
+                        }
+                        sleep(1);
+                        count --;
+                    }
+                }
+
 
 			old_int_mode = now_int_mode;
 		}
