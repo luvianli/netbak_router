@@ -412,12 +412,10 @@ int isProductionMode(){
     huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
     if(mode == 0){
         while (isProcessRunning("ated")) {
-        printf("ated Process ated is running. Waiting for 3 seconds...\n");
-        CON_LOG("ated Process ated is running. Waiting for 3 seconds...\n");
+        CON_LOG("Process ated is running. Waiting for 3 seconds...\n");
         sleep(3);
         }
     }
-    printf("ated not start");
     CON_LOG("ated not start");
     return 1;
 
@@ -426,14 +424,14 @@ int isProductionMode(){
 
 
 void Production_testing_mode(){
-   int mode = 0 ;
+   int mode = 0;
    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
    if(mode == 0){
     CON_LOG("enter Production");
     set_siminfo();
+    CON_LOG("Information collection completed, waiting for production testing");
     check_network();
     do{
-        CON_LOG("Information collection completed, waiting for production testing");
         huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
         sleep(2);
     }while(mode == 0);

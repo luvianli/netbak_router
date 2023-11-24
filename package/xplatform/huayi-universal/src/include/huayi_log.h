@@ -102,6 +102,31 @@
 		}\
 	}while(0)
 
+#define SWITCH_SIM_LOG_SIN 1
+                                                
+#define SWITCH_SIM_LOG(format, args...) \
+                                                    do { \
+                                                        if (SWITCH_SIM_LOG_SIN) { \
+                                                            time_t rawtime; \
+                                                            struct tm *timeinfo; \
+                                                            char timeString[20]; \
+                                                            time(&rawtime); \
+                                                            timeinfo = localtime(&rawtime); \
+                                                            strftime(timeString, sizeof(timeString), "%Y.%m.%d-%H:%M:%S", timeinfo); \
+                                                            FILE *fp = fopen("/tmp/log/switch_sim_log", "a"); \
+                                                            if (fp) { \
+                                                                fprintf(fp, "[%s] " format "\n", timeString, ##args); \
+                                                                fclose(fp); \
+                                                            } \
+                                                        } \
+                                                        struct stat buf; \
+                                                        int size = stat("/tmp/log/switch_sim_log", &buf); \
+                                                        if (size > 5000) { \
+                                                            system("rm -fr /tmp/log/switch_sim_log"); \
+                                                        } \
+                                                    } while (0)
+
+
 
 #define CON_LOG_SIN 1
 #define CON_LOG(format, args...) \				

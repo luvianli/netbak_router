@@ -5,29 +5,66 @@
 
 #include "huayi_uci_fun.h"
 
+int SlmDial(int sim) {
+    int count = 0, registered_count = 0, signal = 0;
+    char resultbuf[OPTION_STR_LEN] = {0};
+    char cmd[TEMP_STR_LEN] = {0};
+    char print_to[TEMP_STR_LEN] = {0};
+    while (count < 20) {
+        get_cmd_result("lsusb", resultbuf, sizeof(resultbuf));
 
+        if (strstr(resultbuf, "2dee:") != NULL && rc4_SLM770U()) {
+            Atcmd("AT+SFUN=4", strlen("AT+SFUN=4"), 0);
+            
+            snprintf(cmd, TEMP_STR_LEN, "huayi_AT_cli AT+CGDCONT=1,\"IPV4V6\",\"%s\",\"\",0,0", "cmnet");
+            if (Atcmd(cmd, strlen(cmd), 0) == HUAYI_FALSE) {
+                return 0;
+            }
+
+            SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
+
+            while (registered_count < 60 && atcmd_get_slm_mobile_type() == HUAYI_FALSE) {
+                sleep(2);
+                registered_count += 2;
+                atcmd_get_signal_for_cloud(&signal);
+
+               if(!(-121 <= signal && signal <= -51)){
+                    SWITCH_SIM_LOG("The signal of the card being switched is too poor, with a signal value of: %d. Waiting for %d (up to 60) seconds", signal, registered_count);
+                }
+
+                SWITCH_SIM_LOG("The card you want to switch to is not registered and has been waiting for %d (up to 60) seconds", registered_count);
+            }
+
+            if (registered_count < 60) {
+                SWITCH_SIM_LOG("Registered for network, starting dialing");
+
+                Atcmd("AT+CGDATA=\"M-ETHER\",1", strlen("AT+CGDATA=\"M-ETHER\",1"), 0);
+                Atcmd("AT^SPTETHER=\"gadget\",\"on\",1", strlen("AT^SPTETHER=\"gadget\",\"on\",1"), 0);
+
+                SWITCH_SIM_LOG("===switch sim%d   OK===\n\n", sim);
+                return 1;
+            }else{
+                SWITCH_SIM_LOG("Waiting for timeout to exit card cutting");
+            }
+        }
+        strcpy(print_to,strstr(resultbuf, "2dee:") == NULL ? "Identifying module" : "Module encryption failed");
+        SWITCH_SIM_LOG("%s",print_to);
+
+
+        count += 1;
+        sleep(3);
+    }
+
+    return 0;
+}
 
 int main(int argc, char* argv[])
 {
 	int iRet;
     int lock = 0;
     int force = 1;
-    char resultbuf[OPTION_STR_LEN] = {0};
     pthread_t ptd;
     int iSel = atoi(argv[1]);
-    /*
-    if (iSel == 4){ 
-        if(argc > 2 && strcmp(argv[2], "ZYCPEadmin1235") == 0) {
-                // 处理密码正确的情况
-                printf("password correct , start switch——sim4\n");
-                CON_LOG("password correct , start switch——sim4\n");
-        } else {
-                printf("Switch card 4, please enter password; Format switch_Sim 4 [password]\n");
-                CON_LOG("Switch card 4, please enter password; Format switch_Sim 4 [password]");
-                return;
-        }
-    }
-    */
         system("devmem 0x10000060 32 0x4110441");
     if (argc >= 2 && iSel < 5) {
     	switch(iSel)
@@ -65,28 +102,9 @@ int main(int argc, char* argv[])
         system("gpio l 1 4000 0 0 0 4000");
         sleep(5);
         system("gpio l 1 0 4000 0 0 4000");
-    	sleep(10);
-        int count = 0;
-        while(count < 10){
-        get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
-        if(strstr(resultbuf,"2dee:") !=NULL){
-            if(rc4_SLM770U()){
-                const char* command = "huayi_AT_cli AT+SFUN=4;huayi_AT_cli AT+CGDCONT=1,\\\"IPV4V6\\\",\\\"cmnet\\\",\\\"\\\",0,0;huayi_AT_cli AT+CGDATA=\\\"M-ETHER\\\",1;huayi_AT_cli AT^SPTETHER=\\\"gadget\\\",\\\"on\\\",1";
-                system(command);
-                CON_LOG("===switch sim%s   OK===\n\n",argv[1]);
-              //  huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot",iSel);
-               // huayi_uci_commit(PKG_M_SYSTEM);
-                return 0;
-            }
-            CON_LOG("Card cutting activation failed");
-        }
-     
-        count += 1;
-		sleep(3);
-    }
-        
+        SlmDial(iSel);
     }else 
-        printf("Missing or missing parameters. Please check the command\n\n");
+        SWITCH_SIM_LOG("Missing or missing parameters. Please check the command\n\n");
 
     return 0;
 }

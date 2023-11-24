@@ -1,5 +1,6 @@
 config system system
 	option working_mode	1
+	option status	0
 	option simnum	3
 	option imei ''
 	option switchres 0
