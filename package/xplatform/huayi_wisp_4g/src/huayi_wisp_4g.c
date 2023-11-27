@@ -302,6 +302,7 @@ int main(int argc,char *argv[])
 	int cpe_link = 0;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
+	int simReady = 0;
 	delaycount = 1;
 	
 	while(1)
@@ -329,10 +330,19 @@ int main(int argc,char *argv[])
 		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
 		huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "ipv4", wisp_ipv4);
 		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4", wan4g_ipv4);
+		atcmd_get_cpin(&simReady);
+		if(simReady != 1 && cpe_link == 1)
+		{
+			    system("huayi_cmd set blend cpe_link 0");
+		}
+		if(strlen(wisp_ipv4) <= strlen("0.0.0.0")){
+            wired_link = 0;
+        }
+        if(strlen(wan4g_ipv4) <= strlen("0.0.0.0"))
+		{
+            cpe_link = 0;
+        }
 		if(wired_link == 0 && cpe_link == 0)
-			continue;
-		if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0
-			&& strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
 			continue;
 		memset(wisp_ipv4, 0, sizeof(wisp_ipv4));
 		memset(wan4g_ipv4, 0, sizeof(wan4g_ipv4));
