@@ -65,6 +65,8 @@ ReloadCmdStructure CmdTable[] = {
     {"switch_sim",HUAYI_MSG_SWITCH_CARD,0,"--Start the checker and save the configuration file usesiminfo"},
         
     {"check_internet_state",HUAYI_MSG_CHECK_INTERNET_STATE,0,"check_internet_state"},
+        
+    {"zry",HUAYI_MEIGE_MODULE_DECRYPTION_STATE,0,"check_internet_state"},
 
 };
 

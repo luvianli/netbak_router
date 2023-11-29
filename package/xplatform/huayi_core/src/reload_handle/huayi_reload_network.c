@@ -300,3 +300,13 @@ VTBool huayi_check_internet_state(void *arg,cJSON *input_root){
 }
 
 
+VTBool huayi_meige_module_decryption(void *arg,cJSON *input_root){
+
+    CLIENT_SOCKET_LOG("==");
+
+    rc4_SLM770U();
+    return VT_TRUE;
+}
+
+
+

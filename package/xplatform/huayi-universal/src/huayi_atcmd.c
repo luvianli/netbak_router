@@ -1596,7 +1596,7 @@ LTE_BOOL atcmd_get_slm_mobile_type(char *vlaue)
 		huayi_get_nth_value(2, infoValue, ',', vlaue, AT_VALUE_BUFF_LEN);
 		return LTE_TRUE;
     }
-	SWITCH_SIM_LOG("%s",ptr);
+	//SWITCH_SIM_LOG("%s",ptr);
 	return LTE_FALSE;
 }
 

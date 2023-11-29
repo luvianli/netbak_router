@@ -10,13 +10,15 @@ int SlmDial(int sim) {
     char resultbuf[OPTION_STR_LEN] = {0};
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
-    while (count < 20) {
+    while (count < 60) {
         get_cmd_result("lsusb", resultbuf, sizeof(resultbuf));
 
         if (strstr(resultbuf, "2dee:") != NULL && rc4_SLM770U()) {
+            SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) OK ===", sim,(sim < 2) ? "built-in" : "External");
+
             Atcmd("AT+SFUN=4", strlen("AT+SFUN=4"), 0);
             
-            snprintf(cmd, TEMP_STR_LEN, "huayi_AT_cli AT+CGDCONT=1,\"IPV4V6\",\"%s\",\"\",0,0", "cmnet");
+            snprintf(cmd, TEMP_STR_LEN, "AT+CGDCONT=1,\"IPV4V6\",\"%s\",\"\",0,0", "cmnet");
             if (Atcmd(cmd, strlen(cmd), 0) == HUAYI_FALSE) {
                 return 0;
             }
@@ -41,18 +43,17 @@ int SlmDial(int sim) {
                 Atcmd("AT+CGDATA=\"M-ETHER\",1", strlen("AT+CGDATA=\"M-ETHER\",1"), 0);
                 Atcmd("AT^SPTETHER=\"gadget\",\"on\",1", strlen("AT^SPTETHER=\"gadget\",\"on\",1"), 0);
 
-                SWITCH_SIM_LOG("===switch sim%d   OK===\n\n", sim);
+                SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim,(sim < 2) ? "built-in" : "External");
                 return 1;
             }else{
-                SWITCH_SIM_LOG("Waiting for timeout to exit card cutting");
+                SWITCH_SIM_LOG("Dialing failed, waiting for timeout to exit card switching");
+                return 0;
             }
         }
-        strcpy(print_to,strstr(resultbuf, "2dee:") == NULL ? "Identifying module" : "Module encryption failed");
-        SWITCH_SIM_LOG("%s",print_to);
-
-
-        count += 1;
+        count += 3;
         sleep(3);
+
+        SWITCH_SIM_LOG("%s",(strstr(resultbuf, "2dee:")) ? "Module not found, retrying, taking (up to 60)" : "Module encryption failed, retrying, taking (up to 60)");
     }
 
     return 0;
