@@ -126,6 +126,30 @@
                                                         } \
                                                     } while (0)
 
+#define GUI_LOG_SIN 1
+                                                                        
+#define GUI_LOG(format, args...) \
+                        do { \
+                            if (GUI_LOG_SIN) { \
+                                time_t rawtime; \
+                                struct tm *timeinfo; \
+                                char timeString[20]; \
+                                time(&rawtime); \
+                                timeinfo = localtime(&rawtime); \
+                                strftime(timeString, sizeof(timeString), "%Y.%m.%d-%H:%M:%S", timeinfo); \
+                                FILE *fp = fopen("/tmp/log/GUIlog", "a"); \
+                                if (fp) { \
+                                    fprintf(fp, "[%s] " format "\n", timeString, ##args); \
+                                    fclose(fp); \
+                                } \
+                            } \
+                            struct stat buf; \
+                            int size = stat("/tmp/log/GUIlog", &buf); \
+                            if (size > 5000) { \
+                                system("rm -fr /tmp/log/GUIlog"); \
+                            } \
+                        } while (0)
+
 
 
 #define CON_LOG_SIN 1

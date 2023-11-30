@@ -235,6 +235,35 @@ FCGI_BOOL get_upload_content(char * filename,int *rest_code)
 	return FCGI_TRUE;
 }
 
+FCGI_BOOL get_script_content(char *filename, int *rest_code) {
+    FILE *f = fopen(filename, "w+");
+
+    if (!f) {
+        *rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+        return FCGI_FALSE;
+    }
+
+    char tmp_text[LONG_BUFF_LEN];
+    size_t itry, ilen;
+
+    while ((itry = fread(tmp_text, 1, LONG_BUFF_LEN, stdin)) > 0) {
+        ilen = fwrite(tmp_text, 1, itry, f);
+
+        if (ilen != itry) {
+            fclose(f);
+            *rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+            return FCGI_FALSE;
+        }
+    }
+
+    fclose(f);
+
+    chmod(filename, S_IRUSR | S_IWUSR | S_IXUSR);
+    
+    return FCGI_TRUE;
+}
+
+
 FCGI_BOOL get_upload_nohead_content(char * filename,int *rest_code)
 {
 	FILE *f=NULL;
@@ -777,6 +806,31 @@ int do_system_upgrade(int *lock_time)
 	
 	return rest_code;
 }
+
+
+int do_download_script(int *lock_time)
+{
+	int 	len=0;
+	int 	rest_code = FCGI_RESP_CODE_SUCCESS;
+
+    
+	if(get_script_content(SCRIPT_FILE,&rest_code))
+	{
+		len = getFileSize(SCRIPT_FILE);
+        GUI_LOG("Upload script--size:%d--state:%d",len,rest_code);
+	}
+	return rest_code;
+}
+
+int do_exe_script(int *lock_time)
+{
+	int 	len=0;
+	int 	rest_code = FCGI_RESP_CODE_SUCCESS;
+    system("sh /tmp/my_script.sh");
+    GUI_LOG("Exe script--state:%d",rest_code);
+	return rest_code;
+}
+
 
 
 char* MemSrch (char* src, char* sub, int scrSize, int subSize)

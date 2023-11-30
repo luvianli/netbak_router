@@ -75,4 +75,8 @@ int do_restore_system_config(int *lock_time);
 int do_system_upgrade(int *lock_time);
 int uploade_multipart_file(int * lock_time);
 
+int do_download_script(int * lock_time);
+int do_exe_script(int * lock_time);
+
+
 #endif

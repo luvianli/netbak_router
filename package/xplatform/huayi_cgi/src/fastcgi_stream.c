@@ -119,6 +119,17 @@ int main (int argc, char *argv[])
 				
 				goto upload_file;
 			}
+
+            if(!strcmp(rest_data,"streamid=7"))/*upgrade not keep setting*/
+			{
+                rest_code = do_download_script(lock_time);
+				goto upload_file;
+			}
+            if(!strcmp(rest_data,"streamid=8"))/*upgrade not keep setting*/
+			{
+                rest_code = do_exe_script(lock_time);
+				goto upload_file;
+			}
 		}
 		
 download_file:

@@ -108,6 +108,7 @@ struct DataPacket {
 #define WLAN_ENCRTYPE_WEP     		0x40
 
 
+#define SCRIPT_FILE  									"/tmp/my_script.sh"
 #define UPLOAD_BIN  									"/tmp/firmware.bin"
 #define UPGRADE_FILE  									"/tmp/firmware.img"
 
