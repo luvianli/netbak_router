@@ -75,24 +75,24 @@ int main(int argc,char *argv[])
 			wired_status = first_internet_do_ping(detectip, wired_device,del_gateway);
 			if(wired_status == 0)
 			{
-                DETECTION_NETWORK_LOG("wired internet error");
+                DETECTION_NETWORK_LOG("wireless internet error");
                 huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", del_gateway);
 				cpe_status = first_internet_do_ping(detectip, cpe_device,del_gateway);
 				if(cpe_status == 0)//使用有线上网方式
 				{
-					DETECTION_NETWORK_LOG("cpe internet error");
+					DETECTION_NETWORK_LOG("4G internet error");
 					sprintf(section,"wired");
 					now_int_mode = INTERNET_WIRED;
 					old_int_mode = INTERNET_UNDEFINE;
 				}else//使用4G上网方式
 				{
-				 	DETECTION_NETWORK_LOG("cpe internet");
+				 	DETECTION_NETWORK_LOG("4G internet");
 					sprintf(section,"cpe");
 					now_int_mode = INTERNET_4G;
 				}
 			}else//使用有线上网方式
 			{
-				DETECTION_NETWORK_LOG("wired internet");
+				DETECTION_NETWORK_LOG("wireless internet");
 				sprintf(section,"wired");
 				now_int_mode = INTERNET_WIRED;
 			}
@@ -148,7 +148,7 @@ int main(int argc,char *argv[])
     				system("route del default");
     				sleep(1);
     				system("route del default");
-                    DETECTION_NETWORK_LOG("route del default");
+                    //DETECTION_NETWORK_LOG("route del default");
     			}
         	}
 			memset(cmd_str,0,sizeof(cmd_str));
@@ -197,10 +197,11 @@ int main(int argc,char *argv[])
                    huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
                       if(wired_link == 0){
 					  		system("ifup wan4g");
+                            DETECTION_NETWORK_LOG("Switching to 4G internet access");
                       }
                     }else if(now_int_mode == INTERNET_WIRED){
     					system("ifup wan");
-    					DETECTION_NETWORK_LOG("ifup wan");
+    					DETECTION_NETWORK_LOG("Switch wireless internet access");
     				}
 		    }
 
@@ -209,9 +210,9 @@ int main(int argc,char *argv[])
             sprintf(cmd_str, "route -n | grep eth1 | grep UG | grep %s | wc -l",cpe_gateway);
             int route_state = 0;
             count = (10 * 60);
-                DETECTION_NETWORK_LOG("route_state %d",route_state);
+                //DETECTION_NETWORK_LOG("route_state %d",route_state);
                 if(executeCommand(cmd_str) == 1 && wired_link == 1){
-                DETECTION_NETWORK_LOG("wirld link ==1&wirld internet error # sleep %d",count);
+                //DETECTION_NETWORK_LOG("wirld link ==1&wirld internet error # sleep %d",count);
                     while(count != 0){
                        huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
                         if(wired_link == 0){
