@@ -662,13 +662,12 @@ retry_signal:
 				snprintf(cmd, CMD_STR_LEN,"echo 'cgpipaddr =  %s   cpe_ipaddr = %s' >> /tmp/test.txt", cgpipaddr, wired_ipaddr);	
 				system(cmd);
                 
-                DETECTION_NETWORK_LOG("cgpipaddr =  %s   cpe_ipaddr = %s\n", cgpipaddr, wired_ipaddr);
 				if(strlen(wired_ipaddr) > 7 && strstr(cgpipaddr, wired_ipaddr) == NULL)
 				{
 					if(2 == ip_count)
 					{
                         
-                        DETECTION_NETWORK_LOG("cgpipaddr =  %s   wan_ipaddr = %s\n", cgpipaddr, wan_ipaddr);
+                        DETECTION_NETWORK_LOG("Activate mobile network data connection,cgpipaddr =  %s   wan_ipaddr = %s\n", cgpipaddr, wan_ipaddr);
 						//AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
 						sleep(3);
 						system("huayi-reset small4gfunc");
@@ -704,7 +703,7 @@ retry_signal:
 			{	
 				if(strlen(wan_ipaddr) > 7 && NULL == strstr(cgpipaddr, wan_ipaddr))
 				{
-                    DETECTION_NETWORK_LOG("cgpipaddr =  %s   wan_ipaddr = %s\n", cgpipaddr, wan_ipaddr);
+                    DETECTION_NETWORK_LOG("Activate mobile network data connection,cgpipaddr =  %s   wan_ipaddr = %s\n", cgpipaddr, wan_ipaddr);
 					AtcmdSendDelay("at+cgact=1,1", strlen("at+cgact=1,1"), 0);
 					sleep(3);
 					system("huayi-reset small4gfunc");

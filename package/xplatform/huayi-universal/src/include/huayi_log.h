@@ -104,6 +104,36 @@
 	}while(0)
 
 
+
+
+
+#define REMOVE_OLDEST_LOG(filename) \
+                do { \
+                    FILE *fp = fopen(filename, "r"); \
+                    if (fp) { \
+                        fseek(fp, 0, SEEK_END); \
+                        long file_size = ftell(fp); \
+                        fclose(fp); \
+                        fp = fopen(filename, "r"); \
+                        if (fp) { \
+                            char *file_contents = (char *)malloc(file_size); \
+                            if (file_contents) { \
+                                fread(file_contents, 1, file_size, fp); \
+                                fclose(fp); \
+                                char *newline_pos = strchr(file_contents, '\n'); \
+                                if (newline_pos) { \
+                                    fp = fopen(filename, "w"); \
+                                    if (fp) { \
+                                        fwrite(newline_pos + 1, 1, file_size - (newline_pos - file_contents) - 1, fp); \
+                                        fclose(fp); \
+                                    } \
+                                } \
+                                free(file_contents); \
+                            } \
+                        } \
+                    } \
+                } while (0)
+
 #define CON_LOG_SIN 1
 #define CON_LOG(format, args...) \				
 						do{ \
@@ -119,33 +149,34 @@
 							} \
 							struct stat buf;\
 							int size=stat("/tmp/log/con_log", &buf);\
-							if(size > 20000)\
+							if(size > 2024 )\
 							{\
 								system("rm -fr /tmp/log/con_log");\
 							}\
 						}while(0)
 
+
 #define DETECTION_NETWORK_LOG(format, args...) \
-					do{ \
-						if(CON_LOG_SIN) \
-						{\
-							FILE *fp = fopen("/tmp/log/detection_network_log", "a"); \
-							if(fp)\
-							{\
-								time_t now = time(NULL);\
-								struct tm *t = localtime(&now);\
-								fprintf(fp, "time:%d:%d:%d##%s@%s,%d] " format "\n", \
-								t->tm_hour, t->tm_min, t->tm_sec,__FILE__, __func__,__LINE__, ##args ); \
-							}\
-							fclose(fp);\
-							struct stat buf;\
-							int size=stat("/tmp/log/detection_network_log", &buf);\
-							if(size > 20000)\
-							{\
-								system("rm -fr /tmp/log/detection_network_log");\
-							}\
-							}\
-					}while(0)
+                        do { \
+                            if (CON_LOG_SIN) { \
+                                FILE *fp = fopen("/tmp/log/detection_network_log", "a"); \
+                                if (fp) { \
+                                    time_t now = time(NULL); \
+                                    struct tm *t = localtime(&now); \
+                                    fprintf(fp, "%d/%02d/%02d %02d:%02d:%02d " format "\n", \
+                                            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, \
+                                            t->tm_hour, t->tm_min, t->tm_sec, ##args); \
+                                    fclose(fp); \
+                                    struct stat buf; \
+                                    if (stat("/tmp/log/detection_network_log", &buf) == 0) { \
+                                        if (buf.st_size > (2 * 1024 * 1024)) { \
+                                            REMOVE_OLDEST_LOG("/tmp/log/detection_network_log"); \
+                                        } \
+                                    } \
+                                } \
+                            } \
+                        } while (0)
+
 #define WISP_NETWORK_LOG_SIN 1
 #define WISP_NETWORK_LOG(format, args...) \
                             do { \
