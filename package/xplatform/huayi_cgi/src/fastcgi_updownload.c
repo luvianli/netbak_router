@@ -560,7 +560,7 @@ int check_system_firmware(char *imagefile, int offset, int len)
     memcpy (hdr, ptr, sizeof(image_header_t));
 	
 	huayi_uci_get_int(PKG_SYSTEM,"global","upgrade_no_check",&upgrade_no_check);
-    upgrade_no_check =1;
+    //upgrade_no_check =1;
 	if(!upgrade_no_check)
 	{
 		huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
