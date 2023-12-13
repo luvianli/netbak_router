@@ -10,11 +10,13 @@ int SlmDial(int sim) {
     char resultbuf[OPTION_STR_LEN] = {0};
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
+    strcpy(print_to,(sim < 2) ? "built-in" : "External");
+    SWITCH_SIM_LOG("gpio ok");
     while (count < 60) {
         get_cmd_result("lsusb", resultbuf, sizeof(resultbuf));
 
         if (strstr(resultbuf, "2dee:") != NULL && rc4_SLM770U()) {
-            SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) OK ===", sim,(sim < 2) ? "built-in" : "External");
+            SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) OK ===", sim,print_to);
 
             Atcmd("AT+SFUN=4", strlen("AT+SFUN=4"), 0);
             
@@ -33,8 +35,9 @@ int SlmDial(int sim) {
                if(!(-121 <= signal && signal <= -51)){
                     SWITCH_SIM_LOG("The signal of the card being switched is too poor, with a signal value of: %d. Waiting for %d (up to 60) seconds", signal, registered_count);
                 }
-
-                SWITCH_SIM_LOG("The card you want to switch to is not registered and has been waiting for %d (up to 60) seconds", registered_count);
+                else{
+                    SWITCH_SIM_LOG("The card you want to switch to is not registered and has been waiting for %d (up to 60) seconds", registered_count);
+                }
             }
 
             if (registered_count < 60) {
@@ -43,7 +46,7 @@ int SlmDial(int sim) {
                 Atcmd("AT+CGDATA=\"M-ETHER\",1", strlen("AT+CGDATA=\"M-ETHER\",1"), 0);
                 Atcmd("AT^SPTETHER=\"gadget\",\"on\",1", strlen("AT^SPTETHER=\"gadget\",\"on\",1"), 0);
 
-                SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim,(sim < 2) ? "built-in" : "External");
+                SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim,print_to);
                 return 1;
             }else{
                 SWITCH_SIM_LOG("Dialing failed, waiting for timeout to exit card switching");
@@ -53,7 +56,12 @@ int SlmDial(int sim) {
         count += 3;
         sleep(3);
 
-        SWITCH_SIM_LOG("%s",(strstr(resultbuf, "2dee:")) ? "Module not found, retrying, taking (up to 60)" : "Module encryption failed, retrying, taking (up to 60)");
+        if (strstr(resultbuf, "2dee:")){
+            SWITCH_SIM_LOG("Module not found, retrying, taking (up to 60)");
+        }else{
+            SWITCH_SIM_LOG("Module encryption failed, retrying, taking (up to 60)");
+        }
+        //SWITCH_SIM_LOG("%s",(strstr(resultbuf, "2dee:")) ? "Module not found, retrying, taking (up to 60)" : "Module encryption failed, retrying, taking (up to 60)");
     }
 
     return 0;
