@@ -231,7 +231,8 @@ void check_network()
 
     isProductionMode();
 
-    huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+    //huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+    simn = 2;
     sprintf(cmd, "switch_sim %d", simn);
     system(cmd);
     sleep(25);
@@ -239,7 +240,7 @@ void check_network()
 
 
     
-	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+	//huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
 cretry1:
 	memset(check_ip, 0, OPTION_STR_LEN);
 	huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
@@ -256,7 +257,7 @@ cretry1:
 		if(count <= 10)
 			goto cretry1;
 	}
-	count = 0;
+/*	count = 0;
 
 	CON_LOG("sim%d ping bu tong %s",simn,check_ip);
 check_net:
@@ -302,6 +303,7 @@ cretry2:
 		count = 0;
         sleep(1);
 	}
+	*/
     CON_LOG("All cards network error");
     sleep(15);
     system("reboot");
