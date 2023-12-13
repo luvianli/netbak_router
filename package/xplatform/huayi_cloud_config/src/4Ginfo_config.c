@@ -94,7 +94,9 @@ void huayi_set_4g_config(cJSON *response_root)
 	{
 		return;
 	}
+/*
     huayi_uci_get_str(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
+
     if(simSwitch == 2 && !enable){
         CON_LOG("external_card_enable=0,switch 3 error");
         return;
@@ -106,6 +108,7 @@ void huayi_set_4g_config(cJSON *response_root)
     system(cmd);
     sleep(30);
     save_useing_siminfo(simSwitch);
+*/
 	return ;
 }
 

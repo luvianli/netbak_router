@@ -77,7 +77,8 @@ int main(int argc, char* argv[])
         system("devmem 0x10000060 32 0x4110441");
     if (argc >= 2 && iSel < 5) {
     	switch(iSel)
-    	{
+    	{   
+            /*
     	   case 0 :
                  printf("switch sim2;0 Set LOW=2.7V & 2 Set High=3.3V" );
                  system("gpio l 0 0 4000 0 0 4000");
@@ -88,7 +89,7 @@ int main(int argc, char* argv[])
     			system("gpio l 0 0 4000 0 0 4000");
                 system("gpio l 2 4000 0 0 0 4000");
     		  break;
-              /*
+           
     	   case 2 :
     		    printf("switch sim3;0 Set High=3.3V & 2 Set High=3.3V" );
                 system("gpio l 0 0 4000 0 0 4000");
@@ -103,9 +104,13 @@ int main(int argc, char* argv[])
 
               break;
     		default :
+                system("gpio l 0 4000 0 0 0 4000");
+                system("gpio l 2 4000 0 0 0 4000");
+                /*
     		    printf("switch sim1;0 Set High=3.3V & 2 Set LOW=2.7V\n" );
     			system("gpio l 0 0 4000 0 0 4000");
                 system("gpio l 2 4000 0 0 0 4000");
+                */
     		  break;
     	}
         system("gpio l 1 4000 0 0 0 4000");
