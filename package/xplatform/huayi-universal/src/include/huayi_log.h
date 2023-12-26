@@ -258,7 +258,53 @@
                                 } \
                             } while (0)
 
+#define REMOVE_OLDEST_LOG(filename) \
+										do { \
+											FILE *fp = fopen(filename, "r"); \
+											if (fp) { \
+												fseek(fp, 0, SEEK_END); \
+												long file_size = ftell(fp); \
+												fclose(fp); \
+												fp = fopen(filename, "r"); \
+												if (fp) { \
+													char *file_contents = (char *)malloc(file_size); \
+													if (file_contents) { \
+														fread(file_contents, 1, file_size, fp); \
+														fclose(fp); \
+														char *newline_pos = strchr(file_contents, '\n'); \
+														if (newline_pos) { \
+															fp = fopen(filename, "w"); \
+															if (fp) { \
+																fwrite(newline_pos + 1, 1, file_size - (newline_pos - file_contents) - 1, fp); \
+																fclose(fp); \
+															} \
+														} \
+														free(file_contents); \
+													} \
+												} \
+											} \
+										} while (0)
 
 
+#define UO_LOG(format, args...) \
+                        do { \
+                            if (1) { \
+                                FILE *fp = fopen("/tmp/log/uo_log", "a"); \
+                                if (fp) { \
+                                    time_t now = time(NULL); \
+                                    struct tm *t = localtime(&now); \
+                                    fprintf(fp, "%d/%02d/%02d %02d:%02d:%02d " format "\n", \
+                                            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, \
+                                            t->tm_hour, t->tm_min, t->tm_sec, ##args); \
+                                    fclose(fp); \
+                                    struct stat buf; \
+                                    if (stat("/tmp/log/uo_log", &buf) == 0) { \
+                                        if (buf.st_size > (2 * 1024 * 1024)) { \
+                                            REMOVE_OLDEST_LOG("/tmp/log/uo_log"); \
+                                        } \
+                                    } \
+                                } \
+                            } \
+                        } while (0)
 
 #endif /* __HUAYI_LOG_H__ */

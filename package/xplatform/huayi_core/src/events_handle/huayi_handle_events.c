@@ -842,7 +842,7 @@ void button_wps_timeout(void* arg)
 void run_gpio_function(struct VcoreAgent *Agent, unsigned char gpio_id,unsigned char status)
 {
 	char echo_str[128] = {0};
-	int sys_mode = 0, uptime = 0;
+	int sys_mode = 0, uptime = 0, mode = 0;
 	int reset_buttonid = -1, wps_buttonid = -1;
 	int wlan_2g_disabled = 1, wlan_5g_disabled = 1;
 	#if defined(CONFIG_HUAYI_BUTTON_WIFI_SUPPORT)
@@ -864,6 +864,14 @@ void run_gpio_function(struct VcoreAgent *Agent, unsigned char gpio_id,unsigned 
 	#if defined(CONFIG_HUAYI_BUTTON_RESET_SUPPORT)
 	if(reset_buttonid == gpio_id)
  	{
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+		if (!mode)
+		{
+			UO_LOG("Production testing mode. Key recognized but not reset");
+			/*for product test*/
+			system("touch /tmp/reset_test && echo 'Production testing mode. Key recognized but not reset'");
+			return;
+		}
 		if(reset_buttonid == wps_buttonid)// Reset and WPS key multiplexing
 		{
 			huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","uptime",&uptime);

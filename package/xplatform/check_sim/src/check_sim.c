@@ -12,6 +12,9 @@
 #include <signal.h>
 #include <pthread.h>
 #include <wait.h>
+void switch_sim(int i, int gpio);
+
+int isProductionMode();
 
 
 void save_siminfo(int i, int gpio)
@@ -147,69 +150,59 @@ retry_getoperator:	  //尽最大可能取到operator info
 
 	return;
 }
-void appendLast6Digits(char *target, const char *source, int maxTargetSize) {
-    int sourceLength = strlen(source);
-    if (sourceLength < 6) {
-        printf("IMEI号长度不足6位，无法截取。\n");
-        return;
-    }
 
-    strncat(target, source + sourceLength - 6, maxTargetSize - strlen(target) - 1);
 
-    if (strlen(target) >= maxTargetSize - 1) {
-        printf("目标字符串空间不足，无法追加。\n");
-    }
+void switch_sim(int i, int gpio) {
+    char tmp[OPTION_STR_LEN];
+
+    isProductionMode();
+
+    memset(tmp, 0, OPTION_STR_LEN);
+    snprintf(tmp, OPTION_STR_LEN, "switch_sim %d", i);
+    system(tmp);
+
+    save_siminfo(i, gpio);
 }
 
 
-void set_siminfo()
-{
-	int simnum = 0, usegpio = 0, gpio = 0;
-	char cmd[OPTION_STR_LEN] = {0},InitialSim[OPTION_STR_LEN] = {0};
-	char tmp[OPTION_STR_LEN] = {0};
-	int i = 0, flag = 0, ret;
-	char lte_value[OPTION_STR_LEN] = {0},iccid_value[OPTION_STR_LEN] = {0};
-	int i_ready = 0, count = 0;
-    char def_ssid[OPTION_STR_LEN] = {0};
-    char imei_6[RESULT_STR_LEN] = {0};
+void set_siminfo() {
+    int i, simnum, usegpio, gpio, def_gpio, card_slot;
+    char cmd[OPTION_STR_LEN] = {0};
+    char lte_value[OPTION_STR_LEN] = {0};
 
+    // Wait until atcmd is true
+    while (LTE_TRUE != atcmd_check()) {
+        sleep(1);
+    }
 
-	while ( LTE_TRUE != atcmd_check() )
-	{
-		sleep(1);
-	}
-	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", &usegpio);
-	memset(lte_value,0,OPTION_STR_LEN);
-	atcmd_get_EC20_imei(lte_value);
-	if(strlen(lte_value) < 5)
-	{
-		strcpy(lte_value, "");
-	}
-	huayi_uci_set_str(PKG_M_SYSTEM, "system", "imei", lte_value);
-	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+    huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", &usegpio);
+    atcmd_get_EC20_imei(lte_value);
 
-	for(i = 0; i < simnum; i++ )
-	{
-		sprintf(cmd, "sim%d", i);
-		huayi_uci_get_int(PKG_M_SYSTEM, cmd, "gpio", &gpio);
-        
+    if (strlen(lte_value) < 5) {
+        strcpy(lte_value, "");
+    }
 
-        memset(lte_value,0,sizeof(lte_value));
-        huayi_uci_get_str(PKG_M_SYSTEM,cmd, "iccid",lte_value);
-        if(strlen(lte_value) < 5){
+    huayi_uci_set_str(PKG_M_SYSTEM, "system", "imei", lte_value);
+    huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+    huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &card_slot);
+	huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
 
-           isProductionMode();
+    for (i = 0; i < simnum; i++) {
+        sprintf(cmd, "sim%d", i);
+        huayi_uci_get_int(PKG_M_SYSTEM, cmd, "gpio", &gpio);
 
-    		memset(tmp, 0, OPTION_STR_LEN);
-    		sprintf(tmp, "switch_sim %d", i);
-    		system(tmp);
-    		save_siminfo(i, gpio);
-        }else{
-        CON_LOG("Sim information already exists");
-        }
-		
-	}
-	return;
+        memset(lte_value, 0, sizeof(lte_value));
+
+        if (strlen(lte_value) < 5 && card_slot != i) {
+            switch_sim(i, gpio);
+        } else if (card_slot != i) {
+            CON_LOG("Sim%d information already exists");
+        } else{
+			def_gpio=gpio;
+		}
+    }
+
+    switch_sim(card_slot, def_gpio);
 }
 
 
@@ -427,16 +420,17 @@ void Production_testing_mode(){
    int mode = 0;
    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
    if(mode == 0){
-    CON_LOG("enter Production");
+    CON_LOG("Start production testing");
     set_siminfo();
     CON_LOG("Information collection completed, waiting for production testing");
-    check_network();
     do{
         huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
         sleep(2);
     }while(mode == 0);
+    CON_LOG("End production testing");
+   }else{
+    CON_LOG("Start working mode");
    }
-    CON_LOG("exit Production");
 
 }
 

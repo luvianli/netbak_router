@@ -6,7 +6,7 @@
 #include "huayi_uci_fun.h"
 
 int SlmDial(int sim) {
-    int count = 0, registered_count = 0, signal = 0;
+    int count = 0, registered_count = 0, signal = 0, mode = 0;
     char resultbuf[OPTION_STR_LEN] = {0};
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
@@ -17,41 +17,46 @@ int SlmDial(int sim) {
 
         if (strstr(resultbuf, "2dee:") != NULL && rc4_SLM770U()) {
             SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) OK ===", sim,print_to);
+			huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+			if(mode){
+	            Atcmd("AT+SFUN=4", strlen("AT+SFUN=4"), 0);
+	            
+	            snprintf(cmd, TEMP_STR_LEN, "AT+CGDCONT=1,\"IPV4V6\",\"%s\",\"\",0,0", "cmnet");
+	            if (Atcmd(cmd, strlen(cmd), 0) == HUAYI_FALSE) {
+	                return 0;
+	            }
 
-            Atcmd("AT+SFUN=4", strlen("AT+SFUN=4"), 0);
-            
-            snprintf(cmd, TEMP_STR_LEN, "AT+CGDCONT=1,\"IPV4V6\",\"%s\",\"\",0,0", "cmnet");
-            if (Atcmd(cmd, strlen(cmd), 0) == HUAYI_FALSE) {
-                return 0;
-            }
+	            SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
 
-            SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
+	            while (registered_count < 60 && atcmd_get_slm_mobile_type() == HUAYI_FALSE) {
+	                sleep(2);
+	                registered_count += 2;
+	                atcmd_get_signal_for_cloud(&signal);
 
-            while (registered_count < 60 && atcmd_get_slm_mobile_type() == HUAYI_FALSE) {
-                sleep(2);
-                registered_count += 2;
-                atcmd_get_signal_for_cloud(&signal);
+	               if(!(-121 <= signal && signal <= -51)){
+	                    SWITCH_SIM_LOG("The signal of the card being switched is too poor, with a signal value of: %d. Waiting for %d (up to 60) seconds", signal, registered_count);
+	                }
+	                else{
+	                    SWITCH_SIM_LOG("The card you want to switch to is not registered and has been waiting for %d (up to 60) seconds", registered_count);
+	                }
+	            }
 
-               if(!(-121 <= signal && signal <= -51)){
-                    SWITCH_SIM_LOG("The signal of the card being switched is too poor, with a signal value of: %d. Waiting for %d (up to 60) seconds", signal, registered_count);
-                }
-                else{
-                    SWITCH_SIM_LOG("The card you want to switch to is not registered and has been waiting for %d (up to 60) seconds", registered_count);
-                }
-            }
+	            if (registered_count < 60) {
+	                SWITCH_SIM_LOG("Registered for network, starting dialing");
 
-            if (registered_count < 60) {
-                SWITCH_SIM_LOG("Registered for network, starting dialing");
+	                Atcmd("AT+CGDATA=\"M-ETHER\",1", strlen("AT+CGDATA=\"M-ETHER\",1"), 0);
+	                Atcmd("AT^SPTETHER=\"gadget\",\"on\",1", strlen("AT^SPTETHER=\"gadget\",\"on\",1"), 0);
 
-                Atcmd("AT+CGDATA=\"M-ETHER\",1", strlen("AT+CGDATA=\"M-ETHER\",1"), 0);
-                Atcmd("AT^SPTETHER=\"gadget\",\"on\",1", strlen("AT^SPTETHER=\"gadget\",\"on\",1"), 0);
-
-                SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim,print_to);
-                return 1;
-            }else{
-                SWITCH_SIM_LOG("Dialing failed, waiting for timeout to exit card switching");
-                return 0;
-            }
+	                SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim,print_to);
+	                return 1;
+	            }else{
+	                SWITCH_SIM_LOG("Dialing failed, waiting for timeout to exit card switching");
+	                return 0;
+	            }
+			}else{
+				SWITCH_SIM_LOG("Production testing skipping dialing");
+				return 0;
+			}
         }
         count += 3;
         sleep(3);
