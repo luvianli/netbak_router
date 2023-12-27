@@ -1360,6 +1360,7 @@ void save_useing_siminfo(int i)
 	int i_ready = 0, i_signal = 0;
 	char lte_value[OPTION_STR_LEN] = {0};
     int AsciiNum[22], j;
+	int signal = 0;
 
 	sprintf(cmd, "sim%d", i);
     /*
@@ -1382,6 +1383,7 @@ retry_getccid:
 	}
     count = 0;
 	huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "iccid", lte_value);
+	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
 
 
 retry_getlac:     //尽最大可能取到LAC
@@ -1396,6 +1398,7 @@ retry_getlac:     //尽最大可能取到LAC
             goto retry_getlac;
     }
     huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "lac", lte_value);
+	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "lac", lte_value);
     count = 0;
 
 retry_getci:      //尽最大可能取到ci
@@ -1410,6 +1413,7 @@ retry_getci:      //尽最大可能取到ci
             goto retry_getci;
     }
     huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "ci", lte_value);
+	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "ci", lte_value);
     count = 0;
 
 
@@ -1440,7 +1444,13 @@ retry_getoperator:    //尽最大可能取到operator info
             goto retry_getoperator;
     }
     huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "operator", netoperator);
+	huayi_uci_set_int(PKG_M_SYSTEM, cmd, "operator", netoperator);
     count = 0;
+
+	
+	atcmd_get_signal(&signal);
+	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "signal", signal);
+	huayi_uci_set_int(PKG_M_SYSTEM, cmd, "signal", signal);
 
 
 
