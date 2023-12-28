@@ -2373,6 +2373,7 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 	int rep_status = 0, rep_24g_status = 0, rep_58g_status = 0;
 	char section[OPTION_STR_LEN] = {0};
 	char apclissid[OPTION_STR_LEN] = {0};
+	char product_name[OPTION_STR_LEN] = {0};
 	
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
@@ -2461,6 +2462,9 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 	}
 	cJSON_AddStringToObject(result_root,"wifi_rssi",lte_value);	
 	cJSON_AddStringToObject(result_root,"apcli_ssid", apclissid);
+
+	huayi_uci_get_str(PKG_ABOUT,"about_system","product_name",product_name);
+	cJSON_AddStringToObject(result_root,"product_name",product_name);
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
 	return FCGI_RESP_CODE_SUCCESS;
