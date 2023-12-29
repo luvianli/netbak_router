@@ -6,7 +6,7 @@
 #include "huayi_uci_fun.h"
 
 int SlmDial(int sim) {
-    int count = 0, registered_count = 0, signal = 0, mode = 0;
+    int count = 0, registered_count = 0, signal = 0;
     char resultbuf[OPTION_STR_LEN] = {0};
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
@@ -17,15 +17,16 @@ int SlmDial(int sim) {
 
         if (strstr(resultbuf, "2dee:") != NULL && rc4_SLM770U()) {
             SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) OK ===", sim,print_to);
-			huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
-			if(mode){
-	            Atcmd("AT+SFUN=4", strlen("AT+SFUN=4"), 0);
-	            
-	            snprintf(cmd, TEMP_STR_LEN, "AT+CGDCONT=1,\"IPV4V6\",\"%s\",\"\",0,0", "cmnet");
-	            if (Atcmd(cmd, strlen(cmd), 0) == HUAYI_FALSE) {
-	                return 0;
-	            }
 
+            Atcmd("AT+SFUN=4", strlen("AT+SFUN=4"), 0);
+            
+            snprintf(cmd, TEMP_STR_LEN, "AT+CGDCONT=1,\"IPV4V6\",\"%s\",\"\",0,0", "cmnet");
+            if (Atcmd(cmd, strlen(cmd), 0) == HUAYI_FALSE) {
+                return 0;
+            }
+			int mode = 0;
+   			huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+			if(mode == 1){
 	            SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
 
 	            while (registered_count < 60 && atcmd_get_slm_mobile_type() == HUAYI_FALSE) {
@@ -54,14 +55,14 @@ int SlmDial(int sim) {
 	                return 0;
 	            }
 			}else{
-				SWITCH_SIM_LOG("Production testing skipping dialing");
-				return 0;
+				SWITCH_SIM_LOG("Production testing mode skip dialing");
+				return 1;
 			}
         }
         count += 3;
         sleep(3);
 
-        if (strstr(resultbuf, "2dee:")){
+        if (strstr(resultbuf, "2dee:") == NULL){
             SWITCH_SIM_LOG("Module not found, retrying, taking (up to 60)");
         }else{
             SWITCH_SIM_LOG("Module encryption failed, retrying, taking (up to 60)");

@@ -15,6 +15,7 @@
 void switch_sim(int i, int gpio);
 
 int isProductionMode();
+void save_siminfo(int i, int gpio);
 
 
 void save_siminfo(int i, int gpio)
@@ -157,7 +158,6 @@ void switch_sim(int i, int gpio) {
 
     isProductionMode();
 
-    memset(tmp, 0, OPTION_STR_LEN);
     snprintf(tmp, OPTION_STR_LEN, "switch_sim %d", i);
     system(tmp);
 
@@ -185,15 +185,17 @@ void set_siminfo() {
     huayi_uci_set_str(PKG_M_SYSTEM, "system", "imei", lte_value);
     huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
     huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &card_slot);
-	huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
+
 
     for (i = 0; i < simnum; i++) {
         sprintf(cmd, "sim%d", i);
-        huayi_uci_get_int(PKG_M_SYSTEM, cmd, "gpio", &gpio);
-
         memset(lte_value, 0, sizeof(lte_value));
+		huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
+		huayi_uci_get_int(PKG_M_SYSTEM, cmd, "gpio", &gpio);
+		
 
-        if (strlen(lte_value) < 5 && card_slot != i) {
+        if (strlen(lte_value) < 5 && card_slot != i && i != 2) {
+			SWITCH_SIM_LOG("sim%d start switch card", i);
             switch_sim(i, gpio);
         } else if (card_slot != i) {
             CON_LOG("Sim%d information already exists");
@@ -258,7 +260,7 @@ check_net:
 	{
 		if(i == simn)
 			continue;
-        //ÍâÖÃ¿¨
+        //å¤–ç½®å¡
         if(i == 2){
             huayi_uci_get_int(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
             if(!enable){
@@ -301,6 +303,7 @@ cretry2:
 
 	return;
 }
+
 
 void init_cloud_client()
 {
