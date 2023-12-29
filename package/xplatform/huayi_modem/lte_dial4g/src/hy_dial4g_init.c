@@ -104,7 +104,7 @@ void huayi_to_ext_simcard()
 	return;
 }
 
-void module_init()
+void meige_module_init()
 {
 	char resultbuf[OPTION_STR_LEN] = {0};
 	int ret = 0, count = 0;
@@ -114,27 +114,10 @@ void module_init()
         CON_LOG("Process ated is running. Waiting for 3 seconds...\n");
         sleep(3);
     }
-
-
-
     
 #if defined(CONFIG_HUAYI_MODULE_SUPPORT)
-        char cmd[CMD_STR_LEN] = {0};
-        //system("devmem 0x10000060 32 0x4110441");
-        //sleep(2);
-        //snprintf(cmd, sizeof(cmd), "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_MODULE_GPIO_NUM);
-        //CON_LOG("%s",cmd);
-        //system("devmem 0x10000060 32 0x4110441");
-        //	/usr/bin/gpio l 1 0 4000 0 0 4000
-       // system("devmem 0x10000060 32 0x4110441");
-        system("gpio l 1 4000 0 0 0 4000");
-        sleep(5);
-        system("gpio l 1 0 4000 0 0 4000");
-    	sleep(10);
-        
-        //sleep(10);
+		system("gpio l 1 4000 0 0 0 4000 && sleep 1 && gpio l 1 0 4000 0 0 4000");
         CON_LOG("gpio start");
-	    //system("/etc/init.d/huayi_dial4gcontrol restart");
       
 #endif
 
@@ -167,8 +150,7 @@ int main(int argc, char *argv[])
 	}
      if(!strcmp(product_model, "WYX3C-1"))
     {
-        CON_LOG("===");
-        module_init();
+        meige_module_init();
     }
 
 
@@ -197,15 +179,13 @@ int main(int argc, char *argv[])
                 
                 CON_LOG("%d",i);
                 if(i == 15){
-                    CON_LOG("lsusb error ;reboot");
-                    sleep(2);
-                    system("reboot");
-                    //CON_LOG("lsusb error ;/etc/init.d/huayi_dial4g_init restart");
-                    //system("/etc/init.d/huayi_dial4_init restart");
+					i = 0;
+                    CON_LOG("LSUSB not recognized, power on the module again");
+					system("gpio l 1 4000 0 0 0 4000 && sleep 1 && gpio l 1 0 4000 0 0 4000");
                 }
                 i++;
                 
-				sleep(1);
+				sleep(2);
 			}
 
 		}
