@@ -73,6 +73,7 @@ int hy_mtd_read(char **value)
 	char mac[OPTION_STR_LEN] = { 0 };
 	int portstatus[OPTION_STR_LEN] = { 0 };
 	int i = 0, port_link = 0;
+	char cmd [RESULT_STR_LEN];
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	char pmodel[SHORT_STR_LEN]={ 0 }, imei[OPTION_STR_LEN] = { 0 };
 	char iccid[OPTION_STR_LEN] = { 0 };
@@ -124,15 +125,29 @@ int hy_mtd_read(char **value)
 			strcpy(sn, " ");
 		}
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
-        char iccid1[OPTION_STR_LEN] = { 0 },iccid2[OPTION_STR_LEN] = { 0 };
-		huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid1);
-        huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid2);
+
+		int simnum;
+		i = 0;
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+        char iccid [simnum][OPTION_STR_LEN];
+		do{
+			memset(cmd,0,sizeof(cmd));
+			snprintf(cmd,RESULT_STR_LEN -1,"sim%d",i);
+			huayi_uci_get_str(PKG_M_SYSTEM,cmd, "iccid", iccid[i]);
+			}while(++i < simnum);
+
+
 
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
 		//huayi_uci_get_str(PKG_STATUS_MODEM,"modem", "iccid", iccid);
 		get_cmd_result("cat /tmp/iwconfigra0 | grep 'Access Point' | awk '{print $5}'", mac, sizeof(mac));
-		printf("%s;%s;%s;%s;%s;%s;%s;%s;\n", sn, imei, pmodel, mac, ssid, key,iccid1,iccid2);
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
+		printf("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;\n", sn, imei, pmodel, mac, ssid, key,iccid[0],iccid[1],iccid[2],iccid[3]);
+#else
+		printf("%s;%s;%s;%s;%s;%s;%s;%s;%s;\n", sn, imei, pmodel, mac, ssid, key,iccid[0],iccid[1],iccid[2]);
+#endif
+
 #else
 		get_cmd_result("cat /tmp/iwconfigra0 | grep 'Access Point' | awk '{print $5}'", mac, sizeof(mac));
 		printf("%s;%s;%s;%s;\n", sn, mac, ssid, key);
@@ -192,15 +207,23 @@ int hy_mtd_read(char **value)
 	}
     else if (!strncmp(*value, "iccid", 5))
 	{	
-        char iccid1[OPTION_STR_LEN] = { 0 },iccid2[OPTION_STR_LEN] = { 0 },iccid3[OPTION_STR_LEN] = { 0 };
-		huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid1);
-        huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid2);
-        huayi_uci_get_str(PKG_M_SYSTEM, "sim2", "iccid", iccid3);
-        if(strlen(iccid1)>5 && strlen(iccid2)>5 && strlen(iccid2)>5){
-            printf("%s;%s;%s;\n", iccid1, iccid2, iccid3);
-        }else{
-            printf("ERROR;ERROR;ERROR;\n");
-        }
+		int simnum;
+		i = 0;
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+        char iccid [simnum][OPTION_STR_LEN];
+		do{
+			memset(cmd,0,sizeof(cmd));
+			snprintf(cmd,RESULT_STR_LEN -1,"sim%d",i);
+			huayi_uci_get_str(PKG_M_SYSTEM,cmd, "iccid", iccid[i]);
+			}while(++i < simnum);
+     
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
+            printf("%s;%s;%s;%s;\n", iccid[0], iccid[1], iccid[2], iccid[3]);
+#else
+			printf("%s;%s;%s;\n", iccid[0], iccid[1], iccid[2]);
+#endif
+
+
 	}
 	else	
 	{		
