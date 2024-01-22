@@ -274,9 +274,11 @@ void check_network()
     int simnum;
     huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
 	simn = simnum - 1;
-
+	SWITCH_SIM_LOG ("CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES START");
 #else
 	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+	SWITCH_SIM_LOG ("HUAYI_SUPPORT_MEIGE_TRIPLE_CARD START");
+
 
 #endif
     sprintf(cmd, "switch_sim %d", simn);
