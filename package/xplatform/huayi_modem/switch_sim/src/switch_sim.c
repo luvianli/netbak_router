@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
             case 2 :
               printf("switch sim3;0 Set High=3.3V & 2 Set High=3.3V" );
-              system("gpio l 0 4000 0 0 4000");
+              system("gpio l 0 4000 0 0 0 4000");
               system("gpio l 2 0 4000 0 0 4000");
 
             break;

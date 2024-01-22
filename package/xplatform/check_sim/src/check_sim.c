@@ -168,6 +168,26 @@ void switch_sim(int i, int gpio)
     save_siminfo(i, gpio);
 }
 
+int isIccidDuplicate(const char iccidArray[][OPTION_STR_LEN], int currentIndex) {
+	int i;
+	for (i = 0; i < currentIndex; i++) {
+        if (strcmp(iccidArray[i], iccidArray[currentIndex]) == 0 && strcmp(iccidArray[i],"")) {
+			SWITCH_SIM_LOG ("iccid%d:%s == iccid%d:%s ,reset sim info",i ,iccidArray[i],currentIndex, iccidArray[currentIndex]);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void clearAllIccids(int simnum) {
+    char cmd[OPTION_STR_LEN];
+	int i;
+    for (i = 0; i < simnum; i++) {
+        sprintf(cmd, "sim%d", i);
+        huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", "");
+    }
+    huayi_uci_commit(PKG_M_SYSTEM);
+}
 
 void set_siminfo()
 {
@@ -191,27 +211,36 @@ void set_siminfo()
 
     huayi_uci_set_str(PKG_M_SYSTEM, "system", "imei", lte_value);
     huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+
+	
+	char iccid[simnum][OPTION_STR_LEN];
     huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &card_slot);
 
+againt:
 
-    for (i = 0; i < simnum; i++)
+    for (i = 0; i < simnum -1; i++)
     {
         sprintf(cmd, "sim%d", i);
-        memset(lte_value, 0, sizeof(lte_value));
-        huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
+        huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", iccid[i]);	
         huayi_uci_get_int(PKG_M_SYSTEM, cmd, "gpio", &gpio);
 
 
-        if (strlen(lte_value) < 5 && card_slot != i && i != simnum - 1)
+        if (isIccidDuplicate(iccid, i)) {
+            clearAllIccids(simnum);
+			goto againt;
+        }
+
+
+        if (strlen(iccid[i]) < 5 && card_slot != i)
         {
-            SWITCH_SIM_LOG("sim%d start switch card", i);
+            SWITCH_SIM_LOG("\n\nsim%d start switch card", i);
             switch_sim(i, gpio);
         }
-        else if (card_slot != i)
+        else if (strlen(iccid[i]) > 5)
         {
-            CON_LOG("Sim%d information already exists");
+            SWITCH_SIM_LOG("Sim%d information already exists");
         }
-        else
+        else if(card_slot == i)
         {
             def_gpio = gpio;
         }
@@ -240,13 +269,15 @@ void check_network()
     isProductionMode();
 
     //External card
+
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
     int simnum;
     huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+	simn = simnum - 1;
 
-#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
-    huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
 #else
-    simn = simnum - 1;
+	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+
 #endif
     sprintf(cmd, "switch_sim %d", simn);
     system(cmd);
@@ -283,8 +314,7 @@ check_net:
             continue;
         //外置卡
 #ifndef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
-
-        if (i == simnum - 1)
+        if (i == totalsimnum - 1)
         {
             huayi_uci_get_int(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
             if (!enable)
@@ -323,7 +353,7 @@ cretry2:
         count = 0;
         sleep(1);
     }
-    CON_LOG("All cards network error");
+	SWITCH_SIM_LOG("All cards network error -> exe reboot");
     sleep(15);
     system("reboot");
 
