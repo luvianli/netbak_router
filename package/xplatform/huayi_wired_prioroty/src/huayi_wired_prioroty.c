@@ -9,6 +9,43 @@ typedef enum{
 	
 }INTERNET_MODE;
 
+void setNetworkConfiguration(const char *device, const char *ipv4, const char *netmask, const char *gateway, const char *dns) {
+    char cmd_str[CMD_STR_LEN];
+    snprintf(cmd_str, CMD_STR_LEN, "huayi_cmd set network wan_device %s", device);
+    system(cmd_str);
+    snprintf(cmd_str, CMD_STR_LEN, "huayi_cmd set network wan_ipv4 %s", ipv4);
+    system(cmd_str);
+    snprintf(cmd_str, CMD_STR_LEN, "huayi_cmd set network wan_netmask %s", netmask);
+    system(cmd_str);
+    snprintf(cmd_str, CMD_STR_LEN, "huayi_cmd set network wan_gateway %s", gateway);
+    system(cmd_str);
+
+    char temp_dns[TEMP_STR_LEN];
+    int i = 0;
+	CON_LOG ("dns :%s",dns);
+    while (huayi_get_nth_value(i++, dns, " ", temp_dns, sizeof(temp_dns))) {
+        snprintf(cmd_str, CMD_STR_LEN, "huayi_cmd set network wan_dns_server %s", temp_dns);
+        system(cmd_str);
+    }
+}
+
+void routeConfiguration(const char *del_gateway, const char *wan_ifname, const char *wan_gateway) {
+    char cmd_str[CMD_STR_LEN];
+    if (strncmp(del_gateway, "0.0.0.0", strlen("0.0.0.0"))) {
+        snprintf(cmd_str, CMD_STR_LEN, "route del default gw %s", del_gateway);
+        system(cmd_str);
+
+        snprintf(cmd_str, CMD_STR_LEN, "route -n | grep %s | grep UG | grep %s |wc -l", wan_ifname, wan_gateway);
+        char resultbuf[SHORT_STR_LEN];
+        get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+
+        if (atoi(resultbuf) == 0 && strncmp(wan_gateway, "0.0.0.0", strlen("0.0.0.0"))) {
+            snprintf(cmd_str, CMD_STR_LEN, "route add default gw %s dev %s", wan_gateway, wan_ifname);
+            system(cmd_str);
+        }
+    }
+}
+
 
 int main(int argc,char *argv[])
 {
@@ -28,9 +65,7 @@ int main(int argc,char *argv[])
 	char wan_type[OPTION_STR_LEN] = {0};
 	char net_ipv4[IPV4_STR_LEN] = {0};
 
-	int wired_status = 0;
 	int cpe_status = 0;
-	int wired_link = 0;
 	int cpe_link = 0;
 	int old_int_mode = INTERNET_UNDEFINE;
 	int now_int_mode = INTERNET_UNDEFINE;
@@ -48,59 +83,29 @@ int main(int argc,char *argv[])
 			continue;
 		}
 		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
-		memset(wired_device,0,sizeof(wired_device));
 		memset(cpe_device,0,sizeof(cpe_device));
-		wired_link = 0;
 		cpe_link = 0;
-		wired_status = 0;
 		cpe_status = 0;
-		huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "device", wired_device);
 		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "device", cpe_device);
-		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
 		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
 
-		if(wired_link == 1 && cpe_link == 1)//同时在线时，使用有线优先策略
+		if(cpe_link == 1)
 		{
-			wired_status = internet_do_ping_detect(detectip, wired_device);
-			if(wired_status == 0)
-			{
 				cpe_status = internet_do_ping_detect(detectip, cpe_device);
-				if(cpe_status == 0)//使用有线上网方式
-				{
-					sprintf(section,"wired");
-					now_int_mode = INTERNET_WIRED;
-					old_int_mode = INTERNET_UNDEFINE;
-				}else//使用4G上网方式
+				if(cpe_status)
 				{
 					sprintf(section,"cpe");
 					now_int_mode = INTERNET_4G;
 				}
-			}else//使用有线上网方式
-			{
-				sprintf(section,"wired");
-				now_int_mode = INTERNET_WIRED;
-			}
 
-		}else if(cpe_link == 1)//使用4G上网方式
-		{	
-			sprintf(section,"cpe");
-			now_int_mode = INTERNET_4G;
-		}else//使用有线上网方式
-		{
-			sprintf(section,"wired");
-			now_int_mode = INTERNET_WIRED;
 		}
-		//printf("old_int_mode = %d\n",old_int_mode);
-		//printf("now_int_mode = %d\n",now_int_mode);
-		//if(old_int_mode != now_int_mode || )
 		{
-			memset(cmd_str,0,sizeof(cmd_str));
 			memset(del_gateway,0,sizeof(del_gateway));
-			if(!strncmp(section,"wired",strlen("wired")))//有线上网方式，删除4G默认路由
+			if(!strncmp(section,"wired",strlen("wired")))
 			{
 				huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
 			}
-			else//4G上网方式，删除有线默认路由
+			else
 			{
 				huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", del_gateway);
 			}
@@ -114,55 +119,13 @@ int main(int argc,char *argv[])
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "netmask", wan_netmask);
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "gateway", wan_gateway);
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "dns_server",temp_dns);
-			//printf("del_gateway = %s\n",del_gateway);
-			if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
-			{
-				sprintf(cmd_str,"route del default gw %s",del_gateway);
-				system(cmd_str);
-				//printf("cmd_str = %s\n",cmd_str);
 
-				memset(cmd_str,0,sizeof(cmd_str));
-				sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
-				get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
-
-				if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
-				{
-					memset(cmd_str,0,sizeof(cmd_str));
-					sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
-					system(cmd_str);
-				}
-			}
+			routeConfiguration( del_gateway, wan_ifname, wan_gateway);
 
 			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
 			if(strcmp(wan_ipv4,net_ipv4))
-			{	
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
-				system(cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_ipv4 %s",wan_ipv4);
-				system(cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_netmask %s",wan_netmask);
-				system(cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_gateway %s",wan_gateway);
-				system(cmd_str);
-
-				memset(dns,0,IPV4_STR_LEN);
-				i = 0;
-				//printf("temp_dns = %s\n",temp_dns);
-				while(huayi_get_nth_value(i++, temp_dns, " ", dns, sizeof(dns)))
-				{
-					//printf("dns = %s\n",dns);
-					memset(cmd_str,0,sizeof(cmd_str));
-					snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_dns_server %s",dns);
-					//printf("cmd_str = %s\n",cmd_str);
-					system(cmd_str);
-				}
+			{
+				setNetworkConfiguration( wan_ifname, wan_ipv4, wan_netmask, wan_gateway, temp_dns);	
 
 				if(now_int_mode == INTERNET_4G)
 				{

@@ -145,5 +145,27 @@
 							}\
 					}while(0)
 
+#define ROUTE_LOG_SIN 1
+#define ROUTE_LOG(format, args...) \
+                do { \
+                    if (ROUTE_LOG_SIN) { \
+                        time_t rawtime; \
+                        struct tm *timeinfo; \
+                        char timeString[20]; \
+                        time(&rawtime); \
+                        timeinfo = localtime(&rawtime); \
+                        strftime(timeString, sizeof(timeString), "%Y.%m.%d-%H:%M:%S", timeinfo); \
+                        FILE *fp = fopen("/tmp/log/route_log", "a"); \
+                        if (fp) { \
+                            fprintf(fp, "[%s] " format "\n", timeString, ##args); \
+                            fclose(fp); \
+                        } \
+                    } \
+                    struct stat buf; \
+                    int size = stat("/tmp/log/route_log", &buf); \
+                    if (size > 5000) { \
+                        system("rm -fr /tmp/log/route_log"); \
+                    } \
+                } while (0)
 #endif /* __HUAYI_LOG_H__ */
 

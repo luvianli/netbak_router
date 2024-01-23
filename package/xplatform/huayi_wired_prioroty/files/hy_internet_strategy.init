@@ -8,6 +8,8 @@ PROG=/usr/sbin/hy_internet_strategy
 
 
 start_service() {
+	huayi_cmd set blend cpe_link 1
+	huayi_cmd set network wan_link 1
     procd_open_instance
 	procd_set_param command "$PROG" 
 	procd_set_param respawn 0

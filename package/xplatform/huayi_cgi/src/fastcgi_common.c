@@ -817,12 +817,12 @@ FCGI_BOOL get_vpn_type_list(cJSON *result_root)
 	for(id = 0; id < ARRAY_SIZE(vpntype_list); id++)
 	{
 		authenticate_obj= cJSON_CreateObject();
-		cJSON_AddNumberToObject(authenticate_obj,"id",id+1);
+		cJSON_AddNumberToObject(authenticate_obj,"index",id+1);
 		cJSON_AddStringToObject(authenticate_obj,"authenticate",vpntype_list[id]);
 		cJSON_AddItemToArray(authenticate_array,authenticate_obj);
 	}
 
-	cJSON_AddItemToObject(result_root,"vpn_type_list",authenticate_array);
+	cJSON_AddItemToObject(result_root,"vpn_type_arr",authenticate_array);
 
 	return FCGI_TRUE;
 }

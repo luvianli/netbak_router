@@ -690,8 +690,8 @@ int get_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 		huayi_uci_get_str(PKG_VPN_USER,section,"desc",desc);
 		
 		ppp_user_obj = cJSON_CreateObject();
-		cJSON_AddStringToObject(ppp_user_obj,"username",ppp_username);
-		cJSON_AddStringToObject(ppp_user_obj,"password",ppp_password);
+		cJSON_AddStringToObject(ppp_user_obj,"usr",ppp_username);
+		cJSON_AddStringToObject(ppp_user_obj,"pwd",ppp_password);
 		if(!strcmp(authenticate, "pptp-server"))
 		{
 			cJSON_AddStringToObject(ppp_user_obj,"authenticate","pptp");
@@ -706,8 +706,8 @@ int get_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 			cJSON_AddStringToObject(ppp_user_obj,"authenticate","all");
 		}
 	
-		cJSON_AddStringToObject(ppp_user_obj,"remoteip",remoteip);
-		cJSON_AddStringToObject(ppp_user_obj,"desc",desc);
+		cJSON_AddStringToObject(ppp_user_obj,"remote_addr",remoteip);
+		cJSON_AddStringToObject(ppp_user_obj,"com",desc);
 
 		router_array = cJSON_CreateArray();
 		j = 0;
@@ -728,11 +728,11 @@ int get_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 			huayi_uci_get_str(PKG_VPN_USER,section,"netmask",netmask);
 			router_obj = cJSON_CreateObject();
 			cJSON_AddStringToObject(router_obj,"target",target);
-			cJSON_AddStringToObject(router_obj,"netmask",netmask);
+			cJSON_AddStringToObject(router_obj,"subnet_mask",netmask);
 			cJSON_AddItemToArray(router_array,router_obj);
 			
 		}
-		cJSON_AddItemToObject(ppp_user_obj,"route",router_array);
+		cJSON_AddItemToObject(ppp_user_obj,"route_arr",router_array);
 		cJSON_AddItemToArray(ppp_user_array,ppp_user_obj);
 		i++;
 
@@ -744,22 +744,23 @@ int get_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 	huayi_uci_get_str(PKG_XL2TPD,"xl2tpd","startip",xl2tpd_startip);
 	huayi_uci_get_str(PKG_XL2TPD,"xl2tpd","endip",xl2tpd_endip);
 	
-	cJSON_AddItemToObject(result_root,"vpnUser_list",ppp_user_array);
+	cJSON_AddItemToObject(result_root,"vpnusr_arr",ppp_user_array);
 	if(!get_vpn_type_list(result_root))
 	{
 		cJSON_Delete(result_root);
 		return FCGI_RESP_CODE_SERVER_FAILURE;
 	}
 
-	cJSON_AddStringToObject(result_root,"pptpd_startip",pptpd_startip);
-	cJSON_AddStringToObject(result_root,"pptpd_endip",pptpd_endip);
-	cJSON_AddStringToObject(result_root,"xl2tpd_startip",xl2tpd_startip);
-	cJSON_AddStringToObject(result_root,"xl2tpd_endip",xl2tpd_endip);
+	cJSON_AddStringToObject(result_root,"pptpd_start_addr",pptpd_startip);
+	cJSON_AddStringToObject(result_root,"pptpd_end_addr",pptpd_endip);
+	cJSON_AddStringToObject(result_root,"xl2tpd_start_addr",xl2tpd_startip);
+	cJSON_AddStringToObject(result_root,"xl2tpd_end_addr",xl2tpd_endip);
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
 	return FCGI_RESP_CODE_SUCCESS;
 }
+
 
 
 /*
@@ -794,7 +795,7 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 		return FCGI_RESP_CODE_HYID_MISS;
 	}
 	
-	ppp_user_array = cJSON_GetObjectItem(request_root,"vpnUser_list");
+	ppp_user_array = cJSON_GetObjectItem(request_root,"vpnusr_arr");
 
 	size = cJSON_GetArraySize(ppp_user_array);
 	
@@ -834,11 +835,11 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 	for(k=0;k<size;k++)
 	{	
 		ppp_user_obj = cJSON_GetArrayItem(ppp_user_array,k);
-		huayi_json_get_str(ppp_user_obj,"username",ppp_username,OPTION_STR_LEN);
-		huayi_json_get_str(ppp_user_obj,"password",ppp_password,OPTION_STR_LEN);
+		huayi_json_get_str(ppp_user_obj,"usr",ppp_username,OPTION_STR_LEN);
+		huayi_json_get_str(ppp_user_obj,"pwd",ppp_password,OPTION_STR_LEN);
 		huayi_json_get_str(ppp_user_obj,"authenticate",authenticate,OPTION_STR_LEN);
-		huayi_json_get_str(ppp_user_obj,"remoteip",remoteip,OPTION_STR_LEN);
-		huayi_json_get_str(ppp_user_obj,"desc",desc,OPTION_STR_LEN);
+		huayi_json_get_str(ppp_user_obj,"remote_addr",remoteip,OPTION_STR_LEN);
+		huayi_json_get_str(ppp_user_obj,"com",desc,OPTION_STR_LEN);
 		
 		huayi_uci_add_section(PKG_VPN_USER,"login");
 		snprintf(section,sizeof(section),"@login[%d]",k);
@@ -865,7 +866,7 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 		
 		huayi_uci_set_int(PKG_VPN_USER,section,"id",k+1);
 		
-		route_array = cJSON_GetObjectItem(ppp_user_obj,"route");
+		route_array = cJSON_GetObjectItem(ppp_user_obj,"route_arr");
 		route_size	= cJSON_GetArraySize(route_array);
 
 		for(j=0;j<route_size;j++)
@@ -874,7 +875,7 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 			memset(target,0,IPV4_STR_LEN);
 			memset(netmask,0,IPV4_STR_LEN);
 			huayi_json_get_str(route_obj,"target",target,IPV4_STR_LEN);
-			huayi_json_get_str(route_obj,"netmask",netmask,IPV4_STR_LEN);
+			huayi_json_get_str(route_obj,"subnet_mask",netmask,IPV4_STR_LEN);
 			
 			huayi_uci_add_section(PKG_VPN_USER,"route");
 			snprintf(section,sizeof(section),"@route[%d]",j + route_num);
@@ -947,8 +948,8 @@ int get_vpn_user_status(cJSON *request_root, cJSON *response_root, int *lock_tim
 			cJSON_AddStringToObject(user_obj,"account",username);
 			cJSON_AddStringToObject(user_obj,"account_type",str2upper(account_type));
 			cJSON_AddNumberToObject(user_obj,"pid",pid);
-			cJSON_AddStringToObject(user_obj,"ip",ip);
-			cJSON_AddStringToObject(user_obj,"device_ip",device_ip);
+			cJSON_AddStringToObject(user_obj,"ip_addr",ip);
+			cJSON_AddStringToObject(user_obj,"device_addr",device_ip);
 			time_tmp = (time_t)(time_of_day-(cur_uptime -uptime));	
 			p = localtime(&time_tmp);
 			join_time = time_tmp + p->tm_gmtoff - 28800;  
@@ -960,7 +961,7 @@ int get_vpn_user_status(cJSON *request_root, cJSON *response_root, int *lock_tim
 		fp = NULL;
 	}
 
-	cJSON_AddItemToObject(result_root,"user_list",user_list);
+	cJSON_AddItemToObject(result_root,"usr_arr",user_list);
 	
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 

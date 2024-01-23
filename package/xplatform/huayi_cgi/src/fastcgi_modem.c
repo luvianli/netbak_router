@@ -1413,7 +1413,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	result_root = cJSON_CreateObject();
 
 	cJSON_AddStringToObject(result_root,"wan_mode",wan_type);
-
+#if 0
 	if (!strcmp(wan_type,WAN_TYPE_4G_MOBILE))
 	{
 		if (sim_state != MODEM_SIN_READY)
@@ -1452,6 +1452,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 		if (wan_link == 0)
 			wan_up = 0;
 	}
+#endif
 
 	cJSON_AddNumberToObject(result_root,"wan_up",wan_up);
 
@@ -1842,7 +1843,7 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	huayi_uci_get_str(PKG_NETWORK,"wan","gateway",gateway);
 	cJSON_AddStringToObject(result_root,"gateway",gateway);
 
-	huayi_uci_get_str(PKG_NETWORK,"wan1","dns",temp_dns);
+	huayi_uci_get_str(PKG_NETWORK,"wan4g","dns",temp_dns);
 		
 	dns_array = cJSON_CreateArray();
 	while(huayi_get_nth_value(i++, temp_dns, WEB_SPACE_DELIMIT, dns, sizeof(dns)))
@@ -1888,7 +1889,7 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	
 	return FCGI_RESP_CODE_SUCCESS;
 }
-int	set_net_dhcp_config_by_index(cJSON *wan_obj,char *section)
+int	set_net_dns_config_by_index(cJSON *wan_obj,char *section)
 {
 	char	hostname[OPTION_STR_LEN] = {0};
 	char 	temp_dns[OPTION_STR_LEN] = {0};
@@ -1897,27 +1898,20 @@ int	set_net_dhcp_config_by_index(cJSON *wan_obj,char *section)
     cJSON	*dns_array = NULL;
     cJSON	*dns_obj = NULL;
     int dns_count;
-    /*
-	huayi_json_get_str(wan_obj,"hostname",hostname,OPTION_STR_LEN);
-	if(strlen(hostname)>0)
-	{
-		huayi_uci_set_str(PKG_NETWORK,section,"hostname",hostname);
-	}
-*/
-	//huayi_uci_delete_option(PKG_NETWORK,section,"dns");
+
 	dns_array = cJSON_GetObjectItem(wan_obj, "dns_usb_arr");
-            
     if(dns_array == NULL)
     {
         return FCGI_FALSE;
     }
     
     dns_count = cJSON_GetArraySize(dns_array);
-    huayi_uci_delete_option(PKG_NETWORK,"wan1","dns");
+    huayi_uci_delete_option(PKG_NETWORK,section,"dns");
+    huayi_uci_delete_option(PKG_STATUS_BLEND,"cpe","dns_server");
     for(i=0;i<dns_count;i++)
     {
         dns_obj = cJSON_GetArrayItem(dns_array,i);
-        huayi_uci_add_list(PKG_NETWORK,"wan1","dns",dns_obj->valuestring);
+        huayi_uci_add_list(PKG_NETWORK,section,"dns",dns_obj->valuestring);
     }
 	return FCGI_TRUE;
 }
@@ -2271,21 +2265,17 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	else if(!strcmp(wan_type,HUAYI_NET_PROTO_USBNET))
 	{
         CON_LOG("enter usb-net");
-        huayi_uci_get_int(PKG_NETWORK,"wan1","ppp_mtu",&ppp_mtu);
-	    huayi_uci_get_int(PKG_NETWORK,"wan1","cc_mtu",&cc_mtu);
-        if(!huayi_json_get_str(request_root,"proto_usb",proto,OPTION_STR_LEN))
+        if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
         {
             return FCGI_RESP_CODE_DATA_MISS;
         }
         if(!strcmp(proto,"dhcp"))
     	{
-            if(!set_net_dhcp_config_by_index(request_root,"wan1"))
+            if(!set_net_dns_config_by_index(request_root,"wan4g"))
             {
                 huayi_uci_revert(PKG_NETWORK);
                 return FCGI_RESP_CODE_DATA_MISS;
             }
-            huayi_uci_set_int(PKG_NETWORK,"wan1","mtu",cc_mtu);
-            huayi_uci_set_str(PKG_NETWORK,"wan1","proto","dhcp");
             huayi_uci_set_int(PKG_SYSTEM,"global","first_boot",0);
 
 

@@ -51,6 +51,14 @@ esac
 				wan4g)
 					#4g模式没有静态模式，暂时不需添加
 					#huayi_cmd set blend wired_gateway "$gw"
+					huayi_cmd set blend cpe_dns_server "0.0.0.0"
+					[ -n "$dns1" ] &&{
+						huayi_cmd set blend cpe_dns_server $dns1
+					}
+					
+					[ -n "$dns2" ] &&{
+						huayi_cmd set blend cpe_dns_server $dns2
+					}
 					;;
 				wan)
 					[ -n "$ipaddr" ] &&{
