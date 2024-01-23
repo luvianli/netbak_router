@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
               system("gpio l 0 4000 0 0 0 4000");
               system("gpio l 2 0 4000 0 0 4000");
 
-            break;
+              break;
            
             case 3 :
                 printf("switch sim4;0 Set LOW=2.7V & 2 Set LOW=2.7V");
@@ -132,11 +132,12 @@ int main(int argc, char *argv[])
                 printf("switch sim4;0 Set LOW=2.7V & 2 Set LOW=2.7V");
                 system("gpio l 0 4000 0 0 0 4000");
                 system("gpio l 2 4000 0 0 0 4000");
-#endif
                 break;
+#endif
+
             default :
                 printf("\n switch error \n switch [option]");
-                return;
+                return -1;
         }
 		system("gpio l 1 4000 0 0 0 4000 && sleep 5 && gpio l 1 0 4000 0 0 4000");
         SlmDial(iSel);
