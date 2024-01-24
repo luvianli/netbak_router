@@ -1683,9 +1683,15 @@ againt:
 
     sprintf(cmd, "AT+RZY=\"%s\",\"%s\"", "zstuctf", encoded_data);
     atcmd_start_rzy(cmd, strlen(cmd));
-    sleep(2);
-    if(atcmd_get_rzy() == LTE_FALSE)
-        return 0;
+	int i = 0;
+againt_to:
+    if(atcmd_get_rzy() == LTE_FALSE){
+		if(i++ < 3){
+			sleep(2);
+			goto againt_to;
+		}
+		return 0;
+    }
     return 1;
 }
 
