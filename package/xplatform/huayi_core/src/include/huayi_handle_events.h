@@ -52,5 +52,21 @@ void do_internet_led_off(void);
 void do_internet_led_slowly(void);
 #endif
 
+#if defined(CONFIG_HUAYI_4GONLINE_LED_SUPPORT)
+void do_4G_online_led_on(void);
+void do_4G_online_led_off(void);
+#endif
+
+#if defined(CONFIG_HUAYI_SIM_LED_SUPPORT)
+void do_sim_led_on(void);
+void do_sim_led_off(void);
+#endif
+
+#if defined(CONFIG_HUAYI_SIGNAL_LED_SUPPORT)
+void do_signal_led_high(void);
+void do_signal_led_low(void);
+void do_signal_led_middle(void);
+void do_signal_led_off(void);
+#endif
 
 #endif

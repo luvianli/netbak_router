@@ -38,7 +38,9 @@ VTBool huayi_led_init(struct VcoreAgent *Agent)
 	int opmode = 0;
 	int repeater_status_24g = 0;
 	int repeater_status_58g = 0;
+	char product_model[OPTION_STR_LEN] = {0};
 
+	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	huayi_uci_get_int(PKG_SYSTEM, "mode", "opmode", &opmode);
 	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_24g_status",&repeater_status_24g);		
 	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_58g_status",&repeater_status_58g);
@@ -46,6 +48,13 @@ VTBool huayi_led_init(struct VcoreAgent *Agent)
 	Agent->repeater_status_24g = repeater_status_24g;
 	Agent->repeater_status_58g = repeater_status_58g;
 	Agent->opmode = opmode;
+
+	if(!strcmp(product_model, "ZC-GW03-3"))
+	{
+		char cmd[CMD_STR_LEN] = {0};
+		strcpy(cmd, "devmem 0x10000060 32 0x55150451"); 
+		system(cmd);
+	}
 
 #if defined(CONFIG_HUAYI_WPS_LED_SUPPORT)
 	if(HUAYI_REP_MODE == Agent->opmode)
@@ -67,7 +76,15 @@ VTBool huayi_led_init(struct VcoreAgent *Agent)
 #endif
 
 #if defined(CONFIG_HUAYI_POWER_LED_SUPPORT)
-	do_power_led_off();
+	if(!strcmp(product_model, "ZC-GW03-3"))
+	{
+		do_power_led_on();
+	}else
+		do_power_led_off();
+#endif
+
+#if defined(CONFIG_HUAYI_SIGNAL_LED_SUPPORT)
+	do_signal_led_off();
 #endif
 
 #if defined(CONFIG_HUAYI_REPEATER_LED_SUPPORT)

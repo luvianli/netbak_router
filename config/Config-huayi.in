@@ -175,6 +175,24 @@ config HUAYI_INTERNET_LED_SUPPORT
 	config HUAYI_INTERNET_LED_GPIO_NUM
 	int "Which Number of internet led gpio"
 	depends on HUAYI_INTERNET_LED_SUPPORT
+
+config HUAYI_SIM_LED_SUPPORT
+	bool	"Support sim led"
+	depends on HUAYI_SUPPORT_GPIO_EVENT
+	bool
+	
+	config HUAYI_SIM_LED_GPIO_NUM
+	int "Which Number of sim led gpio"
+	depends on HUAYI_SIM_LED_SUPPORT
+	
+config HUAYI_4GONLINE_LED_SUPPORT
+	bool	"Support 4g online led"
+	depends on HUAYI_INTERNET_LED_SUPPORT
+	bool
+	
+	config HUAYI_4GONLINE_LED_GPIO_NUM
+	int "Which Number of 4g online led gpio"
+	depends on HUAYI_4GONLINE_LED_SUPPORT
 	
 config HUAYI_REPEATER_LED_SUPPORT
 	bool	"Support repeater led"
@@ -195,7 +213,27 @@ config HUAYI_REPEATER_LED_SUPPORT
 	int "Which Number of signal 3 led gpio"
 	depends on HUAYI_REPEATER_LED_SUPPORT
 	default 1000
+
+config HUAYI_SIGNAL_LED_SUPPORT
+	bool	"Support singan led"
+	depends on HUAYI_INTERNET_LED_SUPPORT
+	bool
 	
+	config HUAYI_HIGH_SIGNAL_LED_GPIO_NUM
+	int "Which Number of high signal led gpio"
+	depends on HUAYI_SIGNAL_LED_SUPPORT
+	default 1000
+	
+	config HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM
+	int "Which Number of middle signal led gpio"
+	depends on HUAYI_SIGNAL_LED_SUPPORT
+	default 1000
+	
+	config HUAYI_LOW_SIGNAL_LED_GPIO_NUM
+	int "Which Number of low signal led gpio"
+	depends on HUAYI_SIGNAL_LED_SUPPORT
+	default 1000	
+
 config HUAYI_SWITCH_SIM_SUPPORT
 	bool	"Support SWITCH SIM CARD"
 	bool

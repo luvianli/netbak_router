@@ -1135,6 +1135,17 @@ void do_power_led_blinks_fast(void)
 	return;
 }
 
+void do_power_led_on(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_POWER_LED_GPIO_NUM);
+
+	system(cmd);
+	
+	return;
+}
+
 #endif
 
 #if defined(CONFIG_HUAYI_REPEATER_LED_SUPPORT)
@@ -1355,4 +1366,149 @@ void do_internet_led_slowly(void)
 }
 #endif
 
+#if defined(CONFIG_HUAYI_4GONLINE_LED_SUPPORT)
+void do_4G_online_led_on(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_4GONLINE_LED_GPIO_NUM);
+
+	system(cmd);
+
+	return;
+}
+
+void do_4G_online_led_off(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_4GONLINE_LED_GPIO_NUM);
+
+	system(cmd);
+
+	return;
+}
+#endif
+
+#if defined(CONFIG_HUAYI_SIM_LED_SUPPORT)
+void do_sim_led_on(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_SIM_LED_GPIO_NUM);
+	system(cmd);
+	return;
+}
+
+void do_sim_led_off(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_SIM_LED_GPIO_NUM);
+	system(cmd);
+	return;
+}
+
+#endif
+
+#if defined(CONFIG_HUAYI_SIGNAL_LED_SUPPORT)
+void do_signal_led_high(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+
+	if (CONFIG_HUAYI_HIGH_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_HIGH_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+
+	if (CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+
+	if (CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+	
+	return;
+}
+
+void do_signal_led_low(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+
+	if (CONFIG_HUAYI_HIGH_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_HIGH_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+
+	if (CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+
+	if (CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+	
+	return;
+}
+
+void do_signal_led_middle(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+
+	if (CONFIG_HUAYI_HIGH_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_HIGH_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+
+	if (CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+
+	if (CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+	
+	return;
+}
+
+void do_signal_led_off(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+
+	if (CONFIG_HUAYI_HIGH_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_HIGH_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+
+	if (CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+
+	if (CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM != 1000)
+	{
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
+		system(cmd);
+	}
+	
+	return;
+}
+
+#endif
 

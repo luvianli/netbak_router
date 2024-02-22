@@ -485,7 +485,9 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	int i_ready = 0; 
 #endif
-	
+	char product_model[OPTION_STR_LEN] = {0};
+	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+
 	if (internet_do_ping_detect(INTERNET_DOMAIN, NULL) == 1)
 	{
 		network_status = 1;	
@@ -504,6 +506,8 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 		}
 	}
 
+	if(strcmp(product_model, "ZC-GW03-3"))
+	{
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	huayi_uci_get_int(PKG_STATUS_MODEM, "modem", "sim_ready", &i_ready);
 
@@ -526,8 +530,51 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 		do_internet_led_off();
 	}
 #endif
-
+	}
 	
+#if defined(CONFIG_HUAYI_4GONLINE_LED_SUPPORT)
+	huayi_uci_get_int(PKG_STATUS_MODEM, "modem", "sim_ready", &i_ready);
+	if(i_ready == 1 && network_status == 1)
+	{
+		char ifname[IPV4_STR_LEN] = {0};
+		huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ifname", ifname);
+		if(!strcmp(ifname, "eth1") || !strcmp(ifname, "wwan0"))
+		{
+			do_4G_online_led_on();
+		}else
+		{
+			do_4G_online_led_off();
+		}
+	}else
+	{
+		do_4G_online_led_off();
+	}
+#endif	
+
+#if defined(CONFIG_HUAYI_SIGNAL_LED_SUPPORT)
+	if(1 == network_status)
+	{
+		int i_signal;
+		atcmd_get_signal(&i_signal);
+		if(i_signal > 85)
+		{
+			do_signal_led_high();
+		}else if(i_signal > 53)
+		{
+			do_signal_led_middle();
+		}else if(i_signal > 0)
+		{
+			do_signal_led_low();
+		}else
+		{
+			do_signal_led_off();
+		}//rssi=csq*2-113,i_signal=csq*100/31
+	}else
+	{
+		do_signal_led_off();
+	}	
+#endif
+
 	huayi_core_add_task(HUAYI_INTERNET_LED_DELAY_TIME,HUAYI_START_CHECK_NETWORK_LED_TASK,huayi_core_start_internet_led,Agent);
 	
 	return;
@@ -542,6 +589,23 @@ void huayi_core_update_led_status(struct VcoreAgent *Agent)
 	
 	return;
 }
+
+#if defined(CONFIG_HUAYI_SIM_LED_SUPPORT)
+void huayi_core_start_sim_led(struct VcoreAgent *Agent)
+{
+	int i_ready = 0;
+	atcmd_get_cpin(&i_ready);
+	if(i_ready == 1)
+	{
+		do_sim_led_on();
+	}else
+	{
+		do_sim_led_off();
+	}
+	huayi_core_add_task(HUAYI_INTERNET_LED_DELAY_TIME,HUAYI_START_CHECK_SIM_LED_TASK,huayi_core_start_sim_led,Agent);
+	return;
+}
+#endif
 
 #if defined(CONFIG_HUAYI_SUPPORT_FLUSH_ARP)
 void huayi_core_flush_arp_list(void* arg)
@@ -1007,6 +1071,10 @@ void huayi_utimer_functions_start(struct VcoreAgent *Agent)
 
 #if defined(CONFIG_HUAYI_INTERNET_LED_SUPPORT)
 	huayi_core_start_internet_led(Agent);
+#endif
+
+#if defined(CONFIG_HUAYI_SIM_LED_SUPPORT)
+	huayi_core_start_sim_led(Agent);
 #endif
 
 #if defined(CONFIG_HUAYI_SUPPORT_FLUSH_ARP)
