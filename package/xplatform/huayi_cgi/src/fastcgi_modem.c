@@ -1842,15 +1842,15 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	huayi_uci_get_str(PKG_NETWORK,"wan","gateway",gateway);
 	cJSON_AddStringToObject(result_root,"gateway",gateway);
 
-	huayi_uci_get_str(PKG_NETWORK,"wan1","dns",temp_dns);
+	huayi_uci_get_str(PKG_NETWORK,"wan","dns",temp_dns);
 		
 	dns_array = cJSON_CreateArray();
 	while(huayi_get_nth_value(i++, temp_dns, WEB_SPACE_DELIMIT, dns, sizeof(dns)))
 	{
 		cJSON_AddItemToArray(dns_array,cJSON_CreateString(dns));
 	}
-	//cJSON_AddItemToObject(result_root,"dns_arr",dns_array);
-    cJSON_AddItemToObject(result_root,"dns_usb_arr",dns_array);
+	cJSON_AddItemToObject(result_root,"dns_arr",dns_array);
+    //cJSON_AddItemToObject(result_root,"dns_usb_arr",dns_array);
     
 
 	huayi_uci_get_str(PKG_NETWORK,"wan","username",username);
