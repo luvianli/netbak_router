@@ -569,9 +569,9 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 		!huayi_json_get_str(request_root,"server_addr",server_ip,LIST_STR_LEN ) ||
 		!huayi_json_get_str(request_root,"usr",username,OPTION_STR_LEN) ||
 		!huayi_json_get_str(request_root,"pwd",password,OPTION_STR_LEN) ||
-		!huayi_json_get_int(request_root,"route_type",&route_type)) ||
-		!huayi_json_get_int(request_root,"ipsec_enable",&ipsec_enable)) ||
-		!huayi_json_get_str(request_root,"ipsec_key",ipsec_key,OPTION_STR_LEN) ||
+		!huayi_json_get_int(request_root,"route_type",&route_type) ||
+		!huayi_json_get_int(request_root,"ipsec_enable",&ipsec_enable) ||
+		!huayi_json_get_str(request_root,"ipsec_key",ipsec_key,OPTION_STR_LEN))
 		
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
