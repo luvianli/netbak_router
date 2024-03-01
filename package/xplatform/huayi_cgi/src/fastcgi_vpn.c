@@ -556,6 +556,9 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	char target[IPV4_STR_LEN] = {0};
 	char netmask[IPV4_STR_LEN] = {0};
 	char max_route[SMALL_STR_LEN] = {0};
+	int ipsec_enable = 0;
+	char ipsec_key[OPTION_STR_LEN] = {0};
+	
 
 	if(NULL == request_root || NULL == response_root || NULL == lock_time)
 	{
@@ -566,7 +569,10 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 		!huayi_json_get_str(request_root,"server_addr",server_ip,LIST_STR_LEN ) ||
 		!huayi_json_get_str(request_root,"usr",username,OPTION_STR_LEN) ||
 		!huayi_json_get_str(request_root,"pwd",password,OPTION_STR_LEN) ||
-		!huayi_json_get_int(request_root,"route_type",&route_type))
+		!huayi_json_get_int(request_root,"route_type",&route_type)) ||
+		!huayi_json_get_int(request_root,"ipsec_enable",&ipsec_enable)) ||
+		!huayi_json_get_str(request_root,"ipsec_key",ipsec_key,OPTION_STR_LEN) ||
+		
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -579,7 +585,11 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	huayi_uci_set_str(PKG_PPL2TP,"xl2tp","username",username);
 	huayi_uci_set_str(PKG_PPL2TP,"xl2tp","password",password);
 	huayi_uci_set_int(PKG_PPL2TP,"xl2tp","route_type",route_type);
-
+	
+	huayi_uci_set_int(PKG_PPL2TP,"xl2tp","ipsec_enable",ipsec_enable);
+	if(!ipsec_enable)
+		huayi_uci_set_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
+	
 	if(route_type == 0 && enable == 1)
 	{
 		if(!(xl2tp_static_router_array= cJSON_GetObjectItem(request_root,"xl2tp_static_arr")))
