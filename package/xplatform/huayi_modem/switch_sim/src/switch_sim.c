@@ -111,7 +111,9 @@ int switchSim(int simSelection) {
     switch (simSelection) {
         case SIM0_HIGH_HIGH:
             printf("Switching sim0; Setting High=3.3V & 2 Setting High=3.3V\n");
-            system("gpio l 0 0 4000 0 0 4000");
+           // system("gpio l 0 0 4000 0 0 4000");
+           // system("gpio l 2 0 4000 0 0 4000");
+            system("gpio l 0 4000 0 0 0 4000");
             system("gpio l 2 0 4000 0 0 4000");
             break;
         case SIM1_HIGH_LOW:
@@ -122,7 +124,7 @@ int switchSim(int simSelection) {
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
         case SIM2_LOW_HIGH:
             printf("Switching sim2; Setting LOW=2.7V & 2 Setting High=3.3V\n");
-            system("gpio l 0 4000 0 0 0 4000");
+			system("gpio l 0 0 4000 0 0 4000");
             system("gpio l 2 0 4000 0 0 4000");
             break;
         case EXTERNAL_CARD_LOW_LOW:

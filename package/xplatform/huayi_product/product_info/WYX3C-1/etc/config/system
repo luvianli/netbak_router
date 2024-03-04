@@ -56,7 +56,7 @@ config settings settings
 	option heartbeat_restart_enabled 10
 	
 config server server
-	option interval 40000
+	option interval 180000 #3 min
 	option urldomain 'http://device.10086group.com/admin/ylapi/uploadData'
 	option clientlog   '1'
 	
