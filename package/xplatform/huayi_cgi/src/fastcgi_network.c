@@ -2973,13 +2973,13 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 #if !defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;
+		//return FCGI_RESP_CODE_DATA_MISS;
 	}
 #endif
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	if(!huayi_json_get_str(request_root,"wan_type",wan_type,OPTION_STR_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;
+		//return FCGI_RESP_CODE_DATA_MISS;
 	}
 	huayi_uci_set_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 
@@ -3009,7 +3009,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 
 		if(!huayi_json_get_int(request_root,"use_apn",&use_apn))
 		{
-			return FCGI_RESP_CODE_DATA_MISS;
+			//return FCGI_RESP_CODE_DATA_MISS;
 		}
 
 		if(1 == use_apn)
@@ -3139,7 +3139,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 
 		if(!huayi_json_get_int(request_root,"use_apn",&use_apn))
 		{
-			return FCGI_RESP_CODE_DATA_MISS;
+			//return FCGI_RESP_CODE_DATA_MISS;
 		}
 		if(1 == use_apn)
 		{
@@ -3223,7 +3223,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 			if(!set_multiwan_static_config_by_index(request_root,"wan"))
 			{
 				huayi_uci_revert(PKG_NETWORK);
-				return FCGI_RESP_CODE_DATA_MISS;
+				//return FCGI_RESP_CODE_DATA_MISS;
 			}
 			huayi_uci_set_int(PKG_NETWORK,"wan","mtu",cc_mtu);
 		}else if(!strcmp(proto,HUAYI_NET_PROTO_PPPOE))
@@ -3231,7 +3231,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 			if(!set_multiwan_pppoe_config_by_index(request_root,"wan"))
 			{
 				huayi_uci_revert(PKG_NETWORK);
-				return FCGI_RESP_CODE_DATA_MISS;
+				//return FCGI_RESP_CODE_DATA_MISS;
 			}
 			huayi_uci_set_int(PKG_NETWORK,"wan","mtu",ppp_mtu);
 		}else if(!strcmp(proto,HUAYI_NET_PROTO_DHCP))
@@ -3239,7 +3239,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 			if(!set_multiwan_dhcp_config_by_index(request_root,"wan"))
 			{
 				huayi_uci_revert(PKG_NETWORK);
-				return FCGI_RESP_CODE_DATA_MISS;
+				//return FCGI_RESP_CODE_DATA_MISS;
 			}
 			huayi_uci_set_int(PKG_NETWORK,"wan","mtu",cc_mtu);
 		}

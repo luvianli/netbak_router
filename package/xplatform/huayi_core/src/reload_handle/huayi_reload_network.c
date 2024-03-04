@@ -293,3 +293,10 @@ VTBool huayi_switch_card(void *arg,cJSON *input_root)
 	return VT_TRUE;
 }
 
+VTBool huayi_ipsec_init(void *arg,cJSON *input_root)
+{
+	system("etc/init.d/ipsec-up start");
+	return VT_TRUE;
+}
+
+

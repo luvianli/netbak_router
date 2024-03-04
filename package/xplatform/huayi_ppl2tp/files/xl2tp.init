@@ -8,13 +8,14 @@ BIN=/usr/sbin/xl2tp
 OPTIONS=/var/etc/options.xl2tp
 MAIN_CONFIG=/var/etc/xl2tp.conf
 
-#ly add
-OPTIONS_STRONGSWAN=/var/etc/strongswan.conf
+
 
 setup_config() {
 	
 	enable=`uci -q get ppl2tp.xl2tp.enable`
-	
+    ipsec_enable=`uci -q get ppl2tp.xl2tp.ipsec_enable`
+    ipsec_key=`uci -q get ppl2tp.xl2tp.ipsec_key`
+
 	[ "$enable" -eq 0 ] && return 1
 	
 	username=`uci -q get ppl2tp.xl2tp.username`
@@ -45,39 +46,17 @@ setup_config() {
 	echo "lns = ${server_ip}" >> $MAIN_CONFIG
 	echo "pppoptfile = ${OPTIONS}" >> $MAIN_CONFIG
 	
-	
-    # IPsec configuration (ly add)
-    enable_ipsec=`uci -q get ppl2tp.xl2tp.ipsec_enable`
-    if [ "$enable_ipsec" -eq 1 ]; then
-        key_ipsec=`uci -q get ppl2tp.xl2tp.ipsec_key`
-        # Write IPsec configuration for StrongSwan
-        echo "conn myvpn" > $OPTIONS_STRONGSWAN
-        echo "    keyexchange=ikev1" >> $OPTIONS_STRONGSWAN
-        echo "    authby=secret" >> $OPTIONS_STRONGSWAN
-        echo "    left=%defaultroute" >> $OPTIONS_STRONGSWAN
-        echo "    leftid=${username_ipsec}" >> $OPTIONS_STRONGSWAN
-        echo "    right=${server_ip_ipsec}" >> $OPTIONS_STRONGSWAN
-        echo "    rightid=%any" >> $OPTIONS_STRONGSWAN
-        echo "    auto=start" >> $OPTIONS_STRONGSWAN
-        echo "    ike=aes128-sha1" >> $OPTIONS_STRONGSWAN
-        echo "    keyingtries=3" >> $OPTIONS_STRONGSWAN
-        echo "    ikelifetime=60m" >> $OPTIONS_STRONGSWAN
-        echo "    esp=aes128-sha1" >> $OPTIONS_STRONGSWAN
-        echo "    lifetime=1h" >> $OPTIONS_STRONGSWAN
-        echo "    type=tunnel" >> $OPTIONS_STRONGSWAN
-        echo "    auth=esp" >> $OPTIONS_STRONGSWAN
-        echo "    keylife=20m" >> $OPTIONS_STRONGSWAN
-        echo "    compress=no" >> $OPTIONS_STRONGSWAN
-        echo "    keyexchange=ikev1" >> $OPTIONS_STRONGSWAN
+    # ly add
+    if [ "$ipsec_enable" -eq 1 ]; then
+       # echo "ipsec enable" >> $OPTIONS
+        echo "ipsec key ${ipsec_key}" >> $OPTIONS
     fi
+	#
 	return 0
 }
 
 start() {
 	setup_config
-    if [ "$enable_ipsec" -eq 1 ]; then
-        service_start $BIN_STRONGSWAN -c $OPTIONS_STRONGSWAN
-    fi
 	service_start $BIN -c $MAIN_CONFIG
 	sleep 2
 	echo 'c xl2tp' > /var/run/xl2tpd/l2tp-control 
@@ -86,14 +65,6 @@ start() {
 stop() { 
 	echo 'd xl2tp' > /var/run/xl2tpd/l2tp-control
 	service_stop $BIN
-	rm -rf $MAIN_CONFIG
-	rm -rf $OPTIONS
-	rm -rf /var/log/xl2tp.log
-	
-	# Stop IPsec ly add 
-	if [ "$enable_ipsec" -eq 1 ]; then
-        service_stop $BIN_STRONGSWAN
-        rm -rf $OPTIONS_STRONGSWAN
-    fi
+
 }
 

@@ -73,6 +73,8 @@ VTBool huayi_reload_functions_init(struct VcoreAgent *Agent)
 #endif
 	
 	Agent->CoreReloadFunction[HUAYI_MSG_SWITCH_CARD-HUAYI_MSG_PAYLOAD_OFFSET] =huayi_switch_card;
+	Agent->CoreReloadFunction[HUAYI_MSG_IPSEC_INIT-HUAYI_MSG_PAYLOAD_OFFSET] =huayi_ipsec_init;
+
 	return VT_TRUE;
 }
 

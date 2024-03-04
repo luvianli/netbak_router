@@ -477,6 +477,8 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	char target[IPV4_STR_LEN] = {0};
 	char netmask[IPV4_STR_LEN] = {0};
 	char inter_face[OPTION_STR_LEN] = {0};
+	int ipsec_enable = 0;
+	char ipsec_key[OPTION_STR_LEN] = {0};
 
 	int i = 0;
 
@@ -490,11 +492,16 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","username",username);
 	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","password",password);
 	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","route_type",&route_type);
-	huayi_uci_get_int(PKG_XL2TPD,"xl2tpd","enable",&xl2tpd_enable);	
+	//huayi_uci_get_int(PKG_XL2TPD,"xl2tpd","enable",&xl2tpd_enable);	
+	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&xl2tpd_enable);	
+	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","ipsec_enable",&ipsec_enable);
+	if(ipsec_enable)
+		huayi_uci_get_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
 	
-	huayi_uci_get_str(PKG_STATUS_SYSTEM,"sys","xl2tp_ip",xl2tp_ip);
-	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","xl2tp_link",&xl2tp_status);
-	
+	//huayi_uci_get_str(PKG_STATUS_SYSTEM,"sys","xl2tp_ip",xl2tp_ip);
+	//huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","xl2tp_link",&xl2tp_status);
+	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ip_address",xl2tp_ip);
+	huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","link",&xl2tp_status);
 	result_root = cJSON_CreateObject();
 
 	huayi_add_switch_to_json(result_root,"xl2tp_enable",xl2tp_enable);
@@ -505,6 +512,9 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	cJSON_AddNumberToObject(result_root,"route_type",route_type);
 	cJSON_AddNumberToObject(result_root,"xl2tp_status",xl2tp_status);
 	cJSON_AddStringToObject(result_root,"xl2tp_ip",xl2tp_ip);
+	cJSON_AddNumberToObject(result_root,"ipsec_enable",ipsec_enable);
+	cJSON_AddStringToObject(result_root,"ipsec_key",ipsec_key);
+	
 
 	xl2tp_static_router_array = cJSON_CreateArray();
 	while(1)
@@ -585,9 +595,13 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	huayi_uci_set_str(PKG_PPL2TP,"xl2tp","username",username);
 	huayi_uci_set_str(PKG_PPL2TP,"xl2tp","password",password);
 	huayi_uci_set_int(PKG_PPL2TP,"xl2tp","route_type",route_type);
+
+	huayi_uci_set_str(PKG_NETWORK,"l2tp","server",server_ip);
+	huayi_uci_set_str(PKG_NETWORK,"l2tp","username",username);
+	huayi_uci_set_str(PKG_NETWORK,"l2tp","password",password);
 	
 	huayi_uci_set_int(PKG_PPL2TP,"xl2tp","ipsec_enable",ipsec_enable);
-	if(!ipsec_enable)
+	if(ipsec_enable)
 		huayi_uci_set_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
 	
 	if(route_type == 0 && enable == 1)
@@ -636,11 +650,14 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	}
 
 	huayi_uci_commit(PKG_PPL2TP);
-	
+
+				
+
 	if((route_type == 0 && enable == 1 && old_enable == 1 && old_route_type == 0) ||
 		(route_type == 1 && old_route_type == 0 && enable == 1))
 	{
 		system("huayi-reset network");
+		system("huayi-reset ipsec_up");
 		*lock_time = HUAYI_RELOAD_NETWORK_TIME;
 	}
 	else
