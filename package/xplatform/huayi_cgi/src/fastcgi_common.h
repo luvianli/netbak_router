@@ -261,6 +261,8 @@ typedef enum
 	HYID_GET_FORCE_FIX_DHCP 			= 183,
 	HYID_SET_SKIP_QUICK_SETTING 		= 185,
 	HYID_GET_WANMODE_INFO				= 186,
+	HYID_GET_OPENVPN_CONFIG             = 191,
+	HYID_SET_OPENVPN_CONFIG             = 192,
 	MAX_HUAYI_HYID,
 }FCGI_HYID_ENUM;
 
@@ -552,6 +554,8 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root,int *lock_time
 int get_vpn_user_status(cJSON *request_root, cJSON *response_root, int *lock_time);
 FCGI_BOOL get_vpn_type_list(cJSON *result_root);
 int do_kick_vpn_user(cJSON *request_root, cJSON *response_root, int *lock_time);
+int get_openvpn_config(cJSON *request_root, cJSON *response_root,int *lock_time);
+int set_openvpn_config(cJSON *request_root, cJSON *response_root, int *lock_time);
 
 #endif
 #endif

@@ -41,6 +41,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/xl2tp.init $(1)/etc/init.d/xl2tp
 	$(INSTALL_BIN) ./files/ipsec-up.init $(1)/etc/init.d/ipsec-up
+	$(INSTALL_BIN) ./files/openVPN.init $(1)/etc/init.d/openVPN
 	
 	$(INSTALL_DIR) $(1)/etc/ppp
 	$(INSTALL_DATA) ./files/options.xl2tp $(1)/etc/ppp/

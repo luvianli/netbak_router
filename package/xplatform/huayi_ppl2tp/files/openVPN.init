@@ -1,0 +1,48 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+openvpn_client_init() {
+
+    server_hostname=$(uci -q get ppl2tp.openvpn.host_name)
+    port=$(uci -q get ppl2tp.openvpn.port)
+    username=$(uci -q get ppl2tp.openvpn.username)
+    password=$(uci -q get ppl2tp.openvpn.password)
+
+
+    if [ "$(uci -q get ppl2tp.openvpn.enable)" -eq "1" ]; then
+        mkdir -p /etc/openvpn
+
+        cat <<EOF > /etc/openvpn/openVPN.ovpn
+client
+dev tun
+proto udp
+remote $server_hostname $port
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+cipher AES-256-CBC
+comp-lzo
+verb 3
+auth-user-pass
+$username $password
+EOF
+
+        chmod 600 /etc/openvpn/openVPN.ovpn
+    else
+        echo "OpenVPN is not enabled in the configuration."
+    fi
+}
+
+start() {
+    echo "Starting custom OpenVPN client..."
+	killall openvpn
+    openvpn --config /etc/openvpn/openVPN.ovpn --daemon
+}
+
+stop() {
+    echo "Stopping custom OpenVPN client..."
+    rm -fr /etc/openvpn/openVPN.ovpn
+    killall openvpn
+}

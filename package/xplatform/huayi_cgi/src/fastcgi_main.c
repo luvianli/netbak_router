@@ -293,6 +293,10 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 	FastCgiHandleFunction[HYID_GET_VPN_USER_STATUS] = get_vpn_user_status;
 	
 	FastCgiHandleFunction[HYID_DO_KICK_VPN_USER] = do_kick_vpn_user;
+
+	FastCgiHandleFunction[HYID_GET_OPENVPN_CONFIG] = get_openvpn_config;
+	
+	FastCgiHandleFunction[HYID_SET_OPENVPN_CONFIG] = set_openvpn_config;
 #endif
 
 #if defined(CONFIG_PACKAGE_HUAYI_IPV6)
