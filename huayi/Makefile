@@ -99,6 +99,9 @@ ZC-GW08-C1:
 ZC-GW03-3:
 	@$(MAKE) $(t) product=$@ product_name=ZC-GW03-3 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
 
+ZC-GW06-2:
+	@$(MAKE) $(t) product=$@ product_name=ZC-GW06-2 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
+
 help:
 	@echo "make target   -- target maybe product model"
 	@echo "eg:  make ZC-GW06         -- for 7620N Router 300M 4G ,wisp+4g"
@@ -107,3 +110,4 @@ help:
 	@echo "eg:  make ZC-GW05 -- for 1200M Wireless 7628DA+7613B Modem, wisp+4g"
 	@echo "eg:  make ZC-AP -- for 7628DA Router 300M 4G, wired+4g"
 	@echo "eg:  make ZC-GW08-C1 -- for 7628DA Router 300M 4G, wisp+4g"
+	@echo "eg:  make ZC-GW06-2         -- for 7628DA Router 300M 4G ,wisp+4g"
