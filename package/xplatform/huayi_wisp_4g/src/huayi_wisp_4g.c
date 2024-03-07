@@ -280,7 +280,7 @@ fail:
 
 int main(int argc,char *argv[])
 {
-	char wired_device[SHORT_STR_LEN] = {0},wan_device[SHORT_STR_LEN] = {0};
+	char wired_device[SHORT_STR_LEN] = {0};
 	char cpe_device[SHORT_STR_LEN] = {0};
 	char wan_ifname[SHORT_STR_LEN] = {0};
 	char wan_ipv4[IPV4_STR_LEN] = {0};
@@ -339,14 +339,12 @@ int main(int argc,char *argv[])
 		{
 			    system("huayi_cmd set blend cpe_link 1");
 		}
-		if(strlen(wisp_ipv4) <= strlen("0.0.0.0")){
-            wired_link = 0;
-        }
-        if(strlen(wan4g_ipv4) <= strlen("0.0.0.0"))
-		{
-            cpe_link = 0;
-        }
+
 		if(wired_link == 0 && cpe_link == 0)
+			continue;
+
+		if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0
+			&& strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
 			continue;
 		memset(wisp_ipv4, 0, sizeof(wisp_ipv4));
 		memset(wan4g_ipv4, 0, sizeof(wan4g_ipv4));
@@ -455,9 +453,8 @@ int main(int argc,char *argv[])
 		}
 
 		huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
-		huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "wan_device", wan_device);
 		//printf("net_ipv4 = %s, wan_ipv4 = %s\n",net_ipv4, wan_ipv4);
-		if(strcmp(wan_ipv4,net_ipv4)||strcmp(wan_ifname,wan_device))  //更新proc下的网络状态信息
+		if(strcmp(wan_ipv4,net_ipv4))  //更新proc下的网络状态信息
 		{	
 			memset(cmd_str,0,sizeof(cmd_str));
 			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
