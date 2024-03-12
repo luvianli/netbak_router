@@ -537,6 +537,18 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	
 
 	xl2tp_static_router_array = cJSON_CreateArray();
+	xl2tp_static_router_obj = cJSON_CreateObject();
+
+	memset(cmd, 0, TEMP_STR_LEN);
+	sprintf(cmd, "route -n | awk '$8 == \"%s\" {print $3}'",dev);
+	get_cmd_result(cmd, netmask, sizeof(value));
+	cJSON_AddStringToObject(xl2tp_static_router_obj,"subnet_mask",netmask);
+	memset(cmd, 0, TEMP_STR_LEN);
+	sprintf(cmd, "route -n | awk '$8 == \"%s\" {print $2}'",dev);
+	get_cmd_result(cmd, target, sizeof(value));
+	cJSON_AddStringToObject(xl2tp_static_router_obj,"target",target);
+	cJSON_AddItemToArray(xl2tp_static_router_array,xl2tp_static_router_obj);
+/*
 	while(1)
 	{
 		snprintf(section,sizeof(section),"@route[%d]",i);
@@ -544,7 +556,7 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 		{
 			break;
 		}
-		if(strcmp(inter_face,"XL2TP") == 0)
+		if(strcmp(inter_face,"ppp0") == 0)
 		{
 			huayi_uci_get_str(PKG_PPL2TP,section,"target",target);
 			huayi_uci_get_str(PKG_PPL2TP,section,"netmask",netmask);
@@ -557,7 +569,7 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 		
 		i++;
 	}
-	
+	*/
 	cJSON_AddItemToObject(result_root,"xl2tp_static_arr",xl2tp_static_router_array);
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
@@ -620,7 +632,7 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	//huayi_uci_set_int(PKG_PPL2TP,"xl2tp","ipsec_enable",ipsec_enable);
 	//if(ipsec_enable)
 	huayi_uci_set_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
-	
+/*	
 	if(route_type == 0 && enable == 1)
 	{
 		if(!(xl2tp_static_router_array= cJSON_GetObjectItem(request_root,"xl2tp_static_arr")))
@@ -633,7 +645,7 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 		max_id = atoi(max_route);
 		if(max_id == 0)
 		{
-			;/*no section*/
+			;
 		}else
 		{
 			for(i = max_id - 1 ;i >= 0 ;i--)
@@ -665,7 +677,7 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 			huayi_uci_set_str(PKG_PPL2TP,section,"interface","XL2TP");
 		}
 	}
-
+*/
 	huayi_uci_commit(PKG_PPL2TP);
 	if(enable){
 		system("huayi-reset xl2tpd_ipsec");
