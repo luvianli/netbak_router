@@ -332,6 +332,19 @@ VTBool huayi_reload_vpn_server_route(void * arg,cJSON *input_root)
 	}
 	return VT_TRUE;
 }
+VTBool huayi_reload_openvpn(void * arg,cJSON *input_root)
+{
+	int enable = 0;
+	huayi_uci_get_int(PKG_PPL2TP,"openvpn","enable",&enable);
+	sleep (2);
+	if(!enable)
+		system("etc/init.d/openVPN stop");
+	else
+		system("etc/init.d/openVPN start");
+
+	return VT_TRUE;
+}
+
 
 #endif
 

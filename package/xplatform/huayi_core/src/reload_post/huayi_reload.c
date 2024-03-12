@@ -51,6 +51,7 @@ ReloadCmdStructure CmdTable[] = {
 	{"vpn_user",HUAYI_MSG_RELOAD_VPN_USER,0,"--Reset vpn_user"},
 	{"vpn_route",HUAYI_MSG_RELOAD_VPN_ROUTE,0,"--Reset vpn route"},
 	{"vpn_server_route",HUAYI_MSG_RELOAD_SERVER_VPN_ROUTE,0,"--Reset vpn server route"},
+	{"openvpn",HUAYI_MSG_RELOAD_OPENVPN,0,"--Reset vpn server route"},
 #endif
 	{"ftpd",HUAYI_MSG_RELOAD_FTPD,0,"--Reset ftpd"},
 	{"printer",HUAYI_MSG_RELOAD_PRINTER,0,"--Reset printer"},
@@ -64,7 +65,7 @@ ReloadCmdStructure CmdTable[] = {
 #endif
 	{"switch_sim",HUAYI_MSG_SWITCH_CARD,0,"--Start the checker and save the configuration file usesiminfo"},
 	//ly add
-	{"ipsec_up",HUAYI_MSG_IPSEC_INIT,0,"--The ipsec configuration is initialized"},
+	{"xl2tpd_ipsec",HUAYI_MSG_IPSEC_INIT,0,"--The ipsec configuration is initialized"},
 	//end
 
 };

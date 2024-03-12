@@ -34,18 +34,7 @@ config interface 'wan4g'
 	option metric '2'
 	
 	
-#lyadd
-config interface 'l2tp'
-    option proto 'l2tp'
-    option server 'sslvpn.eaoinfo.com'
-    option username 'fanrui01'
-    option password 'Aa123456'
-    option ipv6 'auto'
-    option metric '20'
-    option defaultroute '1'
-    option peerdns '0'
-#lyend
-	
+
 	
 
 	

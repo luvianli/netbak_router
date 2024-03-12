@@ -119,6 +119,11 @@ int main (int argc, char *argv[])
 				
 				goto upload_file;
 			}
+			if(!strcmp(rest_data,"streamid=7"))/*upgrade not keep setting*/
+			{
+                rest_code = get_upload_nohead_content_notfilesize(&lock_time);
+				goto upload_file;
+			}
 		}
 		
 download_file:

@@ -4,20 +4,27 @@ START=99
 
 openvpn_client_init() {
 
+    
+    # 从配置文件中获取 OpenVPN 相关参数
     server_hostname=$(uci -q get ppl2tp.openvpn.host_name)
     port=$(uci -q get ppl2tp.openvpn.port)
     username=$(uci -q get ppl2tp.openvpn.username)
-    password=$(uci -q get ppl2tp.openvpn.password)
+    password=$(uci -q get ppl2tp.openvpn.pwd)
+    option=$(uci -q get ppl2tp.openvpn.option)
+    enable=$(uci -q get ppl2tp.openvpn.enable)
+    
+    if [ "$option" -eq "0" ]; then
+        if [ "$enable" -eq "1" ]; then
+            mkdir -p /path/to/
+            echo "$username" > /path/to/credentials.txt
+            echo "$password" >> /path/to/credentials.txt
+            
 
-
-    if [ "$(uci -q get ppl2tp.openvpn.enable)" -eq "1" ]; then
-        mkdir -p /etc/openvpn
-
-        cat <<EOF > /etc/openvpn/openVPN.ovpn
+            cat <<EOF > /etc/openvpn/openVPN.ovpn
 client
 dev tun
 proto udp
-remote $server_hostname $port
+remote "$server_hostname" "$port"
 resolv-retry infinite
 nobind
 persist-key
@@ -25,24 +32,32 @@ persist-tun
 cipher AES-256-CBC
 comp-lzo
 verb 3
-auth-user-pass
-$username $password
+auth-user-pass /path/to/credentials.txt
 EOF
 
-        chmod 600 /etc/openvpn/openVPN.ovpn
-    else
-        echo "OpenVPN is not enabled in the configuration."
-    fi
-}
 
+            uci set ppl2tp.openvpn.dev=tun
+        else
+            echo "OpenVPN is not enabled in the configuration."
+        fi
+    else
+        DEV=$(awk '/^dev/ {print $2}' /etc/openvpn/openVPN.ovpn)
+        uci set ppl2tp.openvpn.dev="$DEV"
+    fi
+    
+  
+    uci commit
+    chmod 600 /etc/openvpn/openVPN.ovpn
+}
 start() {
     echo "Starting custom OpenVPN client..."
-	killall openvpn
+    openvpn_client_init
+    # Killall openvpn might not be necessary here
     openvpn --config /etc/openvpn/openVPN.ovpn --daemon
 }
 
 stop() {
     echo "Stopping custom OpenVPN client..."
-    rm -fr /etc/openvpn/openVPN.ovpn
+    rm -f /etc/openvpn/openVPN.ovpn
     killall openvpn
 }

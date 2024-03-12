@@ -17,6 +17,7 @@ proto_l2tp_init_config() {
 	proto_config_add_int "mtu"
 	proto_config_add_int "checkup_interval"
 	proto_config_add_string "server"
+	proto_config_add_string "ipsec_secret"
 	available=1
 	no_device=1
 	no_proto_task=1
@@ -90,6 +91,7 @@ $username
 $ipv6
 $mtu
 $pppd_options
+$ipsec_secret
 EOF
 
 	xl2tpd-control add l2tp-${interface} pppoptfile=${optfile} lns=${server} || {

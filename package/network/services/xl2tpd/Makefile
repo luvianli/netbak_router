@@ -64,7 +64,7 @@ endif
 
 define Package/xl2tpd/conffiles
 /etc/xl2tpd/xl2tpd.conf
-/etc/xl2tpd/xl2tp-secrets
+#/etc/xl2tpd/xl2tp-secrets
 /etc/ppp/options.xl2tpd
 endef
 
@@ -80,7 +80,7 @@ ifeq ($(CONFIG_HUAYI_PLATFORM_SUPPORT),y)
 	
 	$(INSTALL_DIR) $(1)/etc/xl2tpd
 	$(INSTALL_DATA) ./files/huayi_xl2tpd.conf $(1)/etc/xl2tpd/xl2tpd.conf
-	$(INSTALL_CONF) ./files/huayi_xl2tp-secrets $(1)/etc/xl2tpd/xl2tp-secrets
+	#$(INSTALL_CONF) ./files/huayi_xl2tp-secrets $(1)/etc/xl2tpd/xl2tp-secrets
 	
 	$(INSTALL_DIR) $(1)/etc/ppp
 	$(INSTALL_DATA) ./files/huayi_options.xl2tpd $(1)/etc/ppp/options.xl2tpd
@@ -90,8 +90,8 @@ ifeq ($(CONFIG_HUAYI_PLATFORM_SUPPORT),y)
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_BIN) ./files/huayi_xl2tpd.config $(1)/etc/config/xl2tpd
 	
-	$(INSTALL_DIR) $(1)/lib/netifd/proto
-	$(INSTALL_BIN) ./files/huayi_l2tp.sh $(1)/lib/netifd/proto
+	#$(INSTALL_DIR) $(1)/lib/netifd/proto
+	#$(INSTALL_BIN) ./files/huayi_l2tp.sh $(1)/lib/netifd/proto
 ifeq ($(CONFIG_PACKAGE_huayi_ppl2tp),y)
 	$(LN) /usr/sbin/xl2tpd $(1)/usr/sbin/xl2tp
 	#$(CP) $(PKG_INSTALL_DIR)/usr/local/sbin/xl2tpd $(1)/usr/sbin/xl2tp
@@ -103,13 +103,13 @@ else
 
 	$(INSTALL_DIR) $(1)/etc/xl2tpd
 	$(INSTALL_DATA) ./files/xl2tpd.conf $(1)/etc/xl2tpd/
-	$(INSTALL_CONF) ./files/xl2tp-secrets $(1)/etc/xl2tpd/
+	#$(INSTALL_CONF) ./files/xl2tp-secrets $(1)/etc/xl2tpd/
 
 	$(INSTALL_DIR) $(1)/etc/ppp
 	$(INSTALL_DATA) ./files/options.xl2tpd $(1)/etc/ppp/
 
-	$(INSTALL_DIR) $(1)/lib/netifd/proto
-	$(INSTALL_BIN) ./files/l2tp.sh $(1)/lib/netifd/proto
+	#$(INSTALL_DIR) $(1)/lib/netifd/proto
+	#$(INSTALL_BIN) ./files/l2tp.sh $(1)/lib/netifd/proto
 	
 endif
 

@@ -235,6 +235,153 @@ FCGI_BOOL get_upload_content(char * filename,int *rest_code)
 	return FCGI_TRUE;
 }
 
+
+FCGI_BOOL get_script_content(char *filename, int *rest_code) {
+    FILE *f = fopen(filename, "w+");
+
+    if (!f) {
+        *rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+        return FCGI_FALSE;
+    }
+
+    char tmp_text[LONG_BUFF_LEN];
+	memset(tmp_text, 0, LONG_BUFF_LEN);
+    size_t itry, ilen;
+
+    while ((itry = fread(tmp_text, 1, LONG_LIST_BUFF_LEN, stdin)) > 0) {
+        ilen = fwrite(tmp_text, 1, itry, f);
+
+        if (ilen != itry) {
+            fclose(f);
+            *rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+            return FCGI_FALSE;
+        }
+    }
+
+    fclose(f);
+
+    chmod(filename, S_IRUSR | S_IWUSR | S_IXUSR);
+    
+    return FCGI_TRUE;
+}
+FCGI_BOOL get_upload_nohead_content_notfilesize(char * filename,int *rest_code)
+{
+	FILE *f=NULL;
+	int ilen=0,itry=0;
+	int first_read = 1;
+	int first_read_len = 0;
+	int data_len = 0;
+	char *text_head = NULL;
+	char tmp_text[4096]={0};
+
+	system("echo 3 > /proc/sys/vm/drop_caches");
+
+	data_len = strtol(getenv("CONTENT_LENGTH"), NULL, 10);
+
+	f = fopen(filename, "w+");
+
+	if(!f)
+	{
+		*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+		return FCGI_FALSE;
+	}
+	
+	while(1)
+	{
+		memset(tmp_text, 0, LONG_BUFF_LEN);
+		itry=fread(tmp_text, 1, LONG_BUFF_LEN, stdin);
+		if(itry <= 0)
+		{
+           	fclose(f);
+			*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+			return FCGI_FALSE;
+		}
+
+		while(first_read == 1 && itry < LONG_BUFF_LEN)
+		{
+			first_read_len = fread(tmp_text+itry, 1, LONG_BUFF_LEN-itry, stdin);
+			if (first_read_len <= 0)
+			{
+				fclose(f);
+				*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+				return FCGI_FALSE;
+			}
+			itry += first_read_len;
+		}
+
+		if (first_read == 1)
+		{			
+			if ((text_head = strstr(tmp_text,"\r\n\r\n")) == NULL)
+			{
+				fclose(f);
+				*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+				return FCGI_FALSE;
+			}
+			text_head += 4;
+			itry = itry - (text_head - tmp_text);
+
+			data_len = data_len - (text_head - tmp_text);
+
+			ilen = fwrite(text_head, 1,itry, f);
+			if(ilen!=itry)
+			{
+				fclose(f);
+				*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+				return FCGI_FALSE;
+			}
+
+			data_len = data_len - ilen;
+			
+			first_read = 0;
+			continue;
+		}
+
+		if (data_len <= (LONG_BUFF_LEN*2))
+		{
+			while(itry < data_len)
+			{
+				first_read_len = fread(tmp_text+itry, 1, data_len-itry, stdin);
+				if (first_read_len <= 0)
+				{
+					fclose(f);
+					*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+					return FCGI_FALSE;
+				}
+				itry += first_read_len;
+			}
+			
+			if ((text_head = memmem(tmp_text, itry, "\r\n", strlen("\r\n"))) != NULL)
+			{
+				
+				itry = (text_head - tmp_text) + strlen("\r\n");
+			}
+			ilen = fwrite(tmp_text, 1,itry, f);
+			if(ilen!=itry)
+			{
+				fclose(f);
+				*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+				return FCGI_FALSE;
+			}
+			break;
+		}
+		
+		ilen = fwrite(tmp_text, 1,itry, f);
+		if(ilen!=itry)
+		{
+			fclose(f);
+			*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+			return FCGI_FALSE;
+		}
+
+		data_len = data_len - ilen;
+	}
+	
+	fclose(f);
+	
+	return FCGI_TRUE;
+}
+
+
 FCGI_BOOL get_upload_nohead_content(char * filename,int *rest_code)
 {
 	FILE *f=NULL;
@@ -332,6 +479,7 @@ FCGI_BOOL get_upload_nohead_content(char * filename,int *rest_code)
 				
 				itry = (text_head - tmp_text);
 			}
+		
 			
 			ilen = fwrite(tmp_text, 1,itry, f);
 			if(ilen!=itry)
@@ -358,6 +506,9 @@ FCGI_BOOL get_upload_nohead_content(char * filename,int *rest_code)
 	
 	return FCGI_TRUE;
 }
+
+
+
 
 int cut_upload_file(char *filename,char *realfile)
 {
@@ -777,6 +928,34 @@ int do_system_upgrade(int *lock_time)
 	
 	return rest_code;
 }
+
+int do_download_vpn_configure(int *lock_time)
+{
+	int 	len=0;
+	int 	rest_code = FCGI_RESP_CODE_SUCCESS;
+
+	system("mkdir -p /etc/openvpn");
+	system("rm -fr etc/openvpn/openVPN.ovpn");
+    
+	if(get_upload_nohead_content_notfilesize(SCRIPT_FILE,&rest_code))
+	{
+		len = getFileSize(SCRIPT_FILE);
+        CON_LOG("Upload script--size:%d--state:%d",len,rest_code);
+		huayi_uci_set_int(PKG_PPL2TP,"openvpn","option",1);
+		huayi_uci_set_int(PKG_PPL2TP,"openvpn","enable",1);
+		huayi_uci_commit(PKG_PPL2TP);
+		*lock_time = HUAYI_RELOAD_VPN_SERVER_TIME;
+		system("huayi-reset openvpn");
+			
+	}
+	
+
+	return rest_code;
+}
+
+
+
+
 
 
 char* MemSrch (char* src, char* sub, int scrSize, int subSize)

@@ -40,7 +40,7 @@ define Package/$(PKG_NAME)/install
 	
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/xl2tp.init $(1)/etc/init.d/xl2tp
-	$(INSTALL_BIN) ./files/ipsec-up.init $(1)/etc/init.d/ipsec-up
+	$(INSTALL_BIN) ./files/xl2tpd_ipsec.init $(1)/etc/init.d/xl2tpd_ipsec
 	$(INSTALL_BIN) ./files/openVPN.init $(1)/etc/init.d/openVPN
 	
 	$(INSTALL_DIR) $(1)/etc/ppp
@@ -50,6 +50,8 @@ define Package/$(PKG_NAME)/install
 
 	$(INSTALL_DIR) $(1)/etc/xl2tp 
 	$(INSTALL_DATA) ./files/xl2tp.conf $(1)/etc/xl2tp/xl2tp.conf
+	
+	$(INSTALL_DIR) $(1)/etc/strongswan
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

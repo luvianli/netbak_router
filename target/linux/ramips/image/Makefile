@@ -965,7 +965,7 @@ endef
 # MT7628 Profiles
 #
 
-Image/Build/Profile/MT7628=$(call BuildFirmware/Default8M/$(1),$(1),mt7628,MT7628)
+Image/Build/Profile/MT7628=$(call BuildFirmware/Default16M/$(1),$(1),mt7628,MT7628)
 Image/Build/Profile/4G300-H01-HY01=$(call BuildFirmware/Default8M/$(1),$(1),4G300-H01-HY01,4G300-H01-HY01)
 
 ifeq ($(SUBTARGET),mt7628)

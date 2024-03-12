@@ -295,7 +295,12 @@ VTBool huayi_switch_card(void *arg,cJSON *input_root)
 
 VTBool huayi_ipsec_init(void *arg,cJSON *input_root)
 {
-	system("etc/init.d/ipsec-up start");
+	int enable = 0 ;
+	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&enable);
+	if(enable)
+		system("etc/init.d/xl2tpd_ipsec restart");
+	else
+		system("etc/init.d/xl2tpd_ipsec stop");
 	return VT_TRUE;
 }
 
