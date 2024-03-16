@@ -70,6 +70,7 @@ typedef enum{
 #define WLAN_ENCRTYPE_AES     		0x20
 #define WLAN_ENCRTYPE_WEP     		0x40
 
+#define SCRIPT_PATH 									"/path/to/"
 #define SCRIPT_FILE  									"/etc/openvpn/openVPN.ovpn"
 #define PING_FILE                                  	        "/tmp/ping_file"
 #define UPLOAD_BIN  									"/tmp/firmware.bin"

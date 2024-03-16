@@ -52,6 +52,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/xl2tp.conf $(1)/etc/xl2tp/xl2tp.conf
 	
 	$(INSTALL_DIR) $(1)/etc/strongswan
+	$(INSTALL_DIR) $(1)/path/to/
+	$(INSTALL_DIR) $(1)etc/openvpn/
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

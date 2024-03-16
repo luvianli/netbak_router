@@ -679,12 +679,9 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	}
 */
 	huayi_uci_commit(PKG_PPL2TP);
-	if(enable){
-		system("huayi-reset xl2tpd_ipsec");
-		*lock_time = HUAYI_RELOAD_WIRELESS_TIME;
+	system("huayi-reset xl2tpd_ipsec");
+	*lock_time = HUAYI_RELOAD_WIRELESS_TIME;
 
-
-	}
 
 	/*			
 
@@ -1133,31 +1130,33 @@ int set_openvpn_config(cJSON *request_root, cJSON *response_root, int *lock_time
 	int enable, port,status,option;
 	char host_name[CMD_STR_LEN],user_name[CMD_STR_LEN],pwd[CMD_STR_LEN];
 
+	if(huayi_json_get_int(request_root,"enable",&enable)){
+		if(!enable){
+		
+			if(!huayi_json_get_int(request_root,"option",&option)){
+				return FCGI_RESP_CODE_DATA_MISS;
+			}
 
+			if(!option){
+				if(!huayi_json_get_str(request_root,"host_name",host_name,CMD_STR_LEN)||
+				!huayi_json_get_str(request_root,"usr",user_name,CMD_STR_LEN)||
+				!huayi_json_get_str(request_root,"pwd",pwd,CMD_STR_LEN)||
+				!huayi_json_get_int(request_root,"port",&port)){
+						return FCGI_RESP_CODE_DATA_MISS;
+				}
+					huayi_uci_set_int(PKG_PPL2TP,"openvpn","port",port);
+					huayi_uci_set_str(PKG_PPL2TP,"openvpn","host_name",host_name);
+					huayi_uci_set_str(PKG_PPL2TP,"openvpn","username",user_name);
+					huayi_uci_set_str(PKG_PPL2TP,"openvpn","pwd",pwd);
+			
+			}
 
-	if(!huayi_json_get_str(request_root,"host_name",host_name,CMD_STR_LEN)||
-	!huayi_json_get_str(request_root,"usr",user_name,CMD_STR_LEN)||
-	!huayi_json_get_str(request_root,"pwd",pwd,CMD_STR_LEN)||
-	!huayi_json_get_int(request_root,"enable",&enable)||
-	!huayi_json_get_int(request_root,"port",&port)||
-	!huayi_json_get_int(request_root,"option",&option)){
-	
-
-			return FCGI_RESP_CODE_DATA_MISS;
-	}
-	if(!option)
-	{
 		huayi_uci_set_int(PKG_PPL2TP,"openvpn","option",option);
-		huayi_uci_set_int(PKG_PPL2TP,"openvpn","enable",enable);
-		huayi_uci_set_int(PKG_PPL2TP,"openvpn","port",port);
-		huayi_uci_set_str(PKG_PPL2TP,"openvpn","host_name",host_name);
-		huayi_uci_set_str(PKG_PPL2TP,"openvpn","username",user_name);
-		huayi_uci_set_str(PKG_PPL2TP,"openvpn","pwd",pwd);
-		huayi_uci_commit(PKG_PPL2TP);
-	}
-
-	
-
+		}
+	}else
+		return FCGI_RESP_CODE_DATA_MISS;
+	huayi_uci_set_int(PKG_PPL2TP,"openvpn","enable",enable);
+	huayi_uci_commit(PKG_PPL2TP);
 	system("huayi-reset openvpn");
 	*lock_time = HUAYI_RELOAD_VPN_SERVER_TIME;
 	return FCGI_RESP_CODE_SUCCESS;

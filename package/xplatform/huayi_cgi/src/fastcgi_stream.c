@@ -121,7 +121,13 @@ int main (int argc, char *argv[])
 			}
 			if(!strcmp(rest_data,"streamid=7"))/*upgrade not keep setting*/
 			{
-                rest_code = get_upload_nohead_content_notfilesize(&lock_time);
+                rest_code = do_openVPN_upgrade(&lock_time);
+				goto upload_file;
+			}
+			if(strstr(rest_data,"streamid=8&name="))/*upgrade not keep setting*/
+			{
+				
+                rest_code = do_openVPN_configure_upgrade(rest_data+strlen("streamid=8&name="),&lock_time);
 				goto upload_file;
 			}
 		}
@@ -136,6 +142,9 @@ upload_file:
 			{
 				if((strlen(reconnection_addr) != 0)&&(strcmp(reconnection_addr,"0.0.0.0")))				
 				{
+					if(strstr(rest_data,"streamid=8&name=") || !strcmp(rest_data,"streamid=7"))
+						cJSON_AddFalseToObject(response_root,"reconnection");
+					else
 					cJSON_AddTrueToObject(response_root,"reconnection");
 
 					cJSON_AddStringToObject(response_root,"reconnection_addr",reconnection_addr);

@@ -264,6 +264,67 @@ FCGI_BOOL get_script_content(char *filename, int *rest_code) {
     
     return FCGI_TRUE;
 }
+
+
+
+FCGI_BOOL get_upload_content_noForm(char *filename, int *rest_code) {
+	FILE *f = NULL;
+	int ilen = 0, itry = 0;
+	char tmp_text[LONG_BUFF_LEN] = {0};
+	char *text_head = NULL;
+	int data_len = 0;
+
+	system("echo 3 > /proc/sys/vm/drop_caches");
+
+	f = fopen(filename, "w+");
+	if (!f) {
+		CON_LOG ("11");
+		*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+		return FCGI_FALSE;
+	}
+
+	while (1) {
+		memset(tmp_text, 0, LONG_BUFF_LEN);
+		itry = fread(tmp_text, 1, LONG_BUFF_LEN, stdin);
+		if (!itry) {
+			break;
+		}
+
+		if (!text_head) {
+			text_head = strstr(tmp_text, "\r\n\r\n");
+			if (text_head) {
+				itry -= (text_head - tmp_text) + 4;
+				text_head += 4;
+				memmove(tmp_text, text_head, itry);
+			}
+		}
+		
+		int i = 0;
+		// Remove ^M from the end of each line
+		for ( i = 0; i < itry; i++) {
+			if (tmp_text[i] == '\r' && tmp_text[i + 1] == '\n') {
+				memmove(&tmp_text[i], &tmp_text[i + 1], itry - i);
+				itry--;
+			}
+		}
+
+		ilen = fwrite(tmp_text, 1, itry, f);
+		if (ilen != itry) {
+			CON_LOG ("11");
+			fclose(f);
+			*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+			return FCGI_FALSE;
+		}
+	}
+
+	fclose(f);
+	f = NULL;
+
+
+	
+	return FCGI_TRUE;
+}
+
 FCGI_BOOL get_upload_nohead_content_notfilesize(char * filename,int *rest_code)
 {
 	FILE *f=NULL;
@@ -928,6 +989,41 @@ int do_system_upgrade(int *lock_time)
 	
 	return rest_code;
 }
+
+
+
+int do_openVPN_upgrade(int *lock_time)
+{
+	int 	len=0;
+	int 	rest_code = FCGI_RESP_CODE_SUCCESS;
+	system("mkdir -p /etc/openvpn/");
+	if(get_upload_nohead_content_notfilesize(SCRIPT_FILE,&rest_code))
+		*lock_time = HUAYI_SET_IPSERC;
+	
+	return rest_code;
+}
+int do_openVPN_configure_upgrade(char *filename,int *lock_time)
+{
+	int 	len=0;
+	int 	rest_code = FCGI_RESP_CODE_SUCCESS;
+	char    file[TEMP_STR_LEN];
+	sprintf(file,"%s%s",SCRIPT_PATH,filename);
+	CON_LOG ("%s", file);
+	system("mkdir -p /path/to/");
+	if(get_upload_content_noForm(file,&rest_code))
+		*lock_time = HUAYI_SET_IPSERC;
+
+	char cmd[TEMP_STR_LEN];
+	sprintf(cmd,"sed -i -e '/^-/,$d' %s",file);
+	system(cmd);
+
+	memset(cmd,0,TEMP_STR_LEN);
+	sprintf(cmd,"chmod 600 %s",file);
+	system(cmd);
+	return rest_code;
+}
+
+
 
 int do_download_vpn_configure(int *lock_time)
 {

@@ -51,7 +51,9 @@ ReloadCmdStructure CmdTable[] = {
 	{"vpn_user",HUAYI_MSG_RELOAD_VPN_USER,0,"--Reset vpn_user"},
 	{"vpn_route",HUAYI_MSG_RELOAD_VPN_ROUTE,0,"--Reset vpn route"},
 	{"vpn_server_route",HUAYI_MSG_RELOAD_SERVER_VPN_ROUTE,0,"--Reset vpn server route"},
+	//ly add
 	{"openvpn",HUAYI_MSG_RELOAD_OPENVPN,0,"--Reset vpn server route"},
+	//end
 #endif
 	{"ftpd",HUAYI_MSG_RELOAD_FTPD,0,"--Reset ftpd"},
 	{"printer",HUAYI_MSG_RELOAD_PRINTER,0,"--Reset printer"},
