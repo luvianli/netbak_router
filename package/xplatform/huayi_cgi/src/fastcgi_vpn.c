@@ -1131,7 +1131,7 @@ int set_openvpn_config(cJSON *request_root, cJSON *response_root, int *lock_time
 	char host_name[CMD_STR_LEN],user_name[CMD_STR_LEN],pwd[CMD_STR_LEN];
 
 	if(huayi_json_get_int(request_root,"enable",&enable)){
-		if(!enable){
+		if(enable){
 		
 			if(!huayi_json_get_int(request_root,"option",&option)){
 				return FCGI_RESP_CODE_DATA_MISS;
