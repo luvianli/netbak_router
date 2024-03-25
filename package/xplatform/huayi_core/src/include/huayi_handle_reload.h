@@ -97,6 +97,7 @@ VTBool huayi_reload_wifi_sche(void * arg,cJSON *input_root);
 VTBool huayi_switch_card(void * arg,cJSON *input_root);
 VTBool huayi_check_internet_state(void * arg,cJSON *input_root);
 VTBool huayi_meige_module_decryption(void * arg,cJSON *input_root);
+VTBool huayi_meige_set_band(void * arg,cJSON *input_root);
 
 
 #endif

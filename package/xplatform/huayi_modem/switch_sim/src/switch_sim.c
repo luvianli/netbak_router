@@ -5,22 +5,26 @@
 
 #include "huayi_uci_fun.h"
 // Define enum for better readability
+#ifdef CONFIG_HUAYI_SUPPORT_CARD_SUPPORT
+
 enum SimSelection {
+
     SIM0_HIGH_HIGH,
+#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
     SIM1_HIGH_LOW,
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
     SIM2_LOW_HIGH,
-    EXTERNAL_CARD_LOW_LOW,
-#else
-    EXTERNAL_CARD_LOW_LOW,
 #endif
+#endif
+	EXTERNAL_CARD_LOW_LOW,
     INVALID_SELECTION
 };
+#endif
 
 
 int SlmDial(int sim)
 {
-    int count = 0, registered_count = 0, signal = 0;
+    int count = 0, registered_count = 0, signal = 0, band = 0;
     char resultbuf[OPTION_STR_LEN] = {0};
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
@@ -46,6 +50,13 @@ int SlmDial(int sim)
             huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
             if (mode == 1)
             {
+	            huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+				if( band ){
+					memset(cmd,0,TEMP_STR_LEN);
+					snprintf(cmd, TEMP_STR_LEN, "AT+SPLBAND=1,0,0,0,%d,0", band);
+					system(cmd);
+				    SWITCH_SIM_LOG("custom set band %d",band);
+				}
                 SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
 
                 while (registered_count < 60 && atcmd_get_slm_mobile_type() == HUAYI_FALSE)
@@ -73,8 +84,10 @@ int SlmDial(int sim)
 
                     Atcmd("AT+CGDATA=\"M-ETHER\",1", strlen("AT+CGDATA=\"M-ETHER\",1"), 0);
                     Atcmd("AT^SPTETHER=\"gadget\",\"on\",1", strlen("AT^SPTETHER=\"gadget\",\"on\",1"), 0);
-
+					huayi_uci_set_int(PKG_M_SYSTEM, "system", "at_card", sim);
+					huayi_uci_commit (PKG_M_SYSTEM);
                     SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim, print_to);
+					
                     return 1;
                 }
                 else
@@ -109,6 +122,8 @@ int SlmDial(int sim)
 
 int switchSim(int simSelection) {
     switch (simSelection) {
+
+
         case SIM0_HIGH_HIGH:
             printf("Switching sim0; Setting High=3.3V & 2 Setting High=3.3V\n");
            // system("gpio l 0 0 4000 0 0 4000");
@@ -116,6 +131,7 @@ int switchSim(int simSelection) {
             system("gpio l 0 4000 0 0 0 4000");
             system("gpio l 2 0 4000 0 0 4000");
             break;
+#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
         case SIM1_HIGH_LOW:
             printf("Switching sim1; Setting High=3.3V & 2 Setting LOW=2.7V\n");
             system("gpio l 0 0 4000 0 0 4000");
@@ -127,18 +143,15 @@ int switchSim(int simSelection) {
 			system("gpio l 0 0 4000 0 0 4000");
             system("gpio l 2 0 4000 0 0 4000");
             break;
-        case EXTERNAL_CARD_LOW_LOW:
-            printf("Switching External card; Setting LOW=2.7V & 2 Setting LOW=2.7V\n");
-            system("gpio l 0 4000 0 0 0 4000");
-            system("gpio l 2 4000 0 0 0 4000");
-            break;
-#else
-        case EXTERNAL_CARD_LOW_LOW:
-            printf("Switching External card; Setting LOW=2.7V & 2 Setting LOW=2.7V\n");
-            system("gpio l 0 4000 0 0 0 4000");
-            system("gpio l 2 4000 0 0 0 4000");
-            break;
 #endif
+#endif
+
+        case EXTERNAL_CARD_LOW_LOW:
+            printf("Switching External card; Setting LOW=2.7V & 2 Setting LOW=2.7V\n");
+            system("gpio l 0 4000 0 0 0 4000");
+            system("gpio l 2 4000 0 0 0 4000");
+            break;
+
         default:
             printf("\nSwitch error: Invalid selection\nUsage: %d [0|1|2|3]\n", simSelection);
             break;

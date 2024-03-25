@@ -76,6 +76,7 @@ VTBool huayi_reload_functions_init(struct VcoreAgent *Agent)
     Agent->CoreReloadFunction[HUAYI_MSG_CHECK_INTERNET_STATE-HUAYI_MSG_PAYLOAD_OFFSET] =huayi_check_internet_state;
 
     Agent->CoreReloadFunction[HUAYI_MEIGE_MODULE_DECRYPTION_STATE-HUAYI_MSG_PAYLOAD_OFFSET] =huayi_meige_module_decryption;
+	Agent->CoreReloadFunction[HUAYI_MEIGE_MODULE_SET_BAND-HUAYI_MSG_PAYLOAD_OFFSET] =huayi_meige_set_band;
 
 
 	return VT_TRUE;

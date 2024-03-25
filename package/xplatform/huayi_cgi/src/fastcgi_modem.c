@@ -1871,7 +1871,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	char apn_name[OPTION_STR_LEN] = {0};
 	char username[OPTION_STR_LEN] = {0};
 	char password[OPTION_STR_LEN] = {0};
-	int  use_apn = 0, ret = 0;
+	int  use_apn = 0, ret = 0, band = 0,my_band = 0, option = 0;
 	char pmodel[16] = { 0 };
 
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
@@ -1889,6 +1889,17 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 
 	if (!strcmp(wan_type,WAN_TYPE_4G_MOBILE))
 	{
+
+		if(!huayi_json_get_int(request_root,"band",&band))
+		{
+			;//return FCGI_RESP_CODE_DATA_MISS;
+			huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &my_band);
+			if(my_band != band){
+				huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", band);
+				option = 1;
+			}
+				 
+		}
 		if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
 		{
 			;//return FCGI_RESP_CODE_DATA_MISS;
@@ -2287,10 +2298,13 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	huayi_uci_commit(PKG_NETWORK);
 	huayi_uci_commit(PKG_MODEM);
 	huayi_uci_commit(PKG_WIRELESS);
+	huayi_uci_commit(PKG_M_SYSTEM);
 
 	if (!strcmp(wan_type, WAN_TYPE_4G_MOBILE))
 	{
 		system("huayi-reset lte4g parameter 0");
+		if(option)
+			system("huayi-reset band");
 	}
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
 	else if(!strcmp(wan_type, WAN_TYPE_WIRED_PRIOROTY))

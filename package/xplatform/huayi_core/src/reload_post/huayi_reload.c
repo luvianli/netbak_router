@@ -67,6 +67,7 @@ ReloadCmdStructure CmdTable[] = {
     {"check_internet_state",HUAYI_MSG_CHECK_INTERNET_STATE,0,"check_internet_state"},
         
     {"zry",HUAYI_MEIGE_MODULE_DECRYPTION_STATE,0,"check_internet_state"},
+    {"band",HUAYI_MEIGE_MODULE_SET_BAND,0,"check_internet_state"},
 
 };
 

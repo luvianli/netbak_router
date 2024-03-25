@@ -249,17 +249,33 @@ config HUAYI_SUPPORT_REPEATER_DHCPD
 	depends on HUAYI_PLATFORM_SUPPORT
 	bool
 	default y
-
-config HUAYI_SUPPORT_MEIGE_AFTER_SALES
-	bool	"Support for Meige after-sales version"
-	depends on HUAYI_PLATFORM_SUPPORT
-	bool
-	default y
-config HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
-	bool	"Supports switching between Meige three cards"
+	
+config HUAYI_SUPPORT_CARD_SUPPORT
+	bool	"Supports switching Meige cards"
 	depends on HUAYI_PLATFORM_SUPPORT
 	bool
 	default n
+	
+	menu "HUAYI CARD Configuration"
+	depends on HUAYI_SUPPORT_CARD_SUPPORT
+	
+	config HUAYI_SUPPORT_MEIGE_SINGLE_CARD
+		bool	"Support for Meige single built-in cards"
+		default n
+		#depends on !HUAYI_SUPPORT_MEIGE_AFTER_SALES && !HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
+	
+	config HUAYI_SUPPORT_MEIGE_AFTER_SALES
+		bool	"Support for Meige after-sales version"
+		default n
+		#depends on !HUAYI_SUPPORT_MEIGE_SINGLE_CARD && !HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
+		
+	config HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
+		bool	"Support for between Meige three cards"
+		default n
+		#depends on !HUAYI_SUPPORT_MEIGE_SINGLE_CARD && !HUAYI_SUPPORT_MEIGE_AFTER_SALES
+
+	endmenu
+
 
 config HUAYI_SUPPORT_PASSWORD_OPTION
 	bool	"Support password option"

@@ -308,5 +308,18 @@ VTBool huayi_meige_module_decryption(void *arg,cJSON *input_root){
     return VT_TRUE;
 }
 
+VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
+
+    SWITCH_SIM_LOG("==huayi-reset band==");
+	int  at_card = 0;
+	char cmd[OPTION_STR_LEN];
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
+	sprintf(cmd,"switch_sim %d",at_card);
+	system(cmd);
+	
+    return VT_TRUE;
+}
+
+
 
 
