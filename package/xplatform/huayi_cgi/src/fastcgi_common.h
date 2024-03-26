@@ -279,7 +279,7 @@ typedef enum
 #define HUAYI_SYSTEM_ROUTE_MODE_TIME					100
 #define HUAYI_SYSTEM_REP_MODE_TIME					    90
 #define HUAYI_MODULE_UPGRADE_TIME						100
-#define HUAYI_RELOAD_NETWORK_TIME						50
+#define HUAYI_RELOAD_NETWORK_TIME						60
 #define HUAYI_RELOAD_WIRELESS_TIME                      30
 #define HUAYI_RELOAD_VPN_SERVER_TIME                    10
 #define HUAYI_WPS_ENABLE_TIME                           5

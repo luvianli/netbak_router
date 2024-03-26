@@ -50,13 +50,24 @@ int SlmDial(int sim)
             huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
             if (mode == 1)
             {
-	            huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
-				if( band ){
-					memset(cmd,0,TEMP_STR_LEN);
-					snprintf(cmd, TEMP_STR_LEN, "AT+SPLBAND=1,0,0,0,%d,0", band);
-					system(cmd);
-				    SWITCH_SIM_LOG("custom set band %d",band);
-				}
+				huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+				if (band) {
+					memset(cmd, 0, TEMP_STR_LEN);
+					int i = 1;
+					SWITCH_SIM_LOG("custom set band %d", band);
+					
+					if (band >= 1 && band <= 80) {
+						while (band > 1 && band != 17 && band != 33 && band != 49 && band != 65) i *= 2, band--;
+						snprintf(cmd, TEMP_STR_LEN, "AT+SPLBAND=1,%d,%d,%d,%d,%d", (band == 49 ? i : 0), (band == 33 ? i : 0), (band == 17 ? i : 0), (band == 1 ? i : 0), (band == 65 ? i : 0));
+						SWITCH_SIM_LOG("%s", cmd);
+						system(cmd);
+					} else if (band == 10008) Atcmd("AT+SPLBAND=1,0,0,0,149,0", strlen("AT+SPLBAND=1,0,0,0,149,0"), 0);
+					else if (band == 34041) Atcmd("AT+SPLBAND=1,0,482,0,0,0", strlen("AT+SPLBAND=1,0,482,0,0,0"), 0);
+				} else Atcmd("AT+SPLBAND=1,0,482,2056,213,0", strlen("AT+SPLBAND=1,0,482,2056,213,0"), 0);
+
+
+				
+				
                 SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
 
                 while (registered_count < 60 && atcmd_get_slm_mobile_type() == HUAYI_FALSE)
