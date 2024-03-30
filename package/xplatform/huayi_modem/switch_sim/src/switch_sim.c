@@ -21,13 +21,36 @@ enum SimSelection {
 };
 #endif
 
+void set_wanIp(){
+	char cmd[TEMP_STR_LEN] = {0};
+	char cmd_result[CMD_STR_LEN];
+	int is_ipv4 = 0,flag = 0;
+	int i = 0;
+	//do {
+			memset(cmd_result, 0, CMD_STR_LEN);
+			get_cmd_result("echo $(huayi_AT_cli AT+CGDCONT?) | grep -oE 'IPV4:[0-9.]*' | awk -F: '{print $2}'", cmd_result, CMD_STR_LEN);
+	
+			if (strchr(cmd_result, '.') != NULL)flag =1;
+			sleep(2);
+	//	} while (++i < 10);
+	if(flag){
+			CON_LOG("wan ip :%s", cmd_result);
+			memset(cmd,0,TEMP_STR_LEN);
+			sprintf(cmd,"huayi_cmd set network wan_ipv4 %s",cmd_result);
+			system(cmd);
+		}else CON_LOG ("error##wan ip :%s", cmd_result);
+
+
+}
+
 
 int SlmDial(int sim)
 {
-    int count = 0, registered_count = 0, signal = 0, band = 0;
+    int count = 0, registered_count = 0, signal = 0,mode = 0;
     char resultbuf[OPTION_STR_LEN] = {0};
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
+
 
     strcpy(print_to, (sim != EXTERNAL_CARD_LOW_LOW) ? "built-in" : "External");
     SWITCH_SIM_LOG("\n\ngpio sim%d",sim);
@@ -46,28 +69,11 @@ int SlmDial(int sim)
             {
                 return 0;
             }
-            int mode = 0;
-            huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+			
+			huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+
             if (mode == 1)
             {
-				huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
-				if (band) {
-					memset(cmd, 0, TEMP_STR_LEN);
-					int i = 1;
-					SWITCH_SIM_LOG("custom set band %d", band);
-					
-					if (band >= 1 && band <= 80) {
-						while (band > 1 && band != 17 && band != 33 && band != 49 && band != 65) i *= 2, band--;
-						snprintf(cmd, TEMP_STR_LEN, "AT+SPLBAND=1,%d,%d,%d,%d,%d", (band == 49 ? i : 0), (band == 33 ? i : 0), (band == 17 ? i : 0), (band == 1 ? i : 0), (band == 65 ? i : 0));
-						SWITCH_SIM_LOG("%s", cmd);
-						system(cmd);
-					} else if (band == 10008) Atcmd("AT+SPLBAND=1,0,0,0,149,0", strlen("AT+SPLBAND=1,0,0,0,149,0"), 0);
-					else if (band == 34041) Atcmd("AT+SPLBAND=1,0,482,0,0,0", strlen("AT+SPLBAND=1,0,482,0,0,0"), 0);
-				} else Atcmd("AT+SPLBAND=1,0,482,2056,213,0", strlen("AT+SPLBAND=1,0,482,2056,213,0"), 0);
-
-
-				
-				
                 SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
 
                 while (registered_count < 60 && atcmd_get_slm_mobile_type() == HUAYI_FALSE)
@@ -82,9 +88,9 @@ int SlmDial(int sim)
                     }
                     else
                     {
-	                    registered_count += 8;
-                        SWITCH_SIM_LOG("The card you want to switch to is not registered and has been waiting for %d (up to 20) seconds",
-                                       (registered_count / 10));
+	                    //registered_count += 8;
+                        SWITCH_SIM_LOG("The card you want to switch to is not registered and has been waiting for %d (up to 60) seconds",
+                                       (registered_count));
                     }
 					sleep(2);
                 }
@@ -98,7 +104,7 @@ int SlmDial(int sim)
 					huayi_uci_set_int(PKG_M_SYSTEM, "system", "at_card", sim);
 					huayi_uci_commit (PKG_M_SYSTEM);
                     SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim, print_to);
-					
+					set_wanIp();
                     return 1;
                 }
                 else
@@ -183,14 +189,13 @@ int main(int argc, char *argv[]) {
         system("devmem 0x10000060 32 0x4110441");
 
         switchSim(iSel);
-
         system("gpio l 1 4000 0 0 0 4000");
         sleep(5);
         system("gpio l 1 0 4000 0 0 4000");
 		sleep(5);
 
         // Assuming SlmDial function exists
-         SlmDial(iSel);
+        SlmDial(iSel);
     } else {
         printf("Invalid selection. Usage: %s [0|1|2|3]\n", argv[0]);
         return -1;

@@ -28,6 +28,28 @@ typedef enum{
 }INTERNET_MODE;
 static int delaycount = 1;
 
+void set_wanIp(){
+	char cmd[TEMP_STR_LEN] = {0};
+	char cmd_result[CMD_STR_LEN];
+	int is_ipv4 = 0,flag = 0;
+	int i = 0;
+	//do {
+			memset(cmd_result, 0, CMD_STR_LEN);
+			get_cmd_result("echo $(huayi_AT_cli AT+CGDCONT?) | grep -oE 'IPV4:[0-9.]*' | awk -F: '{print $2}'", cmd_result, CMD_STR_LEN);
+	
+			if (strchr(cmd_result, '.') != NULL)flag =1;
+			sleep(2);
+	//	} while (++i < 10);
+	if(flag){
+			CON_LOG ("wan ip :%s", cmd_result);
+			memset(cmd,0,TEMP_STR_LEN);
+			sprintf(cmd,"huayi_cmd set network wan_ipv4 %s",cmd_result);
+			system(cmd);
+		}else CON_LOG ("error##wan ip :%s", cmd_result);
+
+
+}
+
 
 void get_maxdelay(char *checksignalips, char *ifname)
 {
@@ -158,7 +180,7 @@ int IcmpnetworkConnect(const char* interface, const char* ipAddress) {
     packet.header.checksum = htons(~(ICMP_ECHO << 8));
 
     int seq = 0;
-    int count = 4;  // å‘é€ ICMP è¯·æ±‚çš„æ¬¡æ•°
+    int count = 4;  // å‘é€?ICMP è¯·æ±‚çš„æ¬¡æ•?
     int successCount = 0;
 
     for (i = 0; i < count; i++) {
@@ -435,15 +457,18 @@ int main(int argc,char *argv[])
 
 		huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
 		//printf("net_ipv4 = %s, wan_ipv4 = %s\n",net_ipv4, wan_ipv4);
+		
+		set_wanIp();
 		if(strcmp(wan_ipv4,net_ipv4))  //¸üÐÂprocÏÂµÄÍøÂç×´Ì¬ÐÅÏ¢
 		{
 			memset(cmd_str,0,sizeof(cmd_str));
 			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
 			system(cmd_str);
 
-			memset(cmd_str,0,sizeof(cmd_str));
-			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_ipv4 %s",wan_ipv4);
-			system(cmd_str);
+			//memset(cmd_str,0,sizeof(cmd_str));
+			//snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_ipv4 %s",wan_ipv4);
+			//system(cmd_str);
+			set_wanIp();
 
 			memset(cmd_str,0,sizeof(cmd_str));
 			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_netmask %s",wan_netmask);

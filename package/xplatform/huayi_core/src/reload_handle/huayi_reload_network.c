@@ -311,12 +311,50 @@ VTBool huayi_meige_module_decryption(void *arg,cJSON *input_root){
 VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 
     SWITCH_SIM_LOG("==huayi-reset band==");
-	int  at_card = 0;
-	char cmd[OPTION_STR_LEN];
+	int band = 0,i = 1,get_band = 0, flag = 0, at_card = 5;;
+	char cmd[TEMP_STR_LEN],result[TEMP_STR_LEN];
+
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &get_band);
+	band = get_band;
+	if (band) {
+		SWITCH_SIM_LOG("custom set band %d", band);
+		
+		if (band >= 1 && band <= 80) {
+			while (band > 1 && band != 17 && band != 33 && band != 49 && band != 65) i *= 2, band--;
+			snprintf(cmd, TEMP_STR_LEN, "AT+SPLBAND=1,%d,%d,%d,%d,%d", (band == 49 ? i : 0), (band == 33 ? i : 0), (band == 17 ? i : 0), (band == 1 ? i : 0), (band == 65 ? i : 0));
+			SWITCH_SIM_LOG("%s", cmd);
+			Atcmd(cmd, strlen(cmd), 0);
+		} else if (band == 10008) Atcmd("AT+SPLBAND=1,0,0,0,149,0", strlen("AT+SPLBAND=1,0,0,0,149,0"), 0);
+		else if (band == 34041) Atcmd("AT+SPLBAND=1,0,482,0,0,0", strlen("AT+SPLBAND=1,0,482,0,0,0"), 0);
+	} else {Atcmd("AT+SPLBAND=1,0,482,2056,213,0", strlen("AT+SPLBAND=1,0,482,2056,213,0"), 0); flag =1;}
+	Atcmd("AT+CFUN=0", strlen("AT+CFUN=0"), 0);
+	
+	Atcmd("AT+CFUN=1", strlen("AT+CFUN=1"), 0);
+    for (i = 0; i < 15 && !atcmd_get_slm_mobile_type(); i++) {
+        sleep(2);
+    }
+	if(i == 15){SWITCH_SIM_LOG ("cops? error ->> exit");goto FALSE;}
+
+	for(i = 0;i<15;i++){
+		get_cmd_result("echo $(huayi_AT_cli at+cced=0,1) | awk -F ',' '{print $6}'", result, sizeof(result));
+		if(get_band == atoi(result)){
+			SWITCH_SIM_LOG ("##OK##=====band:%d===get cced band:%d",get_band,atoi(result));
+			goto TRUE;
+		}
+		sleep (2);
+		if(flag && strlen(result)){SWITCH_SIM_LOG ("auto band"); goto TRUE;}
+	}
+	SWITCH_SIM_LOG ("##error##band:%d===get cced band:%d\n",get_band,atoi(result));
+	
+FALSE:
+	 return VT_FALSE;
+
+	
+TRUE:
+	SWITCH_SIM_LOG ("Switching frequency band successful, enable redialing");
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
 	sprintf(cmd,"switch_sim %d",at_card);
 	system(cmd);
-	
     return VT_TRUE;
 }
 
