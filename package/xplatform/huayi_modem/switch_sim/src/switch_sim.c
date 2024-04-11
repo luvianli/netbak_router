@@ -20,6 +20,19 @@ enum SimSelection {
     INVALID_SELECTION
 };
 #endif
+typedef struct Operator {
+    char* prefix;
+    int code;
+    int band[5];
+} Operator;
+
+Operator operators[] = {
+	{"46000", 3, {38,39,40,41}}, {"46002", 3, {38,39,40,41}}, {"46007", 3, {38,39,40,41}}, {"46008", 3, {38,39,40,41}},
+	{"46001", 2, {1,3,5,8}}, {"46006", 2, {1,3,5,8}}, {"46009", 2, {1,3,5,8}}, {"46010", 2, {1,3,5,8}},
+	{"46003", 1, {1,3,5}}, {"46011", 1, {1,3,5}}, {"46012", 1, {1,3,5}}
+};
+
+
 int sim = 0;
 void set_wanIp(){
 	char cmd[TEMP_STR_LEN] = {0};
@@ -44,7 +57,6 @@ void set_wanIp(){
 void set_operator_band(char *value){
 
 		int i = 0,j = -1,band = 0,oper = 0;
-		extern  struct Operator operators[];
 		for (i = 0; i < sizeof(operators) / sizeof(operators[0]); i++) {
 			if (strstr(value, operators[i].prefix)) {
 				huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
