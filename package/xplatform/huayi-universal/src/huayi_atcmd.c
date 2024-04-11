@@ -1583,17 +1583,21 @@ LTE_BOOL atcmd_get_slm_mobile_type(char *vlaue)
 	char *ptr = NULL;
 	char *pKey = NULL;
 	char infoValue[AT_CMD_BUFF_LEN] = {0};
-
 	if ( Atcmd("AT+cops?", strlen("AT+cops?"), 0) == LTE_FALSE )
 	{
 		return LTE_FALSE;
 	}
 
 	ptr = ATret;
-    if ((pKey = strstr(ptr, ",7")) != NULL )
+    if ((strstr(ptr, ",7")) != NULL )
     {
-        at_value_get(infoValue, pKey, sizeof(infoValue), '\n');
-		huayi_get_nth_value(2, infoValue, ',', vlaue, AT_VALUE_BUFF_LEN);
+
+		char *copsStart = strstr(ptr, "+COPS");
+		if (copsStart) {
+			int length = strcspn(copsStart, "\n"); 
+			strncpy(vlaue, copsStart, length);
+			vlaue[length] = '\0'; 
+		}
 		return LTE_TRUE;
     }
 	//SWITCH_SIM_LOG("%s",ptr);

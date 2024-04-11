@@ -20,7 +20,7 @@ config system system
 	option transport 'NULL'
 	option returnValue ''
 	option external_card_enable 0
-	option band 0
+	option band -1
 	option at_card 0
 	
 config usesiminfo usesiminfo

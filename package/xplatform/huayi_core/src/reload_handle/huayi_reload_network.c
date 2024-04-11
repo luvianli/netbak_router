@@ -338,7 +338,7 @@ VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 	for(i = 0;i<15;i++){
 		get_cmd_result("echo $(huayi_AT_cli at+cced=0,1) | awk -F ',' '{print $6}'", result, sizeof(result));
 		if(get_band == atoi(result)){
-			SWITCH_SIM_LOG ("##OK##=====band:%d===get cced band:%d",get_band,atoi(result));
+			SWITCH_SIM_LOG ("##set band succeed####config band:%d##AT_CCED ->:%d",get_band,atoi(result));
 			goto TRUE;
 		}
 		sleep (2);

@@ -20,19 +20,17 @@ enum SimSelection {
     INVALID_SELECTION
 };
 #endif
-
+int sim = 0;
 void set_wanIp(){
 	char cmd[TEMP_STR_LEN] = {0};
 	char cmd_result[CMD_STR_LEN];
 	int is_ipv4 = 0,flag = 0;
 	int i = 0;
-	//do {
-			memset(cmd_result, 0, CMD_STR_LEN);
-			get_cmd_result("echo $(huayi_AT_cli AT+CGDCONT?) | grep -oE 'IPV4:[0-9.]*' | awk -F: '{print $2}'", cmd_result, CMD_STR_LEN);
-	
-			if (strchr(cmd_result, '.') != NULL)flag =1;
-			sleep(2);
-	//	} while (++i < 10);
+	memset(cmd_result, 0, CMD_STR_LEN);
+	get_cmd_result("echo $(huayi_AT_cli AT+CGDCONT?) | grep -oE 'IPV4:[0-9.]*' | awk -F: '{print $2}'", cmd_result, CMD_STR_LEN);
+
+	if (strchr(cmd_result, '.') != NULL)flag =1;
+	sleep(2);
 	if(flag){
 			CON_LOG("wan ip :%s", cmd_result);
 			memset(cmd,0,TEMP_STR_LEN);
@@ -43,17 +41,45 @@ void set_wanIp(){
 
 }
 
+void set_operator_band(char *value){
 
-int SlmDial(int sim)
+		int i = 0,j = -1,band = 0,oper = 0;
+		extern  struct Operator operators[];
+		for (i = 0; i < sizeof(operators) / sizeof(operators[0]); i++) {
+			if (strstr(value, operators[i].prefix)) {
+				huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+				huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "operator", operators[i].code);
+				SWITCH_SIM_LOG("###Operator %d: Prefix: %s, card: %s\n", i, operators[i].prefix, (operators[i].code ==1) ? "China Telecom" : (operators[i].code ==2) ? "China Unicom" : "China Mobile");
+				 	while (++j < sizeof(operators[i].band) / sizeof(operators[i].band[0]))
+						if(operators[i].band[j] == band){
+								SWITCH_SIM_LOG ("operators[%d].band[%d]:%d == band:%d", i,j,operators[i].band[j],band);
+								huayi_uci_commit (PKG_M_SYSTEM);
+								return;
+							}
+				SWITCH_SIM_LOG ("###########  band:%d change to band:%d  --->>> reset switch sim%d   ##########",band, operators[i].band[0],sim);
+				huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", operators[i].band[0]);
+				huayi_uci_commit (PKG_M_SYSTEM);
+				system("huayi-reset band && killall switch_sim");
+			}
+			
+		}
+		
+}
+
+
+
+int SlmDial()
 {
     int count = 0, registered_count = 0, signal = 0,mode = 0;
     char resultbuf[OPTION_STR_LEN] = {0};
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
+	char value[TEMP_STR_LEN] = {0};
 
 
     strcpy(print_to, (sim != EXTERNAL_CARD_LOW_LOW) ? "built-in" : "External");
     SWITCH_SIM_LOG("\n\ngpio sim%d",sim);
+	huayi_uci_set_int(PKG_M_SYSTEM, "system", "at_card", sim);
     while (count < 60)
     {
         get_cmd_result("lsusb", resultbuf, sizeof(resultbuf));
@@ -76,33 +102,31 @@ int SlmDial(int sim)
             {
                 SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
 
-                while (registered_count < 60 && atcmd_get_slm_mobile_type() == HUAYI_FALSE)
+                while (registered_count < 60 && atcmd_get_slm_mobile_type(value) == HUAYI_FALSE)
                 {
                     registered_count += 2;
                     atcmd_get_signal_for_cloud(&signal);
 
                     if (!(-121 <= signal && signal <= -51))
                     {
-                        SWITCH_SIM_LOG("The signal of the card being switched is too poor, with a signal value of: %d. Waiting for %d (up to 60) seconds",
-                                       signal, registered_count);
+                        SWITCH_SIM_LOG("##waitting##signal value of: %d .Waiting for %d (up to 60) seconds",signal, registered_count);
                     }
                     else
                     {
 	                    //registered_count += 8;
-                        SWITCH_SIM_LOG("The card you want to switch to is not registered and has been waiting for %d (up to 60) seconds",
-                                       (registered_count));
+                        SWITCH_SIM_LOG("##waitting##card value :%s .waiting for %d (up to 60) seconds",value,(registered_count));
                     }
 					sleep(2);
                 }
 
                 if (registered_count < 60)
                 {
-                    SWITCH_SIM_LOG("Registered for network, starting dialing");
-
+                    
+					set_operator_band(value);
+					
+					SWITCH_SIM_LOG("Registered for network, starting dialing");
                     Atcmd("AT+CGDATA=\"M-ETHER\",1", strlen("AT+CGDATA=\"M-ETHER\",1"), 0);
                     Atcmd("AT^SPTETHER=\"gadget\",\"on\",1", strlen("AT^SPTETHER=\"gadget\",\"on\",1"), 0);
-					huayi_uci_set_int(PKG_M_SYSTEM, "system", "at_card", sim);
-					huayi_uci_commit (PKG_M_SYSTEM);
                     SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim, print_to);
 					set_wanIp();
                     return 1;
@@ -137,26 +161,24 @@ int SlmDial(int sim)
 }
 
 
-int switchSim(int simSelection) {
-    switch (simSelection) {
+int switchSim() {
+    switch (sim) {
 
 
         case SIM0_HIGH_HIGH:
-            printf("Switching sim0; Setting High=3.3V & 2 Setting High=3.3V\n");
-           // system("gpio l 0 0 4000 0 0 4000");
-           // system("gpio l 2 0 4000 0 0 4000");
+            printf("Switching sim0; 0 Setting High=3.3V & 2 Setting LOW=2.7V\n");
             system("gpio l 0 4000 0 0 0 4000");
             system("gpio l 2 0 4000 0 0 4000");
             break;
 #ifndef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
         case SIM1_HIGH_LOW:
-            printf("Switching sim1; Setting High=3.3V & 2 Setting LOW=2.7V\n");
+            printf("Switching sim1; 0 Setting LOW=2.7V & 2 Setting High=3.3V\n");
             system("gpio l 0 0 4000 0 0 4000");
             system("gpio l 2 4000 0 0 0 4000");
             break;
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
         case SIM2_LOW_HIGH:
-            printf("Switching sim2; Setting LOW=2.7V & 2 Setting High=3.3V\n");
+            printf("Switching sim2; 0 Setting LOW=2.7V & 2 Setting LOW=2.7V\n");
 			system("gpio l 0 0 4000 0 0 4000");
             system("gpio l 2 0 4000 0 0 4000");
             break;
@@ -164,13 +186,12 @@ int switchSim(int simSelection) {
 #endif
 
         case EXTERNAL_CARD_LOW_LOW:
-            printf("Switching External card; Setting LOW=2.7V & 2 Setting LOW=2.7V\n");
+            printf("Switching External card; 0 Setting High=3.3V & 2 Setting High=3.3V\n");
             system("gpio l 0 4000 0 0 0 4000");
             system("gpio l 2 4000 0 0 0 4000");
             break;
 
         default:
-            printf("\nSwitch error: Invalid selection\nUsage: %d [0|1|2|3]\n", simSelection);
             break;
     }
 }
@@ -181,25 +202,23 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    int iSel = atoi(argv[1]);
+    sim = atoi(argv[1]);
 	int simnum = 0;
     huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
 
-    if (iSel >= 0 && iSel < simnum) {
+    if (sim >= 0 && sim < simnum) {
         system("devmem 0x10000060 32 0x4110441");
-
-        switchSim(iSel);
+		
+        switchSim();
         system("gpio l 1 4000 0 0 0 4000");
         sleep(5);
         system("gpio l 1 0 4000 0 0 4000");
 		sleep(5);
 
         // Assuming SlmDial function exists
-        SlmDial(iSel);
-    } else {
-        printf("Invalid selection. Usage: %s [0|1|2|3]\n", argv[0]);
-        return -1;
-    }
+        SlmDial();
+    } else 
+		printf("\nSwitch error %d\n Usage: %s [0-%d]\n", sim,argv[0],simnum);
 
     return 0;
 }
