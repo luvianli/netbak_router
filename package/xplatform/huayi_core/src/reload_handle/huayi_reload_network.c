@@ -313,6 +313,7 @@ VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
     SWITCH_SIM_LOG("==huayi-reset band==");
 	int band = 0,i = 1,get_band = 0, flag = 0, at_card = 5;;
 	char cmd[TEMP_STR_LEN],result[TEMP_STR_LEN];
+	char value[TEMP_STR_LEN] = {0};
 
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &get_band);
 	band = get_band;
@@ -330,10 +331,10 @@ VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 	Atcmd("AT+CFUN=0", strlen("AT+CFUN=0"), 0);
 	
 	Atcmd("AT+CFUN=1", strlen("AT+CFUN=1"), 0);
-    for (i = 0; i < 15 && !atcmd_get_slm_mobile_type(); i++) {
+    for (i = 0; i < 15 && !atcmd_get_slm_mobile_type(value); i++) {
         sleep(2);
     }
-	if(i == 15){SWITCH_SIM_LOG ("cops? error ->> exit");goto FALSE;}
+	if(i == 15){SWITCH_SIM_LOG ("cops:%s error ->> Switch default band",value);goto FALSE;}
 
 	for(i = 0;i<15;i++){
 		get_cmd_result("echo $(huayi_AT_cli at+cced=0,1) | awk -F ',' '{print $6}'", result, sizeof(result));
@@ -346,12 +347,13 @@ VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 	}
 	SWITCH_SIM_LOG ("##error##band:%d===get cced band:%d\n",get_band,atoi(result));
 	
-FALSE:
+
 	 return VT_FALSE;
 
 	
 TRUE:
 	SWITCH_SIM_LOG ("Switching frequency band successful, enable redialing");
+FALSE:
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
 	sprintf(cmd,"switch_sim %d",at_card);
 	system(cmd);
