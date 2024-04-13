@@ -311,11 +311,12 @@ VTBool huayi_meige_module_decryption(void *arg,cJSON *input_root){
 VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 
     SWITCH_SIM_LOG("==huayi-reset band==");
-	int band = 0,i = 1,get_band = 0, flag = 0, at_card = 5;
+	int band = 0,i = 1,j = 0,get_band = 0, flag = 0, at_card = 5,count =0;
 	char cmd[TEMP_STR_LEN],result[TEMP_STR_LEN];
 	char value[TEMP_STR_LEN] = {0};
-
-	for (i = 0; i < 15 && !atcmd_get_slm_mobile_type(value); i++) {
+agint:
+	i = 1;
+	for (j = 0; j < 15 && !atcmd_get_slm_mobile_type(value); j++) {
         sleep(2);
     }
 	set_operator_band(value);
@@ -350,10 +351,13 @@ VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 		sleep (2);
 		if(flag && strlen(result)){SWITCH_SIM_LOG ("auto band"); goto TRUE;}
 	}
-	SWITCH_SIM_LOG ("##error##band:%d===get cced band:%d\n",get_band,atoi(result));
-	
-
-	 return VT_FALSE;
+	SWITCH_SIM_LOG ("##error##band:%d===get cced band:%d -->goto agint:%d\n",get_band,atoi(result),count);
+	if(count<5){
+		goto agint;
+		count ++;
+	}
+	SWITCH_SIM_LOG("error ---> start reboot");
+	system("huayi-reset reboot");
 
 	
 TRUE:
