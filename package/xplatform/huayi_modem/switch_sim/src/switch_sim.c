@@ -20,17 +20,6 @@ enum SimSelection {
     INVALID_SELECTION
 };
 #endif
-typedef struct Operator {
-    char* prefix;
-    int code;
-    int band[5];
-} Operator;
-
-Operator operators[] = {
-	{"46000", 3, {38,39,40,41}}, {"46002", 3, {38,39,40,41}}, {"46007", 3, {38,39,40,41}}, {"46008", 3, {38,39,40,41}},
-	{"46001", 2, {1,3,5,8}}, {"46006", 2, {1,3,5,8}}, {"46009", 2, {1,3,5,8}}, {"46010", 2, {1,3,5,8}},
-	{"46003", 1, {1,3,5}}, {"46011", 1, {1,3,5}}, {"46012", 1, {1,3,5}}
-};
 
 
 int sim = 0;
@@ -52,30 +41,6 @@ void set_wanIp(){
 		}else CON_LOG ("error##wan ip :%s", cmd_result);
 
 
-}
-
-void set_operator_band(char *value){
-
-		int i = 0,j = -1,band = 0,oper = 0;
-		for (i = 0; i < sizeof(operators) / sizeof(operators[0]); i++) {
-			if (strstr(value, operators[i].prefix)) {
-				huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
-				huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "operator", operators[i].code);
-				SWITCH_SIM_LOG("###Operator %d: Prefix: %s, card: %s\n", i, operators[i].prefix, (operators[i].code ==1) ? "China Telecom" : (operators[i].code ==2) ? "China Unicom" : "China Mobile");
-				 	while (++j < sizeof(operators[i].band) / sizeof(operators[i].band[0]))
-						if(operators[i].band[j] == band){
-								SWITCH_SIM_LOG ("operators[%d].band[%d]:%d == band:%d", i,j,operators[i].band[j],band);
-								huayi_uci_commit (PKG_M_SYSTEM);
-								return;
-							}
-				SWITCH_SIM_LOG ("###########  band:%d change to band:%d  --->>> reset switch sim%d   ##########",band, operators[i].band[0],sim);
-				huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", operators[i].band[0]);
-				huayi_uci_commit (PKG_M_SYSTEM);
-				system("huayi-reset band && killall switch_sim");
-			}
-			
-		}
-		
 }
 
 
@@ -134,7 +99,8 @@ int SlmDial()
                 if (registered_count < 60)
                 {
                     
-					set_operator_band(value);
+					if(set_operator_band(value))
+						system("huayi-reset band && killall switch_sim");
 					
 					SWITCH_SIM_LOG("Registered for network, starting dialing");
                     Atcmd("AT+CGDATA=\"M-ETHER\",1", strlen("AT+CGDATA=\"M-ETHER\",1"), 0);

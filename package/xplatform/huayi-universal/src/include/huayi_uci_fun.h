@@ -41,11 +41,11 @@ struct DataPacket {
 #define MAX_BUFFER_SIZE 1024
 #define MAX_HOSTS 10
 
-
-
-
-
-
+typedef struct Operator {
+	char* prefix;
+	int code;
+	int band[5];
+} Operator;
 
 
 
@@ -265,5 +265,6 @@ void rc4_crypt(unsigned char* Data, unsigned long Len_D, unsigned char* key, uns
 
 int rc4_SLM770U();
 int isProcessRunning(const char *processName);
+int set_operator_band(char *value);
 
 

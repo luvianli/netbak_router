@@ -311,10 +311,15 @@ VTBool huayi_meige_module_decryption(void *arg,cJSON *input_root){
 VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 
     SWITCH_SIM_LOG("==huayi-reset band==");
-	int band = 0,i = 1,get_band = 0, flag = 0, at_card = 5;;
+	int band = 0,i = 1,get_band = 0, flag = 0, at_card = 5;
 	char cmd[TEMP_STR_LEN],result[TEMP_STR_LEN];
 	char value[TEMP_STR_LEN] = {0};
 
+	for (i = 0; i < 15 && !atcmd_get_slm_mobile_type(value); i++) {
+        sleep(2);
+    }
+	set_operator_band(value);
+	
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &get_band);
 	band = get_band;
 	if (band) {

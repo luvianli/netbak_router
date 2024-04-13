@@ -24,6 +24,11 @@
 
 
 
+Operator operators[] = {
+	{"46000", 3, {38,39,40,41}}, {"46002", 3, {38,39,40,41}}, {"46007", 3, {38,39,40,41}}, {"46008", 3, {38,39,40,41}},
+	{"46001", 2, {1,3,5,8}}, {"46006", 2, {1,3,5,8}}, {"46009", 2, {1,3,5,8}}, {"46010", 2, {1,3,5,8}},
+	{"46003", 1, {1,3,5}}, {"46011", 1, {1,3,5}}, {"46012", 1, {1,3,5}}
+};
 
 
 //Combined get str
@@ -1719,6 +1724,89 @@ int isProcessRunning(const char *processName) {
     pclose(fp);
     return 0; // Process is not running
 }
+/*
+int set_operator_band(){
 
+		int i = 0,j = 0,band = 0,sim_band = 0,oper = 0,sim = 404;
+		char cmd_sim[OPTION_STR_LEN],value[CMD_STR_LEN];
+		int len = sizeof(operators) / sizeof(operators[0]);
+
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &sim);
+		sprintf(cmd_sim,"sim%d",sim);
+		huayi_uci_get_int(PKG_M_SYSTEM, cmd_sim, "band", &sim_band);
+		
+		for (i = 0; i < len; i++) {
+			memset(value,0,CMD_STR_LEN);
+			atcmd_get_slm_mobile_type(value);
+			
+
+		
+			if (strstr(value, operators[i].prefix) != NULL) {
+				huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "operator", operators[i].code);
+
+				
+				SWITCH_SIM_LOG("##%s##Operator %d: Prefix: %s, card: %s\n",value, i, operators[i].prefix, (operators[i].code ==1) ? "China Telecom" : (operators[i].code ==2) ? "China Unicom" : "China Mobile");
+				if(sim_band != 404){
+					huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+					do{
+						SWITCH_SIM_LOG("operators[%d].band[%d]:%d -- band:%d operators[%d].prefix:%s",i,j,operators[i].band[j],band,i,operators[i].prefix);
+						if(operators[i].band[j] == band && strstr(value, operators[i].prefix) != NULL){
+								SWITCH_SIM_LOG ("operators[%d].band[%d]:%d == band:%d", i,j,operators[i].band[j],band);
+								huayi_uci_commit (PKG_M_SYSTEM);
+								return 0;
+							}
+					}while (++j < len);
+				}
+
+
+
+				SWITCH_SIM_LOG ("###########  band:%d change to band:%d  --->>> reset switch sim%d   ##########",band, operators[i].band[0],sim);
+				huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", operators[i].band[0]);
+				huayi_uci_set_int(PKG_M_SYSTEM, cmd_sim, "band", operators[i].band[0]);
+				huayi_uci_commit (PKG_M_SYSTEM);
+				return 1;
+			}	
+		}
+	
+		
+		
+}
+
+
+*/
+
+
+
+int set_operator_band(char *value){
+
+		int i = 0,j = 0,band = 0,oper = 0;
+		Operator operators[] = {
+			{"46000", 3, {38,39,40,41}}, {"46002", 3, {38,39,40,41}}, {"46007", 3, {38,39,40,41}}, {"46008", 3, {38,39,40,41}},
+			{"46001", 2, {1,3,5,8}}, {"46006", 2, {1,3,5,8}}, {"46009", 2, {1,3,5,8}}, {"46010", 2, {1,3,5,8}},
+			{"46003", 1, {1,3,5}}, {"46011", 1, {1,3,5}}, {"46012", 1, {1,3,5}}
+		};
+		for (i = 0; i < sizeof(operators) / sizeof(operators[0]); i++) {
+			if (strstr(value, operators[i].prefix)) {
+				huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+				huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "operator", operators[i].code);
+				SWITCH_SIM_LOG("###Operator %d: Prefix: %s, card: %s\n", i, operators[i].prefix, (operators[i].code ==1) ? "China Telecom" : (operators[i].code ==2) ? "China Unicom" : "China Mobile");
+				 	do{
+						SWITCH_SIM_LOG("operators[%d].band[%d]:%d  band:%d operators[%d].prefix:%s",i,j,operators[i].band[j],band,i,operators[i].prefix);
+						if(operators[i].band[j] == band){
+								SWITCH_SIM_LOG ("operators[%d].band[%d]:%d == band:%d", i,j,operators[i].band[j],band);
+								huayi_uci_commit (PKG_M_SYSTEM);
+								return 0;
+							}
+				 	}while (++j < sizeof(operators[i].band) / sizeof(operators[i].band[0]));
+				SWITCH_SIM_LOG ("###########  band:%d change to band:%d  --->>> reset switch sim  ##########",band, operators[i].band[0]);
+				huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", operators[i].band[0]);
+				huayi_uci_commit (PKG_M_SYSTEM);
+				return 1;
+			}
+			
+		}
+		return 0;
+		
+}
 
 
