@@ -1124,6 +1124,10 @@ int set_lan_config(cJSON *request_root, cJSON *response_root,int *lock_time)
 	int 	min	= 0;
 	int		max = 0;
 	int 	ip_range = 0;
+	char product_model[OPTION_STR_LEN] = {0};
+    huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+	if(strcmp(product_model, "ZC-MCA4-G1") == 0)
+		return FCGI_RESP_CODE_SUCCESS;
 
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
