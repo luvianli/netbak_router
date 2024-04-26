@@ -207,7 +207,7 @@ void huayi_get_mifi_ink(char *mcc,char *mnc,char *btn,char *sim,char *lac,char *
 void huayi_get_mifi_update(int *flow,char *reptm,char *sign,char *devid,char *iccid,int *db,
 				int *wificount,char *wifipsw,char *ssid,char *imei,int *vspeed)
 {
-	int signal = -121;
+	int signal = -121,wifi=0;
 	char key[TEMP_STR_LEN]={0};
 	int rx=0,tx=0;
 
@@ -236,7 +236,8 @@ void huayi_get_mifi_update(int *flow,char *reptm,char *sign,char *devid,char *ic
 	atcmd_get_signal_for_cloud(&signal);
 	*db = signal;
 
-	huayi_uci_get_int(PKG_STATUS_SYSTEM, "sys", "wifi_24g_num",&wificount);
+	huayi_uci_get_int(PKG_STATUS_SYSTEM, "sys", "wifi_24g_num",&wifi);
+	*wificount=wifi;
 	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","ssid",ssid);
 	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","key",wifipsw);
 
