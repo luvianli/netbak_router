@@ -593,7 +593,7 @@ void msg_parse(char *heartdata, unsigned int heartsize,int *code)
 		}
 	}*/else if(ret == 511)//修改wifi密码
 	{	
-		huayi_set_wifi_psw();
+		huayi_set_wifi_psw(format);
 	}else if(ret == 514)//修改wifi名
 	{	
 		huayi_set_wifi_ssid(format);
