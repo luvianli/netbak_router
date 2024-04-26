@@ -4,7 +4,7 @@ LDFLAGS += -L. -lhuayi-universal -luci -lcjson -lstrutils
 
 EXEC=libhyclconf.so
 
-OBJS=sysinfo_config.o 4Ginfo_config.o wireless_config.o ota_upgrade.o network_config.o
+OBJS=sysinfo_config.o 4Ginfo_config.o wireless_config.o ota_upgrade.o network_config.o md5.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<

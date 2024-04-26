@@ -15,6 +15,8 @@
 #include <sys/timerfd.h>
 #include "huayi_uci_fun.h"
 //#include "libutils.h"
+#define SKEY "6113c78aaf33865387f1c70bdbba97ac"
+#define clientId "1101"
 
 
 #define  IMAGE_PATH_STOR   "/tmp/firmware.img"

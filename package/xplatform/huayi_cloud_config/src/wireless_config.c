@@ -457,4 +457,78 @@ void huayi_set_5gwifi_config(cJSON *response_root)
 	return;
 }
 
+void huayi_set_wifi_ssid(cJSON *response_root)
+{	
+	char ssid[TEMP_STR_LEN] = {0};
+	char oldssid[OPTION_STR_LEN] = {0};
+
+	if(NULL == response_root) 
+	{
+		return ;
+	}
+
+	if (huayi_json_get_str(response_root, "info", ssid,OPTION_STR_LEN))
+	{
+		huayi_uci_get_str(PKG_WIRELESS,"radio0_0","ssid", oldssid);
+		if((strlen(ssid) >= 8) && (0 != strcmp(ssid, oldssid)))
+		{
+			huayi_uci_set_str(PKG_WIRELESS,"radio0_0","ssid", ssid);
+			huayi_uci_commit(PKG_WIRELESS); 
+			system("huayi-reset wireless");
+		}
+	}
+
+	return;
+}
+
+void huayi_set_wifi_psw(cJSON *response_root)
+{	
+	char psw[TEMP_STR_LEN] = {0};
+	char oldpsw[OPTION_STR_LEN] = {0};
+
+	if(NULL == response_root) 
+	{
+		return ;
+	}
+
+	if (huayi_json_get_str(response_root, "info", psw,OPTION_STR_LEN))
+	{
+		huayi_uci_get_str(PKG_WIRELESS,"radio0_0","key", oldpsw);
+		if((strlen(psw) >= 8) && (0 != strcmp(psw, oldpsw)))
+		{
+			huayi_uci_set_str(PKG_WIRELESS,"radio0_0","key", psw);
+			huayi_uci_commit(PKG_WIRELESS); 
+			system("huayi-reset wireless");
+		}
+	}
+
+	return;
+}
+
+void huayi_set_wifi_qos(cJSON *response_root)
+{	
+
+	if(NULL == response_root) 
+	{
+		return ;
+	}
+
+	int result = 0;
+	if (huayi_json_get_int(response_root, "info", &result))
+	{	
+		if(result !=0)
+		{int speed = 0;
+		speed = result * 8;
+		huayi_uci_set_int(PKG_QOS,"qos","total_upspeed",speed);
+		huayi_uci_set_int(PKG_QOS,"qos","total_dwspeed",speed);
+		huayi_uci_set_int(PKG_QOS,"qos","qos_mode", 1);
+		huayi_uci_commit(PKG_QOS);	
+		system("huayi-reset iplimit");}
+	}
+
+
+	return;
+}
+
+
 

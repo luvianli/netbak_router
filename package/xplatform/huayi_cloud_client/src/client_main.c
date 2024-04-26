@@ -62,7 +62,7 @@ int init_curl(CURL **curl, char *url, char *post_fields, int post_size ,callback
 	if(strlen(post_fields) != 0) {
 		// 设置http发送的内容类型为JSON  
 		struct curl_slist *plist = NULL;
-        plist = curl_slist_append(plist, "Content-Type:application/json;charset=UTF-8");  
+        plist = curl_slist_append(plist, "Content-Type:application/x-www-form-urlencoded;charset=UTF-8");  
         curl_easy_setopt(*curl, CURLOPT_HTTPHEADER, plist);
 		code = curl_easy_setopt(*curl, CURLOPT_POSTFIELDS, post_fields);
 		//printf("post size:%d\n",post_size);
@@ -129,6 +129,37 @@ int init_curl_https(CURL **curl, char *url, char *post_fields, int post_size, ca
     return 0;
 }
 
+int init_get(CURL **curl, char *url,callback_func *action)
+{
+	CURLcode code;
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+	*curl = curl_easy_init();
+
+	if(*curl == NULL) {
+		CLOUD_CLIENT_LOG("can't create curl connection\n");
+		return -1;
+	}
+	code = curl_easy_setopt(*curl,CURLOPT_URL,url);
+	if(code != CURLE_OK) {
+		CLOUD_CLIENT_LOG("set url fail\n");
+		return -1;
+	}
+
+	code=curl_easy_setopt(*curl,CURLOPT_SSL_VERIFYPEER,false);
+	if(code != CURLE_OK) {
+		CLOUD_CLIENT_LOG("set CURLOPT_SSL_VERIFYPEER fail\n");
+		return -1;
+	}
+	curl_easy_setopt(*curl, CURLOPT_CONNECTTIMEOUT, 60);
+
+	code = curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, action);
+	if(code != CURLE_OK) {
+		CLOUD_CLIENT_LOG("set writefunction fail\n");
+		return -1;
+	}
+
+	return 0;
+}
 
 
 #define TEST 0
@@ -150,7 +181,13 @@ void* heart_handle()
 	int ret= -1, interval = 0;
 	int heartSize = 0;
 	char registStatus[LONG_BUFF_LEN]={0};
+	int code = -1;
 
+	int link = mifi_link();
+	if(link == 1)
+		return (void*)0;
+	mifi_open();
+	
 	huayi_uci_get_int(PKG_SYSTEM,"server","interval", &interval);
 	gTimeWait = interval;
 	while(1) {
@@ -163,21 +200,12 @@ void* heart_handle()
 
 		memset(heartData, 0, sizeof(heartData));
 		memset(url, 0, sizeof(url));
-		get_url(url);
-		msg_content(heartData, &heartSize);
-		CLOUD_CLIENT_LOG("===  %s, %d, heartData = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartData, heartSize);
-#if TEST
-		strcpy(heartContent, res_teststr);
-		heartContentLen = strlen(res_teststr);
-		printf("===  %s, %d, heartContent = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartContent, heartContentLen);
-		msg_parse(heartContent, heartContentLen);
-#else
-        if(strstr(url,"http"))
-		    ret = init_curl(&curl, (char*)url, heartData, heartSize, heart_call_back);
-        else{
-            CLOUD_CLIENT_LOG("https:");
-            ret = init_curl_https(&curl, (char*)url, heartData, heartSize, heart_call_back);
-        }
+		mifi_update_content(heartData, &heartSize);
+		get_mifi_url(url,2);
+		sprintf(url,"%s?m={%s}",url,heartData);
+		CLOUD_CLIENT_LOG("heartSize = %d\nurl:%s\n",heartSize,url);
+
+		ret = init_get(&curl, (char*)url,heart_call_back);
 		if(ret == -1) {
 			CLOUD_CLIENT_LOG(" %s init curl fail\n",__FUNCTION__);
 			if(curl != NULL) {
@@ -196,7 +224,7 @@ void* heart_handle()
 				goto out;
 			}
 			CLOUD_CLIENT_LOG("===  %s, %d, heartContent = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartContent, heartContentLen);
-			msg_parse(heartContent, heartContentLen);
+			msg_parse(heartContent, heartContentLen,&code);
 		}
 		else {
 			CLOUD_CLIENT_LOG("heart connect fail:%d\n",ret);
@@ -210,7 +238,6 @@ void* heart_handle()
 out:
 		curl_easy_cleanup(curl);
 		curl = NULL;
-#endif
 		CLOUD_CLIENT_LOG("%s, %d, gTimeWait = %d !\n", __FUNCTION__, __LINE__, gTimeWait);
 		CHECK_CLOUD_CLIENT_LOG();
 		usleep(gTimeWait*1000); //us
@@ -218,13 +245,143 @@ out:
 	return (void*)0;
 }
 
+int mifi_link()
+{
+	char url[LIST_STR_LEN] ={ 0 }; 
+	char heartData[HEART_REQ_DATALEN] = { 0 };
+	CURL *curl = NULL;
+	int ret= -1;
+	int heartSize = 0;
+	char registStatus[LONG_BUFF_LEN]={0};
+	int code = -1;
+
+	while(1) {
+		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "registStatus", registStatus);
+		if (strcmp(registStatus ,"connected") != 0) {
+			CLOUD_CLIENT_LOG("%s, modem is not connected; registStatus is : %d\n",__FUNCTION__, registStatus);
+			sleep(10);
+			continue;
+		}
+
+		memset(heartData, 0, sizeof(heartData));
+		memset(url, 0, sizeof(url));
+		get_url(url);
+		mifi_link_content(heartData, &heartSize);
+		CLOUD_CLIENT_LOG("===  %s, %d, heartData = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartData, heartSize);
+
+		ret = init_curl(&curl, (char*)url, heartData, heartSize, heart_call_back);
+		if(ret == -1) {
+			CLOUD_CLIENT_LOG(" %s init curl fail\n",__FUNCTION__);
+			if(curl != NULL) {
+				curl_easy_cleanup(curl);
+				curl = NULL;
+			}	
+			sleep(3);
+			continue;
+		}
+
+		memset(heartContent,0,sizeof(heartContent));
+		ret=curl_easy_perform(curl);
+		if(ret == 0) { //parse html
+			if(strlen(heartContent) == 0) {	
+				CLOUD_CLIENT_LOG("content is null\n");
+				goto out;
+			}
+			CLOUD_CLIENT_LOG("===  %s, %d, heartContent = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartContent, heartContentLen);
+			msg_parse(heartContent, heartContentLen,&code);
+			if(curl != NULL) {
+				curl_easy_cleanup(curl);
+				curl = NULL;
+			}
+			if(code != 0)
+				return 1;
+			return 0;
+		}
+		else {
+			CLOUD_CLIENT_LOG("heart connect fail:%d\n",ret);
+			continue ;
+		}
+out:
+		if(curl != NULL) {
+			curl_easy_cleanup(curl);
+			curl = NULL;
+		}
+		return 1;
+	}
+	return 0;
+}
+
+void mifi_open()
+{
+	char url[LIST_STR_LEN] ={ 0 }; 
+	char heartData[HEART_REQ_DATALEN] = { 0 },result[HEART_REQ_DATALEN] = { 0 };;
+	CURL *curl = NULL;
+	int ret= -1;
+	int heartSize = 0;
+	char registStatus[LONG_BUFF_LEN]={0};
+	int code = -1;
+
+	while(1) {
+		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "registStatus", registStatus);
+		if (strcmp(registStatus ,"connected") != 0) {
+			CLOUD_CLIENT_LOG("%s, modem is not connected; registStatus is : %d\n",__FUNCTION__, registStatus);
+			sleep(20);
+			continue;
+	}
+
+	memset(heartData, 0, sizeof(heartData));
+	memset(url, 0, sizeof(url));
+	mifi_open_content(heartData, &heartSize);
+	get_mifi_url(url,1);
+	sprintf(url,"%s?m={%s}",url,heartData);
+	CLOUD_CLIENT_LOG("heartSize = %d\nurl:%s\n",heartSize,url);
+
+	ret = init_get(&curl, (char*)url,heart_call_back);
+	if(ret == -1) {
+		CLOUD_CLIENT_LOG(" %s init curl fail\n",__FUNCTION__);
+		if(curl != NULL) {
+			curl_easy_cleanup(curl);
+			curl = NULL;
+		}	
+		sleep(3);
+		continue;
+	}
+
+	memset(heartContent,0,sizeof(heartContent));
+	ret=curl_easy_perform(curl);
+	if(ret == 0) { //parse html
+		if(strlen(heartContent) == 0) {	
+			CLOUD_CLIENT_LOG("content is null\n");
+			goto out;
+	}
+		CLOUD_CLIENT_LOG("===  %s, %d, heartContent = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartContent, heartContentLen);
+		msg_parse(heartContent, heartContentLen,&code);
+	}
+	else {
+		CLOUD_CLIENT_LOG("heart connect fail:%d\n",ret);
+		if(curl != NULL) {
+			curl_easy_cleanup(curl);
+			curl = NULL;
+		}	
+		sleep(3);
+		continue;
+	}
+out:
+		if(curl != NULL) {
+			curl_easy_cleanup(curl);
+			curl = NULL;
+		}
+		break;
+	}
+	return ;
+}
 
 int main(int argc, char *argv[])
 {
 	pthread_t heartTid;
 	int err;
 	void *tret;
-	char 	wan_type[OPTION_STR_LEN] = {0};
+	char wan_type[OPTION_STR_LEN] = {0};
 	
 	(void) signal(SIGTERM, huayi_client_main_graceful_exit);
 
@@ -247,5 +404,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
-

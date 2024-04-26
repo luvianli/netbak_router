@@ -31,6 +31,55 @@ void get_url(char *url)
 	return;
 }
 
+void get_mifi_url(char *url,int code)
+{
+	char urldomain[OPTION_STR_LEN] = { 0 };
+
+	huayi_uci_get_str(PKG_SYSTEM,"server","mifiurl", urldomain);
+
+	if(strlen(urldomain) == 0){
+		printf("use default server urldomain.\n");
+		sprintf(urldomain,"http://%s", HEART_DOMAIN_DEFAULT);
+		
+	}
+
+	if(code == 1)
+	{
+		sprintf(urldomain,"%s/MiFi/Open", urldomain);
+	}else if(code == 2)
+	{
+		sprintf(urldomain,"%s/MiFi/Update2", urldomain);
+	}
+	strcpy(url, urldomain);
+	CLOUD_CLIENT_LOG(" %s; url is : %s\n",__FUNCTION__,url);
+	return;
+}
+
+void set_url(cJSON *response_root)
+{
+	char address[IPV4_STR_LEN] = {0},port[IPV4_STR_LEN] = {0};
+
+    if (NULL == response_root)
+    {
+        return ;
+    }
+
+	if (!huayi_json_get_str(response_root, "address", address,SHORT_STR_LEN)||
+		!huayi_json_get_str(response_root, "port", port,SHORT_STR_LEN))
+    {	
+    	CLOUD_CLIENT_LOG("address or port is null\n");
+        return;
+    }
+	CLOUD_CLIENT_LOG("address:%s,port:%s\n",address,port);
+
+	char urldomain[OPTION_STR_LEN] = { 0 };
+	sprintf(urldomain,"http://%s:%s",address,port);
+
+	huayi_uci_set_str(PKG_SYSTEM,"server","mifiurl",urldomain);
+	huayi_uci_commit(PKG_SYSTEM);
+
+	return ;
+}
 /*
 {
 	"sn":"123456",				//must need
@@ -99,6 +148,90 @@ void get_url(char *url)
 	
 	return ;
 }*/
+void mifi_link_content(char *heartdata, unsigned int *heartsize)
+{
+	char devid[RESULT_STR_LEN] = {0};
+	char mmc[SMALL_STR_LEN]={0},mnc[SMALL_STR_LEN]={0};
+	char btn[OPTION_STR_LEN]={0},sim[OPTION_STR_LEN]={0},lac[OPTION_STR_LEN]={0},sign[OPTION_STR_LEN]={0};
+	int mode = -1;
+
+	huayi_get_mifi_ink(mmc,mnc,btn,sim,lac,devid,&mode,sign);
+	sprintf(heartdata,"c=1101&devid=%s&sign=%s&btn=%s&sim=%s&mmc=%s&mnc=%s&lac=%s&mode=%d",
+		devid,sign,btn,sim,mmc,mnc,lac,mode);
+	*heartsize = strlen(heartdata);
+	return ;
+}
+
+void mifi_open_content(char *heartdata, unsigned int *heartsize)
+{
+	cJSON *result_root = NULL,*output = NULL;
+	char devid[RESULT_STR_LEN] = {0},hardvers[RESULT_STR_LEN] = {0};
+	char mcc[SMALL_STR_LEN]={0},mnc[SMALL_STR_LEN]={0};
+	char iccid[OPTION_STR_LEN]={0},lac[OPTION_STR_LEN]={0},sign[OPTION_STR_LEN]={0};
+	char ci[SHORT_STR_LEN]={0};
+	int db = 0;
+	/*result_root = cJSON_CreateObject();
+
+	huayi_get_mifi_open(mcc,mnc,iccid,lac,ci,devid,hardvers,&db,sign);
+	cJSON_AddNumberToObject(result_root,"c", 1101);
+	cJSON_AddStringToObject(result_root,"mcc", mcc);
+	cJSON_AddStringToObject(result_root,"mnc", mnc);
+	cJSON_AddStringToObject(result_root,"lac", lac);
+	cJSON_AddStringToObject(result_root,"ci",ci);
+	cJSON_AddStringToObject(result_root,"devid", devid);
+	cJSON_AddStringToObject(result_root,"iccid", iccid);
+	cJSON_AddStringToObject(result_root,"hardvers", hardvers);
+	cJSON_AddNumberToObject(result_root,"db", db);
+	cJSON_AddStringToObject(result_root,"sign", sign);
+
+	output = cJSON_Print(result_root);
+	strcpy(heartdata, output);
+	*heartsize = strlen(output);
+	free(output);*/
+	huayi_get_mifi_open(mcc,mnc,iccid,lac,ci,devid,hardvers,&db,sign);
+	sprintf(heartdata,"\"c\":\"1101\",\"mcc\":\"%s\",\"mnc\":\"%s\",\"lac\":\"%s\",\"ci\":\"%s\",\"devid\":\"%s\",\"iccid\":\"%s\",\"hardvers\":\"%s\",\"sign\":\"%s\",\"db\":\"%d\"",
+		mcc,mnc,lac,ci,devid,iccid,hardvers,sign,db);
+	*heartsize = strlen(heartdata);
+	return ;
+}
+
+void mifi_update_content(char *heartdata, unsigned int *heartsize)
+{
+	cJSON *result_root = NULL,*output = NULL;
+	char devid[RESULT_STR_LEN] = {0},reptm[RESULT_STR_LEN] = {0},imei[RESULT_STR_LEN]={0};
+	int flow;
+	char iccid[OPTION_STR_LEN]={0},wifipsw[OPTION_STR_LEN]={0},ssid[OPTION_STR_LEN]={0},sign[OPTION_STR_LEN]={0};
+	int db = 0,vspeed = 0,battery = 0,wificount = 0;
+	//result_root = cJSON_CreateObject();
+
+	huayi_get_mifi_update(&flow,reptm,sign,devid,iccid,&db,&wificount,wifipsw,ssid,imei,&vspeed);
+	/*cJSON_AddNumberToObject(result_root,"c", 1101);
+	cJSON_AddStringToObject(result_root,"flow", flow);
+	cJSON_AddStringToObject(result_root,"reptm", reptm);
+	cJSON_AddStringToObject(result_root,"devid", devid);
+	cJSON_AddStringToObject(result_root,"imei", devid);
+	cJSON_AddStringToObject(result_root,"iccid", iccid);
+	cJSON_AddNumberToObject(result_root,"db", db);
+	cJSON_AddNumberToObject(result_root,"wificount", wificount);
+	cJSON_AddStringToObject(result_root,"wifipsw", wifipsw);
+	cJSON_AddStringToObject(result_root,"ssid", ssid);
+	cJSON_AddNumberToObject(result_root,"vspeed", vspeed);
+	cJSON_AddNumberToObject(result_root,"battery", 100);
+	cJSON_AddNumberToObject(result_root,"sessid", 0);
+	cJSON_AddStringToObject(result_root,"sign", sign);
+	output = cJSON_Print(result_root);
+	strcpy(heartdata, output);
+	*heartsize = strlen(output);
+	free(output);*/
+	if(flow == 0)
+		sprintf(heartdata,"\"c\":\"1101\",\"sign\":\"%s\",\"devid\":\"%s\",\"iccid\":\"%s\",\"db\":\"%d\",\"wificount\":\"%d\",\"wifipsw\":\"%s\",\"ssid\":\"%s\",\"imei\":\"%s\",\"vspeed\":\"%d\",\"battery\":\"100\",\"sessid\":\"0\"",
+			sign,devid,iccid,db,wificount,wifipsw,ssid,imei,vspeed);
+	else sprintf(heartdata,"\"c\":\"1101\",\"flow\":\"%d\",\"reptm\":\"%s\",\"sign\":\"%s\",\"devid\":\"%s\",\"iccid\":\"%s\",\"db\":\"%d\",\"wificount\":\"%d\",\"wifipsw\":\"%s\",\"ssid\":\"%s\",\"imei\":\"%s\",\"vspeed\":\"%d\",\"battery\":\"100\",\"sessid\":\"0\"",
+			flow,reptm,sign,devid,iccid,db,wificount,wifipsw,ssid,imei,vspeed);
+	*heartsize = strlen(heartdata);
+	return ;
+}
+
 void msg_content(char *heartdata, unsigned int *heartsize)
 {
 	cJSON *result_root = NULL;
@@ -353,31 +486,71 @@ fail:
 	"code":500
 }
 */
-void msg_parse(char *heartdata, unsigned int heartsize)
+void msg_parse(char *heartdata, unsigned int heartsize,int *code)
 {
 	int ret = -1; 	
 	cJSON *root = NULL;
 	cJSON *format = NULL;
+	char *info;
 
 	if(strlen(heartdata) == 0) {
 		return;
 	}
 	ret = getJson_Status(heartdata);
-	//printf("### respon code is %d .\n", ret);
-	if(0 != ret){
-		CLOUD_CLIENT_LOG("### respon code is %d .\n", ret);
-		return;
-	}
-
+	*code = ret;
+	CLOUD_CLIENT_LOG("%s code is %d .\n",__FUNCTION__, ret);
 	root = cJSON_Parse(heartdata);	
 	if(root == NULL)
 		return;
 	format = cJSON_GetObjectItem(root,"data");
 	if(format == NULL) {
-		return;
+		format = cJSON_GetObjectItem(root,"json");
+		if(format == NULL) {
+			return;
+		}
 	}
 
-	huayi_next_url_time(format);
+	if(ret == 0)
+	{	
+		set_url(format);
+#ifndef	CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
+		huayi_set_4g_config(format);
+#endif
+	}else if(ret == 1 || ret == 201 || ret == 501 || ret == 502 || ret == 508)//设备无法上网
+	{	
+		*code = 1;
+		//system("route del default");
+		system("ifdown wan4g");
+	}else if(ret == 509)//重启
+	{	
+		system("reboot");
+	}/*else if(ret == 506)//限速
+	{	
+		huayi_set_wifi_qos();
+	}else if(ret == 507)//取消限速
+	{	
+		int mode = -1;
+		huayi_uci_get_int(PKG_QOS,"qos","qos_mode",&mode);
+		if(mode != 0)
+		{
+			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed",0);
+			huayi_uci_set_int(PKG_QOS,"qos","total_dwspeed",0);
+			huayi_uci_set_int(PKG_QOS,"qos","qos_mode", 0);
+			huayi_uci_commit(PKG_QOS);	
+			system("huayi-reset iplimit");
+		}
+	}*/else if(ret == 511)//修改wifi密码
+	{	
+		huayi_set_wifi_psw();
+	}else if(ret == 514)//修改wifi名
+	{	
+		huayi_set_wifi_ssid(format);
+	}else if(ret == 515)//恢复出厂
+	{	
+		system("huayi-reset reset");
+	}
+	
+	/*huayi_next_url_time(format);
 	huayi_set_4g_config(format);
 	huayi_set_wifi_config(format);
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
@@ -402,8 +575,6 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 	huayi_remote_upgrade(format);
 
 out:
-	cJSON_Delete(root);
+	cJSON_Delete(root);*/
 	return;
 }
-
-

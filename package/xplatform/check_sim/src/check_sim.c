@@ -507,6 +507,40 @@ void Production_testing_mode()
 
 }
 
+void get_siminfo()
+{
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
+    return ;
+#else
+    int mode = 0,simnum,gpio;
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+
+	char iccid[simnum][OPTION_STR_LEN];
+    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+	huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid[0]);
+	huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid[1]);
+
+    while(mode == 1&& (strlen(iccid[0])< 5||strlen(iccid[1])< 5))
+    {	    
+    	if(strlen(iccid[0])< 5)
+    	{	
+    		huayi_uci_get_int(PKG_M_SYSTEM, "sim0", "gpio", &gpio);
+			switch_sim(0, gpio);
+			huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid[0]);
+		}
+    	if(strlen(iccid[1])< 5)
+    	{	
+    		huayi_uci_get_int(PKG_M_SYSTEM, "sim1", "gpio", &gpio);
+			switch_sim(1, gpio);
+			huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid[1]);
+		}		
+		sleep(2);
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+    }
+	sleep(2);
+#endif
+	return ;
+}
 
 int main(int argc, char *argv[])
 {

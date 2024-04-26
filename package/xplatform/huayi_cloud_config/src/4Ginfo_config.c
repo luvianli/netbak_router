@@ -80,7 +80,7 @@ void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char
 
 void huayi_set_4g_config(cJSON *response_root)
 {
-    int sim_slot = 0, lock = 0, simSwitch = 0, Simnum = 0, enable = 0;
+    int at_card = 0, lock = 0, simSwitch = 0, Simnum = 0, enable = 0;
     char usesiminfoBuf[1024] = {0}, siminfoBuf[512] = {0}, cmd[OPTION_STR_LEN] = {0};
     char iccid[OPTION_STR_LEN] = {0};
 
@@ -90,10 +90,26 @@ void huayi_set_4g_config(cJSON *response_root)
         return ;
     }
 
-    if (!huayi_json_get_int(response_root, "simSwitch", &simSwitch))
+    if (!huayi_json_get_int(response_root, "mode", &simSwitch))
     {
         return;
     }
+
+	if(simSwitch == 2)
+	{
+		simSwitch = 0;
+	}else if(simSwitch == 4)
+	{
+		simSwitch = 1;
+	}else if(simSwitch == 3)
+	{
+		simSwitch = 2;
+	}else return ;
+	CLOUD_CLIENT_LOG("simSwitch is %d\n",simSwitch);
+
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
+	if(simSwitch == at_card)
+		return ;
 	
 #ifndef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 	int simnum;
@@ -118,4 +134,143 @@ void huayi_set_4g_config(cJSON *response_root)
 }
 
 
+void huayi_get_mifi_open(char *mcc,char *mnc,char *iccid,char *lac,char *ci,char *devid,char *hardvers,int *db,char *sign)
+{
+	char ccmnc[SHORT_STR_LEN]={0},llac[SHORT_STR_LEN]={0},cci[SHORT_STR_LEN]={0};
+	int  signal = -121;
+	char key[TEMP_STR_LEN]={0};
+
+	atcmd_get_mccmnc(ccmnc);
+	strncpy(mcc, ccmnc, 3);
+	strncpy(mnc, ccmnc+3, 3);
+	atcmd_get_lac(llac);
+	strncpy(lac, llac+1, strlen(llac)-2);
+	atcmd_get_ci(cci);
+	strncpy(ci, cci+1, strlen(cci)-2);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "iccid", iccid);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", devid);
+	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version",hardvers);
+	atcmd_get_signal_for_cloud(&signal);
+	*db = signal;
+
+	sprintf(key,"%s%s",SKEY,devid);
+	get_sign(key,sign);
+
+	return ;
+}
+
+void huayi_get_mifi_ink(char *mcc,char *mnc,char *btn,char *sim,char *lac,char *devid,int *mode,char *sign)
+{
+	char ccmnc[SHORT_STR_LEN]={0},llac[SHORT_STR_LEN]={0};
+	char key[TEMP_STR_LEN]={0};
+	int simnum = 0;
+	
+	atcmd_get_mccmnc(ccmnc);
+	strncpy(mcc, ccmnc, 3);
+	strncpy(mnc, ccmnc+3, 3);
+	atcmd_get_lac(lac);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", devid);
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+
+	int card;
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &card);
+	if(card == simnum-1)
+	{	
+		huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "iccid", btn);
+	}else
+#endif
+	{	
+		huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "iccid", sim);
+	}
+
+#ifdef	CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
+	*mode = 1;
+#else
+	if(card == 0)
+	{
+		*mode = 2;//内置卡1
+	}else if(card == 1)
+	{
+		*mode = 4;//内置卡2
+	}else if(card == 2)
+	{
+		*mode = 3;//外插卡
+	}
+#endif
+	sprintf(key,"%s%s%s",SKEY,clientId,devid);
+	get_sign(key,sign);
+	return ;
+}
+
+
+void huayi_get_mifi_update(int *flow,char *reptm,char *sign,char *devid,char *iccid,int *db,
+				int *wificount,char *wifipsw,char *ssid,char *imei,int *vspeed)
+{
+	int signal = -121;
+	char key[TEMP_STR_LEN]={0};
+	int rx=0,tx=0;
+
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
+	int simnum = 0,card;
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &card);
+	if(card != simnum-1)
+	{	
+		huayi_uci_get_str(PKG_SYSTEM, "network", "time", reptm);
+		huayi_uci_get_int(PKG_SYSTEM, "network", "rx_bytes",&rx);
+		huayi_uci_get_int(PKG_SYSTEM, "network", "tx_bytes",&tx);
+		*flow=(rx+tx)/1024;
+	}
+#else
+	huayi_uci_get_str(PKG_SYSTEM, "network", "time", reptm);
+	huayi_uci_get_int(PKG_SYSTEM, "network", "rx_bytes",&rx);
+	huayi_uci_get_int(PKG_SYSTEM, "network", "tx_bytes",&tx);
+	*flow=(rx+tx)/1024;
+#endif
+
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", devid);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "iccid", iccid);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
+
+	atcmd_get_signal_for_cloud(&signal);
+	*db = signal;
+
+	huayi_uci_get_int(PKG_STATUS_SYSTEM, "sys", "wifi_24g_num",&wificount);
+	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","ssid",ssid);
+	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","key",wifipsw);
+
+	int down = 0,mode = -1;
+	huayi_uci_get_int(PKG_QOS,"qos","qos_mode",&mode);
+	if(mode == 0)
+	{
+		*vspeed = 0;
+	}else {
+		huayi_uci_get_int(PKG_QOS,"qos","total_dwspeed",&down);
+		*vspeed = down / 8;
+	}
+
+	sprintf(key,"%s0",SKEY);
+	get_sign(key,sign);
+
+	return ;
+}
+
+
+void get_sign(char* key, char* sign)
+{
+	unsigned char md5[16]={0};
+	char content[RESULT_STR_LEN]={0};
+
+	MDString(key,strlen(key),md5);
+
+	int i =0;
+	for(i=0;i<16;i++)  
+	{   
+		sprintf(content, "%02x", md5[i]);
+		strcat(sign,content);
+	}
+
+	return ;
+}
 

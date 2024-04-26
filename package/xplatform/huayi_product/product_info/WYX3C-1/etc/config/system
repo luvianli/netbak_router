@@ -56,8 +56,12 @@ config settings settings
 	option heartbeat_restart_enabled 10
 	
 config server server
-	option interval 180000 #3 min
-	option urldomain 'http://device.10086group.com/admin/ylapi/uploadData'
+	option interval 60000 #1 min
+	option urldomain 'http://get.mifi.ink/sn/getSN.do'
+	option mifiurl '0'
 	option clientlog   '1'
-	
-	
+
+config network network
+	option rx_bytes 0
+	option tx_bytes 0	
+	option time '0'
