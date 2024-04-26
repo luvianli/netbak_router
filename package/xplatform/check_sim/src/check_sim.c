@@ -286,8 +286,12 @@ void check_network()
     system(cmd);
     sleep(25);
 
-
-
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
+	char iccid[OPTION_STR_LEN]={0};
+	ret = atcmd_get_iccid(iccid);
+	if(ret == 1 && strlen(iccid)>5)
+		return ;
+#endif
 
     //huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
 cretry1:

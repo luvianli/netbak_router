@@ -220,13 +220,13 @@ void huayi_get_mifi_update(int *flow,char *reptm,char *sign,char *devid,char *ic
 		huayi_uci_get_str(PKG_SYSTEM, "network", "time", reptm);
 		huayi_uci_get_int(PKG_SYSTEM, "network", "rx_bytes",&rx);
 		huayi_uci_get_int(PKG_SYSTEM, "network", "tx_bytes",&tx);
-		*flow=(rx+tx)/1024;
+		*flow=(rx+tx);
 	}
 #else
 	huayi_uci_get_str(PKG_SYSTEM, "network", "time", reptm);
 	huayi_uci_get_int(PKG_SYSTEM, "network", "rx_bytes",&rx);
 	huayi_uci_get_int(PKG_SYSTEM, "network", "tx_bytes",&tx);
-	*flow=(rx+tx)/1024;
+	*flow=(rx+tx);
 #endif
 
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", devid);
