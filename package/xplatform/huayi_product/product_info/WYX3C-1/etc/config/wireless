@@ -31,6 +31,7 @@ config	wifi-iface	'radio0_0'
 	option  noforward	'0'
 	option	key		'12345678'
 	option  disabled    '0'
+	option  change   '0'
 	
 config	wifi-iface	'radio0_cli0'
 	option	ifname		'apcli0'

@@ -2512,6 +2512,7 @@ int set_wireless_status(cJSON *request_root, cJSON *response_root,int *lock_time
 	}
 	huayi_uci_set_int(PKG_WIRELESS,W58G_GUEST_IFACE,"hidden",guest_hide_5g);
 #endif
+	huayi_uci_set_int(PKG_WIRELESS,"radio0_0","change", 1);
 	huayi_uci_commit(PKG_WIRELESS);
 	system("huayi-reset wireless");
 	*lock_time = HUAYI_RELOAD_WIRELESS_TIME;

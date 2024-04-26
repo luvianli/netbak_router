@@ -78,6 +78,27 @@ void set_url(cJSON *response_root)
 	huayi_uci_set_str(PKG_SYSTEM,"server","mifiurl",urldomain);
 	huayi_uci_commit(PKG_SYSTEM);
 
+	char ssid[OPTION_STR_LEN] = {0},oldssid[OPTION_STR_LEN] = {0},imei[RESULT_STR_LEN] = {0};
+	if (!huayi_json_get_str(response_root, "prefix", ssid,SHORT_STR_LEN))
+    {	
+        return;
+    }
+
+	int len = strlen(imei),change;
+	char imei_6[RESULT_STR_LEN] = {0};
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
+	strcpy(imei_6, imei + strlen(imei) - 6);
+	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","ssid", oldssid);
+	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","change", &change);
+	sprintf(ssid,"%s%s",ssid,imei_6);
+	if((strlen(ssid) >= 8) && (0 != strcmp(ssid, oldssid)) && (change == 0))
+	{
+		huayi_uci_set_str(PKG_WIRELESS,"radio0_0","ssid", ssid);
+		huayi_uci_commit(PKG_WIRELESS); 
+		system("huayi-reset wireless");
+	}
+	CLOUD_CLIENT_LOG(" ssid:%s; old: %s\n",ssid,oldssid);
+
 	return ;
 }
 /*
@@ -486,6 +507,38 @@ fail:
 	"code":500
 }
 */
+void link_msg_parse(char *heartdata, unsigned int heartsize,int *code)
+{
+	int ret = -1; 	
+	cJSON *root = NULL;
+	cJSON *format = NULL;
+	char *info;
+
+	if(strlen(heartdata) == 0) {
+		return;
+	}
+	ret = getJson_Status(heartdata);
+	*code = ret;
+	CLOUD_CLIENT_LOG("%s code is %d .\n",__FUNCTION__, ret);
+	root = cJSON_Parse(heartdata);	
+	if(root == NULL)
+		return;
+	format = cJSON_GetObjectItem(root,"data");
+	if(format == NULL) {
+			return;
+		}
+
+	if(ret == 0)
+	{	
+		set_url(format);
+	}else if(ret == 1 || ret == 201 || ret == 501 || ret == 502 || ret == 508)//设备无法上网
+	{	
+		*code = 1;
+		system("ifdown wan4g");
+	}
+	return;
+}
+
 void msg_parse(char *heartdata, unsigned int heartsize,int *code)
 {
 	int ret = -1; 	
@@ -512,7 +565,6 @@ void msg_parse(char *heartdata, unsigned int heartsize,int *code)
 
 	if(ret == 0)
 	{	
-		set_url(format);
 #ifndef	CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
 		huayi_set_4g_config(format);
 #endif

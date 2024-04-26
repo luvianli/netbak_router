@@ -288,7 +288,7 @@ int mifi_link()
 				goto out;
 			}
 			CLOUD_CLIENT_LOG("===  %s, %d, heartContent = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartContent, heartContentLen);
-			msg_parse(heartContent, heartContentLen,&code);
+			link_msg_parse(heartContent, heartContentLen,&code);
 			if(curl != NULL) {
 				curl_easy_cleanup(curl);
 				curl = NULL;

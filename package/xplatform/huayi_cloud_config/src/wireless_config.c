@@ -473,6 +473,7 @@ void huayi_set_wifi_ssid(cJSON *response_root)
 		if((strlen(ssid) >= 8) && (0 != strcmp(ssid, oldssid)))
 		{
 			huayi_uci_set_str(PKG_WIRELESS,"radio0_0","ssid", ssid);
+			huayi_uci_set_int(PKG_WIRELESS,"radio0_0","change", 1);
 			huayi_uci_commit(PKG_WIRELESS); 
 			system("huayi-reset wireless");
 		}
