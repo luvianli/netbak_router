@@ -92,12 +92,12 @@ void set_url(cJSON *response_root)
 	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","change", &change);
 	sprintf(ssid,"%s%s",ssid,imei_6);
 	if((strlen(ssid) >= 8) && (0 != strcmp(ssid, oldssid)) && (change == 0))
-	{
+	{	
+		CLOUD_CLIENT_LOG(" ssid:%s; old: %s\n",ssid,oldssid);
 		huayi_uci_set_str(PKG_WIRELESS,"radio0_0","ssid", ssid);
 		huayi_uci_commit(PKG_WIRELESS); 
 		system("huayi-reset wireless");
 	}
-	CLOUD_CLIENT_LOG(" ssid:%s; old: %s\n",ssid,oldssid);
 
 	return ;
 }

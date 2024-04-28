@@ -330,6 +330,9 @@ int set_wifi_basic_config(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	disabled = radio_enable?0:1;
 
+	char oldssid[OPTION_STR_LEN] = {0};
+	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","ssid", oldssid);
+
 	huayi_uci_set_int(PKG_WIRELESS,radio_section,"disabled",disabled);
 	huayi_uci_set_int(PKG_WIRELESS,vap_section,"disabled",disabled);
 	
@@ -469,7 +472,12 @@ int set_wifi_basic_config(cJSON *request_root, cJSON *response_root,int *lock_ti
 		}
 #endif
 	}
-	
+
+	if(0 != strcmp(ssid, oldssid))
+	{
+		huayi_uci_set_int(PKG_WIRELESS,"radio0_0","change", 1);
+	}
+
 	huayi_uci_commit(PKG_WIRELESS);
 	
 	system("huayi-reset wireless");
@@ -2512,7 +2520,6 @@ int set_wireless_status(cJSON *request_root, cJSON *response_root,int *lock_time
 	}
 	huayi_uci_set_int(PKG_WIRELESS,W58G_GUEST_IFACE,"hidden",guest_hide_5g);
 #endif
-	huayi_uci_set_int(PKG_WIRELESS,"radio0_0","change", 1);
 	huayi_uci_commit(PKG_WIRELESS);
 	system("huayi-reset wireless");
 	*lock_time = HUAYI_RELOAD_WIRELESS_TIME;

@@ -289,7 +289,10 @@ void check_network()
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 	ret = atcmd_get_iccid(iccid);
 	if(ret == 1 && strlen(iccid)>5)
+	{
+		save_useing_siminfo(simn);
 		return ;
+	}
 #endif
 
     //huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
