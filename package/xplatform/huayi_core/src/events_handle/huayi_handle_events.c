@@ -1135,17 +1135,6 @@ void do_power_led_blinks_fast(void)
 	return;
 }
 
-void do_power_led_on(void)
-{
-	char cmd[CMD_STR_LEN] = {0};
-	
-	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_POWER_LED_GPIO_NUM);
-
-	system(cmd);
-	
-	return;
-}
-
 #endif
 
 #if defined(CONFIG_HUAYI_REPEATER_LED_SUPPORT)
@@ -1367,7 +1356,7 @@ void do_internet_led_slowly(void)
 #endif
 
 #if defined(CONFIG_HUAYI_4GONLINE_LED_SUPPORT)
-void do_4G_online_led_on(void)
+void do_4G_online_led_off(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
 	
@@ -1378,7 +1367,7 @@ void do_4G_online_led_on(void)
 	return;
 }
 
-void do_4G_online_led_off(void)
+void do_4G_online_led_on(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
 	
@@ -1391,7 +1380,7 @@ void do_4G_online_led_off(void)
 #endif
 
 #if defined(CONFIG_HUAYI_SIM_LED_SUPPORT)
-void do_sim_led_on(void)
+void do_sim_led_off(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
 	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_SIM_LED_GPIO_NUM);
@@ -1399,7 +1388,7 @@ void do_sim_led_on(void)
 	return;
 }
 
-void do_sim_led_off(void)
+void do_sim_led_on(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
 	snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_SIM_LED_GPIO_NUM);
@@ -1422,13 +1411,13 @@ void do_signal_led_high(void)
 
 	if (CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM != 1000)
 	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
 		system(cmd);
 	}
 
 	if (CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM != 1000)
 	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
 		system(cmd);
 	}
 	
@@ -1447,13 +1436,13 @@ void do_signal_led_low(void)
 
 	if (CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM != 1000)
 	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
 		system(cmd);
 	}
 
 	if (CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM != 1000)
 	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
 		system(cmd);
 	}
 	
@@ -1472,13 +1461,13 @@ void do_signal_led_middle(void)
 
 	if (CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM != 1000)
 	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
 		system(cmd);
 	}
 
 	if (CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM != 1000)
 	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
 		system(cmd);
 	}
 	
@@ -1497,13 +1486,13 @@ void do_signal_led_off(void)
 
 	if (CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM != 1000)
 	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_MIDDLE_SIGNAL_LED_GPIO_NUM);
 		system(cmd);
 	}
 
 	if (CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM != 1000)
 	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
+		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_LOW_SIGNAL_LED_GPIO_NUM);
 		system(cmd);
 	}
 	

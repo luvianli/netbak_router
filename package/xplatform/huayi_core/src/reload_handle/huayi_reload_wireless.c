@@ -307,44 +307,25 @@ VTBool huayi_reload_wireless(void * arg,cJSON *input_root)
 #endif
 
 #if defined(CONFIG_HUAYI_WIFI_MT7628_WLANLED)
-	char product_model[OPTION_STR_LEN] = {0};
-	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-	if(strcmp(product_model, "ZC-GW03-3"))
+	ret = get_cmd_result("devmem 0x10000064",resultbuf,sizeof(resultbuf));
+	if(ret == HUAYI_TRUE)
 	{
-		ret = get_cmd_result("devmem 0x10000064",resultbuf,sizeof(resultbuf));
-		if(ret == HUAYI_TRUE)
-		{
-			regdata  = strtol(resultbuf,NULL,16);
-			regdata &= 0xfffffffc;
-			huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&disabled);
-			if(disabled == 0)
-			{
-				regdata |= 0x0;
-			}
-			else
-			{
-				regdata |= 0x1;
-			}
-
-			memset(resultbuf,0,sizeof(resultbuf));
-			sprintf(resultbuf,"devmem 0x10000064 32 0x%x",regdata);
-			system(resultbuf);
-
-		}
-	}else
-	{
+		regdata  = strtol(resultbuf,NULL,16);
+		regdata &= 0xfffffffc;
 		huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&disabled);
-		char cmd[CMD_STR_LEN] = {0};
 		if(disabled == 0)
 		{
-			snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000",44);
-			system(cmd);
+			regdata |= 0x0;
 		}
 		else
 		{
-			snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000",44);
-			system(cmd);
+			regdata |= 0x1;
 		}
+
+		memset(resultbuf,0,sizeof(resultbuf));
+		sprintf(resultbuf,"devmem 0x10000064 32 0x%x",regdata);
+		system(resultbuf);
+
 	}
 #endif
 	system("wifi reload");

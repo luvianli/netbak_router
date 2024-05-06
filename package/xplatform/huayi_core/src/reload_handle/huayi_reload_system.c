@@ -86,12 +86,6 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 #endif
 
 #if defined(CONFIG_HUAYI_POWER_LED_SUPPORT)
-	char product_model[OPTION_STR_LEN] = {0};
-	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-	if(!strcmp(product_model, "ZC-GW03-3"))
-	{
-		do_power_led_off();
-	}else
 	do_power_led_blinks_fast();
 #elif defined(CONFIG_HUAYI_WPS_LED_SUPPORT)
 	do_wps_led_blinks_slowly();

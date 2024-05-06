@@ -76,10 +76,6 @@ VTBool huayi_led_init(struct VcoreAgent *Agent)
 #endif
 
 #if defined(CONFIG_HUAYI_POWER_LED_SUPPORT)
-	if(!strcmp(product_model, "ZC-GW03-3"))
-	{
-		do_power_led_on();
-	}else
 		do_power_led_off();
 #endif
 
