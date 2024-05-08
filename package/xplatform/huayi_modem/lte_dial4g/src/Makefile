@@ -5,7 +5,7 @@ INCLUDES+= -Iinclude -I$(STAGING_DIR)/usr/include/huayi-universal -I$(STAGING_DI
 
 all: huayi_dial4g quectel_cm huayi_dial4g_init
 
-OBJS = main.o huayi_sms.o quectel_dial4g.o neoway_dial4g.o
+OBJS = main.o huayi_sms.o quectel_dial4g.o neoway_dial4g.o lynq_dial4g.o
 OBJS_INIT = hy_dial4g_init.o
 
 #OBJS_WAN = wan_policy.o

@@ -556,10 +556,10 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 	{
 		int i_signal;
 		atcmd_get_signal(&i_signal);
-		if(i_signal > 85)
+		if(i_signal > 67)
 		{
 			do_signal_led_high();
-		}else if(i_signal > 53)
+		}else if(i_signal > 34)
 		{
 			do_signal_led_middle();
 		}else if(i_signal > 0)

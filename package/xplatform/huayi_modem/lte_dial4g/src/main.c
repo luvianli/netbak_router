@@ -356,6 +356,10 @@ int main(int argc, char *argv[])
 	{
 		neoway_RNDIS_handler(&Agent);
 	}
+	else if(strncmp("LYNQ509",pmodel, 7) == 0)
+	{
+		lynq_model_handler(&Agent);
+	}
 	else
 	{
 		printf("Unidentified modem module!!!\n");

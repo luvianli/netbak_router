@@ -18,13 +18,14 @@ quectel_VID="2c7c:0125"
 quectel_E200T="2c7c:6026"
 quectel_E200A="2c7c:6005"
 neoway_N720V5_V1="2949:8700"
-
+lynq_L509="1286:4e3c"
 
 quectel_model_1_support=`lsusb | grep $quectel_VID`
 quectel_model_2_support=`lsusb | grep $quectel_EC20`
 quectel_model_3_support=`lsusb | grep $quectel_E200T`
 quectel_model_4_support=`lsusb | grep $quectel_E200A`
 neoway_model_1_support=`lsusb | grep $neoway_N720V5_V1`
+lynq_model_1_support=`lsusb | grep $lynq_L509`
 
 quectel_dev_name=`ifconfig -a | grep usb0`
 
@@ -76,6 +77,10 @@ start_service() {
 		DEV_ATC="/dev/ttyUSB1"
 		NET_IFACE="eth1"
 		huayi_cmd set modem modemModel 'EC200A'
+	elif [ -n "$lynq_model_1_support" ]; then
+		DEV_ATC="/dev/ttyUSB1"
+		NET_IFACE="eth1"
+		huayi_cmd set modem modemModel 'LYNQ509'
 	else
 		echo "no detect modem"
 		huayi_cmd set modem registStatus noModem

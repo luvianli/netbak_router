@@ -1773,6 +1773,58 @@ LTE_BOOL atcmd_get_iccid(char *iccid)
 		
 	return LTE_FALSE;
 }
+LTE_BOOL lynq_get_iccid(char *iccid)
+{
+	int i = 0;
+	char *ptr = NULL;
+
+	if ( Atcmd("AT+ICCID", strlen("AT+ICCID"), 0) == LTE_FALSE )
+	{
+		return LTE_FALSE;
+	}
+	
+	ptr = ATret;
+	
+	if ( strstr(ptr, "OK") == NULL )
+	{
+		return LTE_FALSE;
+	}
+	
+	for ( i=0; i < AT_CMD_MAX_LEN-16; i++ )
+	{
+		if ( ptr[i] && isdigit( ptr[i] ) )
+		{
+			strncpy(iccid, ptr+i, 20); //copy iccid
+			return LTE_TRUE;
+		}
+	}
+		
+	return LTE_FALSE;
+}
+LTE_BOOL lynq_get_4gmode(char *netmode)
+{
+	char *ptr = NULL;
+	char *pKey = NULL;
+	char infoValue[AT_LONG_BUFF_LEN] = {0};
+
+	if ( Atcmd("AT+CELLINFO?", strlen("AT+CELLINFO?"), 0) == LTE_FALSE )
+	{
+		return LTE_FALSE;
+	}
+	
+	ptr = ATret;
+	
+    if ((pKey = strstr(ptr, "+CELLINFO")) != NULL )
+    {
+        at_value_get(infoValue, pKey, sizeof(infoValue), '\n');
+		huayi_get_nth_value(1, infoValue, ',', netmode, AT_VALUE_BUFF_LEN);
+		return LTE_TRUE;
+    }
+
+		
+	return LTE_FALSE;
+}
+
 LTE_BOOL atcmd_get_lac(char *lac)
 {
 	char *ptr = NULL;

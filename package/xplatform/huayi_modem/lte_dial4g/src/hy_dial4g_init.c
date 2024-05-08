@@ -140,7 +140,8 @@ int main(int argc, char *argv[])
 		{
 			if((strstr(resultbuf,"2c7c:") != NULL) ||
 				(strstr(resultbuf,"05c6:") != NULL) ||
-				(strstr(resultbuf,"2949:") != NULL))
+				(strstr(resultbuf,"2949:") != NULL)||
+				(strstr(resultbuf,"1286:") != NULL))
 			{
 				if(count == 3) {
 					system("/etc/init.d/huayi_dial4gcontrol restart");
