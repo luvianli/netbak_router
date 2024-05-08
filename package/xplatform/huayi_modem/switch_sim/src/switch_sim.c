@@ -52,7 +52,7 @@ int SlmDial()
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
 	char value[TEMP_STR_LEN] = {0};
-
+	int band,j;
 
     strcpy(print_to, (sim != EXTERNAL_CARD_LOW_LOW) ? "built-in" : "External");
     SWITCH_SIM_LOG("\n\ngpio sim%d",sim);
@@ -68,6 +68,16 @@ int SlmDial()
             Atcmd("AT+SFUN=4", strlen("AT+SFUN=4"), 0);
 
             snprintf(cmd, TEMP_STR_LEN, "AT+CGDCONT=1,\"IPV4V6\",\"%s\",\"\",0,0", "cmnet");
+
+			huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+			if(band != 0)
+			{
+				for (j = 0; j < 15 && !atcmd_get_imsi(value); j++) {
+      				sleep(2);
+    			}
+				if(set_operator_band(value))
+					system("huayi-reset band && killall switch_sim");
+			}
             if (Atcmd(cmd, strlen(cmd), 0) == HUAYI_FALSE)
             {
                 return 0;
@@ -98,10 +108,6 @@ int SlmDial()
 
                 if (registered_count < 60)
                 {
-                    
-					if(set_operator_band(value))
-						system("huayi-reset band && killall switch_sim");
-					
 					SWITCH_SIM_LOG("Registered for network, starting dialing");
                     Atcmd("AT+CGDATA=\"M-ETHER\",1", strlen("AT+CGDATA=\"M-ETHER\",1"), 0);
                     Atcmd("AT^SPTETHER=\"gadget\",\"on\",1", strlen("AT^SPTETHER=\"gadget\",\"on\",1"), 0);

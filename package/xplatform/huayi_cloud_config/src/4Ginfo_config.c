@@ -143,10 +143,8 @@ void huayi_get_mifi_open(char *mcc,char *mnc,char *iccid,char *lac,char *ci,char
 	atcmd_get_mccmnc(ccmnc);
 	strncpy(mcc, ccmnc, 3);
 	strncpy(mnc, ccmnc+3, 3);
-	atcmd_get_lac(llac);
-	strncpy(lac, llac+1, strlen(llac)-2);
-	atcmd_get_ci(cci);
-	strncpy(ci, cci+1, strlen(cci)-2);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "lac", llac);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "ci", cci);
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "iccid", iccid);
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", devid);
 	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version",hardvers);
@@ -164,17 +162,16 @@ void huayi_get_mifi_ink(char *mcc,char *mnc,char *btn,char *sim,char *lac,char *
 	char ccmnc[SHORT_STR_LEN]={0},llac[SHORT_STR_LEN]={0};
 	char key[TEMP_STR_LEN]={0};
 	int simnum = 0;
+	int card;
 	
 	atcmd_get_mccmnc(ccmnc);
 	strncpy(mcc, ccmnc, 3);
 	strncpy(mnc, ccmnc+3, 3);
-	atcmd_get_lac(lac);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "lac", lac);
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", devid);
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &card);
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
-
-	int card;
-	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &card);
 	if(card == simnum-1)
 	{	
 		huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "iccid", btn);

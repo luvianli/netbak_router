@@ -316,7 +316,7 @@ VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 	char value[TEMP_STR_LEN] = {0};
 agint:
 	i = 1;
-	for (j = 0; j < 15 && !atcmd_get_slm_mobile_type(value); j++) {
+	for (j = 0; j < 15 && !atcmd_get_imsi(value); j++) {
         sleep(2);
     }
 	set_operator_band(value);
