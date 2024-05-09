@@ -292,7 +292,7 @@ void check_network()
 	{
 		save_useing_siminfo(simn);
 		return ;
-	}
+	}else goto check_net;
 #endif
 
     //huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);

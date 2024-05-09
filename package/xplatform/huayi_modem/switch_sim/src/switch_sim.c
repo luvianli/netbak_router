@@ -52,11 +52,12 @@ int SlmDial()
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
 	char value[TEMP_STR_LEN] = {0};
-	int band,j;
+	int j,simnum;
 
     strcpy(print_to, (sim != EXTERNAL_CARD_LOW_LOW) ? "built-in" : "External");
     SWITCH_SIM_LOG("\n\ngpio sim%d",sim);
 	huayi_uci_set_int(PKG_M_SYSTEM, "system", "at_card", sim);
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
     while (count < 60)
     {
         get_cmd_result("lsusb", resultbuf, sizeof(resultbuf));
@@ -69,16 +70,7 @@ int SlmDial()
 
             snprintf(cmd, TEMP_STR_LEN, "AT+CGDCONT=1,\"IPV4V6\",\"%s\",\"\",0,0", "cmnet");
 
-			huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
-			if(band != 0)
-			{
-				for (j = 0; j < 15 && !atcmd_get_imsi(value); j++) {
-      				sleep(2);
-    			}
-				if(set_operator_band(value))
-					system("huayi-reset band && killall switch_sim");
-			}
-            if (Atcmd(cmd, strlen(cmd), 0) == HUAYI_FALSE)
+			if (Atcmd(cmd, strlen(cmd), 0) == HUAYI_FALSE)
             {
                 return 0;
             }
@@ -88,6 +80,16 @@ int SlmDial()
             if (mode == 1)
             {
                 SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
+				for (j = 0; j < 3 && !atcmd_get_imsi(value); j++) {
+					sleep(1);
+				}
+				if(j >= 3&&sim == simnum-1)
+				{
+					SWITCH_SIM_LOG("not found sim card\n");
+					return 0;
+				}
+				if(set_operator_band(value))
+					system("huayi-reset band && killall switch_sim");
 
                 while (registered_count < 60 && atcmd_get_slm_mobile_type(value) == HUAYI_FALSE)
                 {
