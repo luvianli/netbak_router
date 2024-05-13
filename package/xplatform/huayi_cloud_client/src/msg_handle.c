@@ -17,7 +17,9 @@ void get_url(char *url)
 {
 	char urldomain[OPTION_STR_LEN] = { 0 };
 	//char port[SHORT_STR_LEN] = { 0 };
-
+#ifdef CONFIG_HUAYI_SUPPORT_SPECIAL_INTERFACE
+	sprintf(urldomain,"%s", HEART_DOMAIN_DEFAULT);
+#else
 	huayi_uci_get_str(PKG_SYSTEM,"server","urldomain", urldomain);
 	//huayi_uci_get_str(PKG_SYSTEM,"server","port",port);
 	//printf("%s, %d, urldomain = %s !\n", __FUNCTION__, __LINE__, urldomain);
@@ -26,6 +28,7 @@ void get_url(char *url)
 		sprintf(urldomain,"http://%s", HEART_DOMAIN_DEFAULT);
 		
 	} 
+#endif
 	strcpy(url, urldomain);
 	CLOUD_CLIENT_LOG(" %s; url is : %s\n",__FUNCTION__,url);
 	return;
@@ -539,7 +542,7 @@ void link_msg_parse(char *heartdata, unsigned int heartsize,int *code)
 	return;
 }
 
-void msg_parse(char *heartdata, unsigned int heartsize,int *code)
+void msg_parse(char *heartdata, unsigned int heartsize)
 {
 	int ret = -1; 	
 	cJSON *root = NULL;
@@ -550,7 +553,6 @@ void msg_parse(char *heartdata, unsigned int heartsize,int *code)
 		return;
 	}
 	ret = getJson_Status(heartdata);
-	*code = ret;
 	CLOUD_CLIENT_LOG("%s code is %d .\n",__FUNCTION__, ret);
 	root = cJSON_Parse(heartdata);	
 	if(root == NULL)
@@ -563,6 +565,7 @@ void msg_parse(char *heartdata, unsigned int heartsize,int *code)
 		}
 	}
 
+#ifdef CONFIG_HUAYI_SUPPORT_SPECIAL_INTERFACE
 	if(ret == 0)
 	{	
 #ifndef	CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
@@ -570,7 +573,6 @@ void msg_parse(char *heartdata, unsigned int heartsize,int *code)
 #endif
 	}else if(ret == 1 || ret == 201 || ret == 501 || ret == 502 || ret == 508)//设备无法上网
 	{	
-		*code = 1;
 		//system("route del default");
 		system("ifdown wan4g");
 	}else if(ret == 509)//重启
@@ -601,8 +603,8 @@ void msg_parse(char *heartdata, unsigned int heartsize,int *code)
 	{	
 		system("huayi-reset reset");
 	}
-	
-	/*huayi_next_url_time(format);
+#else	
+	huayi_next_url_time(format);
 	huayi_set_4g_config(format);
 	huayi_set_wifi_config(format);
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
@@ -627,6 +629,8 @@ void msg_parse(char *heartdata, unsigned int heartsize,int *code)
 	huayi_remote_upgrade(format);
 
 out:
-	cJSON_Delete(root);*/
+	cJSON_Delete(root);
+#endif
+
 	return;
 }

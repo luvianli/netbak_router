@@ -17,8 +17,11 @@
 #include "curl/curl.h"
 
 
-
+#ifdef CONFIG_HUAYI_SUPPORT_SPECIAL_INTERFACE
+#define HEART_DOMAIN_DEFAULT "http://get.mifi.ink/sn/getSN.do"
+#else
 #define HEART_DOMAIN_DEFAULT "http://8.129.188.169:8080/admin/ylapi/uploadData"
+#endif
 #define HEART_PORT_DEFAULT 8888
 #define HEART_DOMAIN_SUFFIX "api/sys.heart" 
 #define HEART_REQ_DATALEN  20480

@@ -276,7 +276,12 @@ config HUAYI_SUPPORT_CARD_SUPPORT
 
 	endmenu
 
-
+config HUAYI_SUPPORT_SPECIAL_INTERFACE
+	bool	"Support special interface"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	default n
+	
 config HUAYI_SUPPORT_PASSWORD_OPTION
 	bool	"Support password option"
 	depends on HUAYI_PLATFORM_SUPPORT
