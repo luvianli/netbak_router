@@ -1,7 +1,7 @@
 config mode	mode
-	option opmode '3'  # 0 router mode 1 APmode 2 repeater mode 3 wisp mode
-	option wan_type 'rep4g'
-	option simchange '0'
+	option opmode '0'  # 0 router mode 1 APmode 2 repeater mode 3 wisp mode
+	option wan_type 'mobile'
+	option simhotplug '1'
 	option detect_ip '8.8.8.8'
 	option detect_time 300
 

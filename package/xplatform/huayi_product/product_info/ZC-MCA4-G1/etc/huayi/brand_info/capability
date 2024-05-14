@@ -1,5 +1,5 @@
 config cap 'cap'
-	option wan_ifname  		'apcli0'
+	option wan_ifname  		'eth0.2'
 	option lan_ifname 		'eth0.1'
 	option wan_lan_ifname 	'eth0.1 eth0.2'
 	option wan_port_num		'4'
