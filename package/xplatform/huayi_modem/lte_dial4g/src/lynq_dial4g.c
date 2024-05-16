@@ -21,13 +21,13 @@ int slm_init_set_modem_status(void)
 	int signal = 0;
 
 	memset(lte_value,0,OPTION_STR_LEN);
-	atcmd_get_EC20_imei(lte_value);
+	atcmd_get_L509_imei(lte_value);
 	if(strlen(lte_value) < 5)
 	{
 		strcpy(lte_value, "");
 	}
-	//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem imei %s",lte_value);
-	//system(cmd);
+	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem imei %s",lte_value);
+	system(cmd);
 
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_imsi(lte_value);

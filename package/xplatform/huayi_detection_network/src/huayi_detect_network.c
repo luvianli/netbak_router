@@ -42,8 +42,10 @@ int DetectConfigurationOfSimAndDns()
 
     if(i_ready == 1){
         if(ifconfig_state == 0 || route_state == 1){
-            DETECTION_NETWORK_LOG("Card present, 4G dialing failed, route table abnormal##Module shutdown(AT+QPOWD=1)");
-            system("huayi_AT_cli AT+QPOWD=1");
+            DETECTION_NETWORK_LOG("Card present, 4G dialing failed, route table abnormal##Module reboot");
+            system("gpio l 1 0 4000 0 0 4000");
+			sleep(5);
+			system("gpio l 1 4000 0 0 0 4000");
         }
     }
 

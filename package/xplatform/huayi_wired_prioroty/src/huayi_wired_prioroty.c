@@ -38,6 +38,7 @@ int main(int argc,char *argv[])
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
 	int count = 1;
+	int sim_state = 0;
 
 	while(1)
 	{
@@ -62,10 +63,11 @@ int main(int argc,char *argv[])
 		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
         huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wired_gateway);
         huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", cpe_gateway);
+		huayi_uci_get_int(PKG_STATUS_MODEM,"modem","sim_ready",&sim_state);
         if(strlen(wired_gateway) <= strlen("0.0.0.0")){
             wired_link = 0;
         }
-        if(strstr(cpe_device,"eth1") == NULL || strlen(cpe_gateway) <= strlen("0.0.0.0"))
+        if(strstr(cpe_device,"eth1") == NULL || strlen(cpe_gateway) <= strlen("0.0.0.0") || sim_state != 1)
 		{
             cpe_link = 0;
         }
