@@ -228,6 +228,12 @@ int main(int argc,char *argv[])
                             DETECTION_NETWORK_LOG("Route does not exist eth1");
                             break;
                         }
+						cpe_status = pingCheck(detectip);
+						if(cpe_status == -1)
+						{
+							DETECTION_NETWORK_LOG("4G internet error");
+							break;
+						}
                         sleep(1);
                         count --;
                     }
