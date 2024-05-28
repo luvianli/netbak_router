@@ -284,7 +284,7 @@ void check_network()
 #endif
     sprintf(cmd, "switch_sim %d", simn);
     system(cmd);
-    sleep(25);
+    sleep(30);
 
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 	ret = atcmd_get_iccid(iccid);

@@ -9,9 +9,9 @@
 
 enum SimSelection {
 
-    SIM0_HIGH_HIGH,
+    SIM0_HIGH_LOW,
 #ifndef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
-    SIM1_HIGH_LOW,
+    SIM1_HIGH_HIGH,
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
     SIM2_LOW_HIGH,
 #endif
@@ -81,15 +81,15 @@ int SlmDial()
             {
                 SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
 				for (j = 0; j < 3 && !atcmd_get_imsi(value); j++) {
-					sleep(1);
+					sleep(2);
 				}
 				if(j >= 3&&sim == simnum-1)
 				{
 					SWITCH_SIM_LOG("not found sim card\n");
 					return 0;
 				}
-				if(set_operator_band(value))
-					system("huayi-reset band && killall switch_sim");
+				/*if(set_operator_band(value))
+					system("huayi-reset band && killall switch_sim");*/
 
                 while (registered_count < 60 && atcmd_get_slm_mobile_type(value) == HUAYI_FALSE)
                 {
@@ -106,6 +106,11 @@ int SlmDial()
                         SWITCH_SIM_LOG("##waitting##card value :%s .waiting for %d (up to 60) seconds",value,(registered_count));
                     }
 					sleep(2);
+					if(strlen(value)<5)
+					{
+						atcmd_get_imsi(value);
+						SWITCH_SIM_LOG("imsi:%s",value);
+					}
                 }
 
                 if (registered_count < 60)
@@ -151,16 +156,16 @@ int switchSim() {
     switch (sim) {
 
 
-        case SIM0_HIGH_HIGH:
-            printf("Switching 0; 0 Setting High=3.3V & 2 Setting High=3.3V\n");
-			system("gpio l 0 0 4000 0 0 4000");
-            system("gpio l 2 0 4000 0 0 4000");
-            break;
-#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
-        case SIM1_HIGH_LOW:
-			printf("Switching 1; 0 Setting High=3.3V & 2 Setting LOW=2.7V\n");
+        case SIM0_HIGH_LOW:
+			printf("Switching 0; 0 Setting High=3.3V & 2 Setting LOW=2.7V\n");
             system("gpio l 0 0 4000 0 0 4000");
             system("gpio l 2 4000 0 0 0 4000");
+            break;
+#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
+        case SIM1_HIGH_HIGH:
+            printf("Switching 1; 0 Setting High=3.3V & 2 Setting High=3.3V\n");
+			system("gpio l 0 0 4000 0 0 4000");
+            system("gpio l 2 0 4000 0 0 4000");
             break;
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
         case SIM2_LOW_HIGH:
