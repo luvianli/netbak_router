@@ -22,7 +22,7 @@ VTBool huayi_power_off_lte4g(void)
 			system("huayi_AT_cli AT+QPOWD=1");
 			sleep(5);
 		}
-		else if(strncmp("N720V5_V1",pmodel, 9) == 0)
+		else if(strncmp("N720V5_V1",pmodel, 9) == 0||strncmp("SLM770U",pmodel, 7) == 0)
 		{
 			system("huayi_AT_cli AT+CFUN=1,1");
 			sleep(5);
