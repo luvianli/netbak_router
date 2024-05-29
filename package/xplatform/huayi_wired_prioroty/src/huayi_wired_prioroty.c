@@ -64,8 +64,10 @@ int main(int argc,char *argv[])
 
 	char wan_type[OPTION_STR_LEN] = {0};
 	char net_ipv4[IPV4_STR_LEN] = {0};
-
+	char wired_gateway[IPV4_STR_LEN] = {0},cpe_gateway [IPV4_STR_LEN] = {0};
+	int wired_status = 0;
 	int cpe_status = 0;
+	int wired_link = 0;
 	int cpe_link = 0;
 	int old_int_mode = INTERNET_UNDEFINE;
 	int now_int_mode = INTERNET_UNDEFINE;
@@ -83,22 +85,58 @@ int main(int argc,char *argv[])
 			continue;
 		}
 		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
+		memset(wired_device,0,sizeof(wired_device));
 		memset(cpe_device,0,sizeof(cpe_device));
+		wired_link = 0;
 		cpe_link = 0;
+		wired_status = 0;
 		cpe_status = 0;
+		huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "device", wired_device);
 		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "device", cpe_device);
+		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
 		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
-
-		if(cpe_link == 1)
+        huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wired_gateway);
+        huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", cpe_gateway);
+        if(strlen(wired_gateway) <= strlen("0.0.0.0")){
+            wired_link = 0;
+        }
+        if(strlen(cpe_gateway) <= strlen("0.0.0.0"))
 		{
+            cpe_link = 0;
+        }
+
+		if(wired_link == 1 && cpe_link == 1)
+		{
+			wired_status = internet_do_ping_detect(detectip, wired_device);
+			if(wired_status == 0)
+			{
 				cpe_status = internet_do_ping_detect(detectip, cpe_device);
-				if(cpe_status)
+				if(cpe_status == 0)
+				{
+					sprintf(section,"wired");
+					now_int_mode = INTERNET_WIRED;
+					old_int_mode = INTERNET_UNDEFINE;
+				}else
 				{
 					sprintf(section,"cpe");
 					now_int_mode = INTERNET_4G;
 				}
-
+			}else
+			{
+				sprintf(section,"wired");
+				now_int_mode = INTERNET_WIRED;
+			}
 		}
+		else if(cpe_link == 1)
+		{	
+			sprintf(section,"cpe");
+			now_int_mode = INTERNET_4G;
+		}else
+		{
+			sprintf(section,"wired");
+			now_int_mode = INTERNET_WIRED;
+		}
+
 		{
 			memset(del_gateway,0,sizeof(del_gateway));
 			if(!strncmp(section,"wired",strlen("wired")))

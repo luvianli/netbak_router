@@ -420,22 +420,19 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	}
 	if (!strcmp(wan_type,WAN_TYPE_4G_MOBILE))
 	{
-		wan_up = 1;
-		if (sim_state != MODEM_SIN_READY)
-			wan_up = 0;
-	/*	huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &sim_state);
+		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &sim_state);
 		if(sim_state == 0)
 		{
 			wan_up = 0;
 		}
-	*/
 	}
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
 	else if(!strcmp(wan_type,WAN_TYPE_WIRED_PRIOROTY))
 	{
 		if (wan_link == 0)
 		{
-			if (sim_state != MODEM_SIN_READY)
+			huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &sim_state);
+			if(sim_state == 0)
 			{
 				wan_up = 0;
 			}

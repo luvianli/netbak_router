@@ -51,7 +51,7 @@ VTBool huayi_sys_upgrade(void * arg,cJSON *input_root)
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	huayi_power_off_lte4g();
 #endif
-	
+	system("gpio l 3 4000 0 0 0 4000");	
 	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","upgrade_keep_setting",&keep_setting);
 	
 	if(keep_setting == 0)  // 0 - upgrade and reset
@@ -91,6 +91,7 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	do_wps_led_blinks_slowly();
 #endif
 
+	system("gpio l 3 4000 0 0 0 4000");
 	/*maybe need to fixed led here*/
 	system("rm -rf /overlay/*");	
 	sleep(3);
@@ -103,6 +104,7 @@ VTBool huayi_sys_reboot(void * arg,cJSON *input_root)
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	huayi_power_off_lte4g();
 #endif
+	system("gpio l 3 4000 0 0 0 4000");
 	system("echo '1' >/etc/opkg/keys/uptime");
 	system("/sbin/reboot"); 
 	return VT_TRUE;
