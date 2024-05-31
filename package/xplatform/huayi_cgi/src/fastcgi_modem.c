@@ -1392,7 +1392,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","link",&wan_link);
 
-	huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link",,&sim_state);
+	huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link",&sim_state);
 	
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","network",mobile_network);
 	huayi_uci_get_str(PKG_STATUS_MODEM,"modem","mobile_type",mobile_type);
