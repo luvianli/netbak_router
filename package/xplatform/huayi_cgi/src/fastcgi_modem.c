@@ -1468,7 +1468,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	cJSON_AddStringToObject(result_root,"mobile_network",mobile_network);
 
-	cJSON_AddStringToObject(result_root,"mobile_type",mobile_type);
+	cJSON_AddStringToObject(result_root,"mobile_type","4G");
 
 	cJSON_AddNumberToObject(result_root,"signal",signal);
 	cJSON_AddNumberToObject(result_root,"signal_4g",signal4g);
