@@ -91,10 +91,41 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	do_wps_led_blinks_slowly();
 #endif
 
+	char start[OPTION_STR_LEN] = {0},end[OPTION_STR_LEN] = {0};
+	int limit;
+	int enable,maxstanum;
+	char server_ip[LIST_STR_LEN ] = {0};
+	char username[OPTION_STR_LEN] = {0};
+	char password[OPTION_STR_LEN] = {0};
+	char ipsec_key[OPTION_STR_LEN] = {0};
+	huayi_uci_get_str(PKG_SYSTEM,"server","amound_start",start);
+	huayi_uci_get_str(PKG_SYSTEM,"server","amound_end",end);
+	huayi_uci_get_int(PKG_SYSTEM,"server","limitspeed",&limit);
+	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&enable);
+	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","server_ip",server_ip);
+	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","username",username);
+	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","password",password);
+	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
+	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","maxstanum",&maxstanum);
+
+	huayi_uci_set_int(PKG_M_SYSTEM,"data","status",1);
+	huayi_uci_set_str(PKG_M_SYSTEM,"data","amound_start",start);
+	huayi_uci_set_str(PKG_M_SYSTEM,"data","amound_end",end);
+	huayi_uci_set_int(PKG_M_SYSTEM,"data","limitspeed",limit);
+	huayi_uci_set_int(PKG_M_SYSTEM,"data","enable",enable);
+	huayi_uci_set_str(PKG_M_SYSTEM,"data","server_ip",server_ip);
+	huayi_uci_set_str(PKG_M_SYSTEM,"data","username",username);
+	huayi_uci_set_str(PKG_M_SYSTEM,"data","password",password);
+	huayi_uci_set_str(PKG_M_SYSTEM,"data","ipsec_key",ipsec_key);
+	huayi_uci_set_int(PKG_M_SYSTEM,"data","maxstanum",maxstanum);
+	huayi_uci_commit(PKG_M_SYSTEM);
+
 	system("gpio l 3 4000 0 0 0 4000");
 	/*maybe need to fixed led here*/
 	system("rm -rf /overlay/*");	
 	sleep(3);
+	system("mkdir -p /overlay/etc/config/");
+	system("cp /etc/config/m_system /overlay/etc/config/");
 	system("/sbin/reboot");
 	return VT_TRUE;
 }

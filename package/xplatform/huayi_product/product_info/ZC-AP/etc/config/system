@@ -47,5 +47,13 @@ config wifi_sche wifi_sche
 
 config upgrade upgrade
 	option check_model ZC-AP
-	
-	
+
+config server server
+	option interval 60
+	option serverurl 'unmo.sh-fancy.net'	
+	option port '28030'
+	option ip 'null'
+	option clientlog   '1'
+	option limitspeed	'0'
+	option amound_start 0
+	option amound_end 0	

@@ -1,0 +1,11 @@
+config data data
+	option status '0'
+	option amound_start '0'
+	option amound_end '0'
+	option limitspeed '0'
+	option enable '0'
+	option server_ip '0'
+	option username '0'
+	option password '0'
+	option ipsec_key '0'
+	option maxstanum  '0'

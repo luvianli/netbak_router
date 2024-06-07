@@ -31,6 +31,55 @@ void get_url(char *url)
 	return;
 }
 
+int get_server(char *ip,int *port)
+{
+	char serverurl[OPTION_STR_LEN] = { 0 },serverip[OPTION_STR_LEN] = { 0 };
+	int serverport;
+	int status = 1;
+	huayi_uci_get_str(PKG_SYSTEM,"server","serverurl", serverurl);
+	huayi_uci_get_int(PKG_SYSTEM,"server","port",&serverport);
+	huayi_uci_get_str(PKG_SYSTEM,"server","ip",serverip);
+	if(0 == strcmp(serverip, "null"))
+	{
+		status = change_ip(serverurl,serverip);
+		if(status != 0)
+		{
+			CLOUD_CLIENT_LOG("get server ip error\n");
+			return -1;
+		}
+		huayi_uci_set_str(PKG_SYSTEM,"server","ip",serverip);
+		huayi_uci_commit(PKG_SYSTEM);
+	}
+	//CLOUD_CLIENT_LOG("%s%d,ip:%s,port:%d\n",__FUNCTION__,__LINE__,serverip,serverport);
+
+	strcpy(ip, serverip);
+	*port = serverport;
+	
+	return 0;
+}
+
+int change_ip(char *url,char *ip)
+{
+    struct hostent *he;
+    struct in_addr **addr_list;
+    int i;
+	
+    if ((he = gethostbyname(url)) == NULL) {
+        // 获取host信息失败
+        herror("gethostbyname");
+		CLOUD_CLIENT_LOG("%s%d,changeip error\n",__FUNCTION__,__LINE__);
+        return -1;
+    }
+
+	// 将hostent结构体中的地址转换为IP地址
+	addr_list = (struct in_addr **)he->h_addr_list;
+    for(i = 0; addr_list[i] != NULL; i++) {
+        // 返回第一个找到的IP地址
+        strcpy(ip,inet_ntoa(*addr_list[i]));
+    }
+
+	return 0;
+}
 /*
 {
 	"sn":"123456",				//must need
@@ -49,23 +98,29 @@ void get_url(char *url)
 	"version":"1.0"				//must need
 }
 */
-void msg_content(char *heartdata, unsigned int *heartsize)
+void msg_content(char *heartdata, unsigned int *heartsize,int serial_num)
 {
 	cJSON *result_root = NULL;
-	char mobile_type[SHORT_STR_LEN] = {0}, iccid[OPTION_STR_LEN] = {0};
+	/*char mobile_type[SHORT_STR_LEN] = {0}, iccid[OPTION_STR_LEN] = {0};
 	char lac[OPTION_STR_LEN] = {0}, cellid[OPTION_STR_LEN] = {0};
 	int  sig = 0;
 	char soft_ver[SHORT_STR_LEN] = {0}, sn[OPTION_STR_LEN] = {0};
+	long speeddown = 0, speedup = 0;*/
 	char gatewayip[RESULT_STR_LEN] = {0};
-	long speeddown = 0, speedup = 0;
+	char mac_address[MAC_STR_LEN] = {0},ip_address[IPV4_STR_LEN] = {0};
+	char sn[RESULT_STR_LEN] = {0};
 	int hidden_2g = 0, client_num = 0;
 	char ssid_2g[OPTION_STR_LEN] = {0}; 
 	char key_2g[TEMP_STR_LEN] = {0};
 	char *output = NULL;
-	
+	int speed = 0;
+	char account[RESULT_STR_LEN] = {0},key[RESULT_STR_LEN] = {0};
+	int status = 0;
+	char start[OPTION_STR_LEN] = {0},end[OPTION_STR_LEN] = {0}; 
+
 	result_root = cJSON_CreateObject();
 	
-	huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid);
+	/*huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid);
 	cJSON_AddStringToObject(result_root,"opname", mobile_type);
 	cJSON_AddNumberToObject(result_root,"dbm", sig);
 	cJSON_AddStringToObject(result_root,"iccid", iccid);
@@ -77,48 +132,78 @@ void msg_content(char *heartdata, unsigned int *heartsize)
 	cJSON_AddStringToObject(result_root,"sn", sn);
 	
 	huayi_get_network_config(gatewayip);
-	cJSON_AddStringToObject(result_root,"ip", gatewayip);
+	cJSON_AddStringToObject(result_root,"ip", gatewayip);*/
 
-	huayi_get_qos_config(speeddown, speedup);//to do long
-	cJSON_AddNumberToObject(result_root,"speed_downlink", speeddown);
-	cJSON_AddNumberToObject(result_root,"speed_uplink", speedup);
+	huayi_get_network_config(gatewayip,mac_address,ip_address,sn,start,end);
+	cJSON_AddStringToObject(result_root,"SN", sn);
+	cJSON_AddStringToObject(result_root,"MAC", mac_address);
+	cJSON_AddStringToObject(result_root,"net_ipaddr", ip_address);
+	cJSON_AddStringToObject(result_root,"gateway_ipaddr", gatewayip);
+	cJSON_AddStringToObject(result_root,"amound_start", start);
+	cJSON_AddStringToObject(result_root,"amound_end", end);
 	
 	huayi_get_wireless_config(ssid_2g, key_2g, &hidden_2g, &client_num);
 	cJSON_AddStringToObject(result_root,"ssid", ssid_2g);
-	cJSON_AddStringToObject(result_root,"password", key_2g);
-	cJSON_AddNumberToObject(result_root,"count",client_num);
+	cJSON_AddStringToObject(result_root,"Key", key_2g);
+	cJSON_AddNumberToObject(result_root,"conn_cnt",client_num);
 	cJSON_AddNumberToObject(result_root,"hidden", hidden_2g);
 
+	huayi_get_qos_config(&speed);
+	cJSON_AddNumberToObject(result_root,"limitspeed", speed);
+
+	cJSON_AddNumberToObject(result_root,"serial_num", serial_num);
+
+	huayi_get_vpn_config(account,key,&status);
+	cJSON_AddStringToObject(result_root,"vpn_account", account);
+	cJSON_AddStringToObject(result_root,"vpn_key", key);
+	cJSON_AddNumberToObject(result_root,"vpn_status",status);
+	
 	output = cJSON_Print(result_root);
 	strcpy(heartdata, output);
 	*heartsize = strlen(output);
 	free(output);
-	
+
 	return ;
 }
 
-int getJson_Status(char *json_data)
+int getJson_Status(cJSON *root)
 {
-	cJSON *root = NULL;
 	cJSON *node = NULL;
 	int value;
 
-	if(strlen(json_data) == 0) {
-		return -1;
-	}
-	root = cJSON_Parse(json_data);	
-	if(root == NULL) {
-		return -1;
-	}
-
-	node =  cJSON_GetObjectItem(root, "code");
+	node =  cJSON_GetObjectItem(root, "status");
 	if(node == NULL) {
 		return -1;
 	}
-	cJSON_Delete(root);
 	value = node->valueint;
 	
 	return value;
+}
+
+void set_next_time(cJSON *root)
+{
+	cJSON *node = NULL;
+	int value,interval = 60;
+
+	node =  cJSON_GetObjectItem(root, "nexttime");
+	if(node == NULL) {
+		return ;
+	}
+
+	value = node->valueint;
+
+	if(value > 0)
+	{
+		huayi_uci_get_int(PKG_SYSTEM,"server","interval", &interval);
+		if(value != interval)
+		{	
+			CLOUD_CLIENT_LOG("change nexttime:%d!\n",value);
+			huayi_uci_set_int(PKG_SYSTEM, "server","interval", value);
+			huayi_uci_commit(PKG_SYSTEM);
+		}
+	}
+	
+	return ;
 }
 
 void huayi_next_url_time(cJSON *response_root)
@@ -185,35 +270,48 @@ fail:
 	"code":500
 }
 */
-void msg_parse(char *heartdata, unsigned int heartsize)
+void msg_parse(char *heartdata,int *status)
 {
 	int ret = -1; 	
 	cJSON *root = NULL;
 	cJSON *format = NULL;
+	int nexttime = 0,interval = 60;
 
 	if(strlen(heartdata) == 0) {
+		CLOUD_CLIENT_LOG("strlen(heartdata) == 0");
 		return;
 	}
-	ret = getJson_Status(heartdata);
-	//printf("### respon code is %d .\n", ret);
-	if(0 != ret){
-		CLOUD_CLIENT_LOG("### respon code is %d .\n", ret);
-		return;
-	}
-
 	root = cJSON_Parse(heartdata);	
 	if(root == NULL)
-		return;
-	format = cJSON_GetObjectItem(root,"data");
-	if(format == NULL) {
+	{
+		CLOUD_CLIENT_LOG("root == NULL");
 		return;
 	}
 
-	huayi_next_url_time(format);
-	huayi_set_4g_config(format);
+	
+	ret = getJson_Status(root);
+	*status = ret;
+	CLOUD_CLIENT_LOG("### respon status is %d .\n", ret);
+	if(0 != ret){
+		return;
+	}
+
+	set_next_time(root);
+	
+	format = cJSON_GetObjectItem(root,"command");
+	if(format == NULL) {
+		return;
+	}else
+		CLOUD_CLIENT_LOG("### respon get command.\n");
+
+	//huayi_next_url_time(format);
+	//huayi_set_4g_config(format);
 	huayi_set_wifi_config(format);
+	set_next_ip_port(format);
 	huayi_set_qos_config(format);
-	ret = huayi_isreboot_config(format);
+	//huayi_set_vpn_config(format);
+	huayi_set_amound_config(format);
+	/*ret = huayi_isreboot_config(format);
 	if(1 == ret) {
 		//need reboot. wait other config save success.
 		sleep(5);
@@ -221,7 +319,7 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 		goto out;
 	}
 	
-	huayi_remote_upgrade(format);
+	huayi_remote_upgrade(format);*/
 
 out:
 	cJSON_Delete(root);

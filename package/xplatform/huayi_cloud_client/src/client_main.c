@@ -84,7 +84,7 @@ char res_teststr[1024] = "{\"msg\":\"seccuss\",\"code\":0,\"data\":{\"switchSim\
 \"60000\",\"host\":\"http://8.129.188.169:8080/admin/ylapi/yYUploadData\",\"firmware_url\":\"\",\"firmware_md5\":\"\"}}";
 #endif
 
-void* heart_handle()
+/*void* heart_handle()
 {
 	char url[LIST_STR_LEN] ={ 0 }; 
 	char heartData[HEART_REQ_DATALEN] = { 0 };
@@ -153,23 +153,125 @@ out:
 		usleep(gTimeWait*1000); //us
 	}
 	return (void*)0;
+}*/
+
+int client_socket(char *ip,int port)
+{
+   int client_sockfd;
+   struct sockaddr_in server_address;
+   
+   client_sockfd=socket(AF_INET,SOCK_STREAM,0);
+   if(client_sockfd < 0 )
+   		return -1;
+   memset(&server_address,0,sizeof(server_address));
+   server_address.sin_family=AF_INET;
+   server_address.sin_port=htons(port);
+   server_address.sin_addr.s_addr = inet_addr(ip);
+   if (connect(client_sockfd,(struct sockaddr *)&server_address,sizeof(server_address)) < 0)
+   {
+   		close(client_sockfd);
+   		return -1;
+   }
+   return client_sockfd;
 }
 
+void* heart_handle()
+{
+	int wan_up = 0,wired_link = 0,cpe_link = 0;
+	char ip[OPTION_STR_LEN] = { 0 },ip_address[IPV4_STR_LEN] = {0};
+	int port;
+	int server = 1;
+	int serial_num = 0;
+	char heartData[HEART_REQ_DATALEN] = { 0 };
+	int heartSize = 0;
+	int interval = 60;
+	int status = 0;
+	char buffer[1024] = {0};
+	char *newbuf;
+	int client_sockfd,written,dataLen;
+	
+	while(1)
+	{
+		huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ip_address",ip_address);
+		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
+		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
+		if((wired_link != 1 && cpe_link != 1) || !strncmp(ip_address, "0.0.0.0", strlen("0.0.0.0")))
+		{
+			CLOUD_CLIENT_LOG("network error!\n");
+			sleep(5);
+			continue ;
+		}
+		server = get_server(ip,&port);
+		if(server == -1)
+		{
+			sleep(5);
+			continue;
+		}
+		CLOUD_CLIENT_LOG("%s%d,ip:%s,port:%d\n",__FUNCTION__,__LINE__,ip,port);
+
+		memset(heartData, 0, sizeof(heartData));
+		msg_content(heartData,&heartSize,serial_num);
+		CLOUD_CLIENT_LOG("===  %s, %d, heartData = %s\n",__FUNCTION__, __LINE__, heartData);
+
+		client_sockfd = -1;
+		client_sockfd=client_socket(ip,port);
+		if(client_sockfd == -1)
+		{
+			CLOUD_CLIENT_LOG("socket error!\n");
+			sleep(2);
+			continue;
+		}else CLOUD_CLIENT_LOG("socket succes!\n");
+
+		written = send(client_sockfd, heartData, heartSize,0);
+    	if (written <= 0) {
+        	CLOUD_CLIENT_LOG("Write error!");
+			goto fail;
+    	}else CLOUD_CLIENT_LOG("wirte succes!\n");
+
+		//memset(buffer, 0, sizeof(buffer));
+		
+		dataLen = read(client_sockfd,buffer,sizeof(buffer)-1);
+		if (dataLen >= 0) {
+			buffer[dataLen] = '\0';
+			newbuf = strchr(buffer,'{');
+		 	CLOUD_CLIENT_LOG("read:%s,len:%d",newbuf,dataLen);
+			msg_parse(newbuf,&status);
+			if(status != 0)//返回status不等于0马上重新上报
+			{
+				close(client_sockfd);
+				serial_num ++;
+				continue;
+			}
+		} else{
+		 	CLOUD_CLIENT_LOG("read error!\n");
+			sleep(30);
+		 	goto fail;
+	 	}
+
+out:
+		close(client_sockfd);
+		serial_num ++;
+		huayi_uci_get_int(PKG_SYSTEM,"server","interval", &interval);
+		CLOUD_CLIENT_LOG("gTimeWait = %d !\n",interval);
+		CHECK_CLOUD_CLIENT_LOG();
+		sleep(interval);
+		continue;
+fail:
+		close(client_sockfd);
+		sleep(60);
+	}
+	return ;
+}
 
 int main(int argc, char *argv[])
 {
-	pthread_t heartTid;
+	/*pthread_t heartTid;
 	int err;
 	void *tret;
 	char 	wan_type[OPTION_STR_LEN] = {0};
 	
 	(void) signal(SIGTERM, huayi_client_main_graceful_exit);
 
-	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
-	if (0 != strcmp(wan_type,WAN_TYPE_4G))
-	{
-		return 0;
-	}
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	pthread_create(&heartTid, NULL, heart_handle, NULL);
@@ -180,7 +282,9 @@ int main(int argc, char *argv[])
         printf("can not join with clound client:%s\n",strerror(err));
         exit(-1);
     }       
-    printf("clound client exit code %d\n",(int)tret);
+    printf("clound client exit code %d\n",(int)tret);*/
+
+	heart_handle();
 
 	return 0;
 }

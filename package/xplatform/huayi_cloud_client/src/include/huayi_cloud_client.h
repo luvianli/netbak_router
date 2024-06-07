@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <sys/epoll.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>

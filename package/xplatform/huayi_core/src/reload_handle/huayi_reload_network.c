@@ -182,8 +182,8 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 		}
 	}
 	
-	if(!access("/etc/init.d/hy_cloud_client", 0))	
-		system("/etc/init.d/hy_cloud_client restart");	
+	//if(!access("/etc/init.d/hy_cloud_client", 0))	
+		//system("/etc/init.d/hy_cloud_client restart");	
 	
 	//system("huayi-reset network");
 	
