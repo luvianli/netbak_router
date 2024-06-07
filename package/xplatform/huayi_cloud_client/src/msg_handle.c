@@ -282,7 +282,7 @@ void msg_content(char *heartdata, unsigned int *heartsize)
     huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
     if(strcmp(product_model, "WYX3C-1") == 0)
     {
-        huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn);
+        huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn,&simSwitch);
         cJSON_AddStringToObject(result_root,"sn", sn);
         cJSON_AddStringToObject(result_root,"iccid", iccid);
         cJSON_AddNumberToObject(result_root,"dbm", sig);
