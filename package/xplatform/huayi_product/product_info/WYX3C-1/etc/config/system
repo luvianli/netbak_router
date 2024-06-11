@@ -57,7 +57,7 @@ config settings settings
 	
 config server server
 	option interval 60000 #1 min
-	option urldomain 'http://device-upload.cbnyunchang.com/admin/ylapi/uploadData'
+	option urldomain 'http://device.10086group.com/admin/ylapi/uploadData'
 	option mifiurl '0'
 	option clientlog   '1'
 
