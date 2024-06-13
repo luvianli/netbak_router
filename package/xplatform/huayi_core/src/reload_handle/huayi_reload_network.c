@@ -316,13 +316,14 @@ VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 	char value[TEMP_STR_LEN] = {0};
 agint:
 	i = 1;
-	for (j = 0; j < 15 && !atcmd_get_imsi(value); j++) {
+	/*for (j = 0; j < 15 && !atcmd_get_imsi(value); j++) {
         sleep(2);
     }
-	set_operator_band(value);
+	set_operator_band(value);*/
 	
-	huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &get_band);
-	band = get_band;
+	huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", 0);
+	huayi_uci_commit (PKG_M_SYSTEM);
+	band = 0;
 	if (band) {
 		SWITCH_SIM_LOG("custom set band %d", band);
 		

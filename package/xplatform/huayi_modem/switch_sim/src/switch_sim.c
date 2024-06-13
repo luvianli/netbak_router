@@ -52,7 +52,7 @@ int SlmDial()
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
 	char value[TEMP_STR_LEN] = {0};
-	int j,simnum;
+	int j,simnum,band;
 
     strcpy(print_to, (sim != EXTERNAL_CARD_LOW_LOW) ? "built-in" : "External");
     SWITCH_SIM_LOG("\n\ngpio sim%d",sim);
@@ -88,9 +88,13 @@ int SlmDial()
 					SWITCH_SIM_LOG("not found sim card\n");
 					return 0;
 				}
-				/*if(set_operator_band(value))
-					system("huayi-reset band && killall switch_sim");*/
-
+				huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+				/*if(set_operator_band(value))*/
+				if(band == -1)
+				{
+					system("huayi-reset band && killall switch_sim");
+				}
+				
                 while (registered_count < 60 && atcmd_get_slm_mobile_type(value) == HUAYI_FALSE)
                 {
                     registered_count += 2;
