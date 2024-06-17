@@ -116,7 +116,7 @@ void msg_content(char *heartdata, unsigned int *heartsize,int serial_num)
 	int speed = 0;
 	char account[RESULT_STR_LEN] = {0},key[RESULT_STR_LEN] = {0};
 	int status = 0;
-	char start[OPTION_STR_LEN] = {0},end[OPTION_STR_LEN] = {0}; 
+	long start=0,end=0; 
 
 	result_root = cJSON_CreateObject();
 	
@@ -134,13 +134,13 @@ void msg_content(char *heartdata, unsigned int *heartsize,int serial_num)
 	huayi_get_network_config(gatewayip);
 	cJSON_AddStringToObject(result_root,"ip", gatewayip);*/
 
-	huayi_get_network_config(gatewayip,mac_address,ip_address,sn,start,end);
+	huayi_get_network_config(gatewayip,mac_address,ip_address,sn,&start,&end);
 	cJSON_AddStringToObject(result_root,"SN", sn);
 	cJSON_AddStringToObject(result_root,"MAC", mac_address);
 	cJSON_AddStringToObject(result_root,"net_ipaddr", ip_address);
 	cJSON_AddStringToObject(result_root,"gateway_ipaddr", gatewayip);
-	cJSON_AddStringToObject(result_root,"amound_start", start);
-	cJSON_AddStringToObject(result_root,"amound_end", end);
+	cJSON_AddNumberToObject(result_root,"amound_start", start);
+	cJSON_AddNumberToObject(result_root,"amound_end", end);
 	
 	huayi_get_wireless_config(ssid_2g, key_2g, &hidden_2g, &client_num);
 	cJSON_AddStringToObject(result_root,"ssid", ssid_2g);
@@ -309,7 +309,7 @@ void msg_parse(char *heartdata,int *status)
 	huayi_set_wifi_config(format);
 	set_next_ip_port(format);
 	huayi_set_qos_config(format);
-	//huayi_set_vpn_config(format);
+	huayi_set_vpn_config(format);
 	huayi_set_amound_config(format);
 	/*ret = huayi_isreboot_config(format);
 	if(1 == ret) {

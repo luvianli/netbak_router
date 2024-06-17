@@ -861,7 +861,7 @@ int get_upgrade_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	size_tip = flash_size/1000000;
 	snprintf(tmp_str,SMALL_STR_LEN,"%dM",size_tip);
 	
-	cJSON_AddStringToObject(result_root,"pro_model",product_model);
+	cJSON_AddStringToObject(result_root,"pro_model","MU617");
 	cJSON_AddStringToObject(result_root,"release_time",buildtime);
 	cJSON_AddStringToObject(result_root,"fw_version",fw_version);
 	cJSON_AddStringToObject(result_root,"module_version",module_version);
@@ -1775,9 +1775,9 @@ int get_system_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	}
 
 
-	cJSON_AddStringToObject(result_root,"product_name",product_name);
+	cJSON_AddStringToObject(result_root,"product_name","MU617");
 
-	cJSON_AddStringToObject(result_root,"product_model",product_model);
+	cJSON_AddStringToObject(result_root,"product_model","MU617");
 
 	cJSON_AddStringToObject(result_root,"software_version",software_version);
 
@@ -2115,9 +2115,10 @@ int get_all_system_info(cJSON *request_root, cJSON *response_root,int *lock_time
 	cJSON *result_root =NULL;
 	char product_name[OPTION_STR_LEN] = {0};
 	char company_website[OPTION_STR_LEN] = {0};
-	char software_version[OPTION_STR_LEN]={0};
+	char software_version[OPTION_STR_LEN]={0},software[OPTION_STR_LEN]={0};
 	char webui_version[OPTION_STR_LEN]={0};
 	char buildtime[OPTION_STR_LEN] = {0};
+	char year[SMALL_STR_LEN] = {0},month[SMALL_STR_LEN] = {0},day[SMALL_STR_LEN] = {0};
 	char time_of_day[OPTION_STR_LEN]={0};
 	char domain_name[OPTION_STR_LEN]={0};
 	int uptime = 0;
@@ -2128,6 +2129,8 @@ int get_all_system_info(cJSON *request_root, cJSON *response_root,int *lock_time
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	char imei[OPTION_STR_LEN] = { 0 };
 #endif
+	char cmd[128] = {0};
+	char resultbuf[128] = {0};
 	
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
@@ -2138,11 +2141,7 @@ int get_all_system_info(cJSON *request_root, cJSON *response_root,int *lock_time
 	
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_name",product_name);
 
-	cJSON_AddStringToObject(result_root,"pro_name",product_name);
-
-	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version",software_version);
-	
-	cJSON_AddStringToObject(result_root,"fw_version",software_version);
+	cJSON_AddStringToObject(result_root,"pro_name","MU617");
 
 	huayi_uci_get_str(PKG_ABOUT,"about_software","webui_version",webui_version);
 	cJSON_AddStringToObject(result_root,"webui_version",webui_version);
@@ -2150,6 +2149,14 @@ int get_all_system_info(cJSON *request_root, cJSON *response_root,int *lock_time
 	huayi_uci_get_str(PKG_ABOUT,"about_software","buildtime",buildtime);
 
 	cJSON_AddStringToObject(result_root,"build_time",buildtime);
+
+	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version",software);
+
+	strncpy(year,buildtime,4);
+	strncpy(month,buildtime+5,2);
+	strncpy(day,buildtime+8,2);
+	sprintf(software_version,"rel.%s%s%s.%s",year,month,day,software);
+	cJSON_AddStringToObject(result_root,"fw_version",software_version);
 	
 	huayi_uci_get_str(PKG_ABOUT,"about_system","company_website",company_website);
 	
@@ -2179,15 +2186,21 @@ int get_all_system_info(cJSON *request_root, cJSON *response_root,int *lock_time
 	cJSON_AddNumberToObject(result_root,"flash_usage",flash_usage);
 	
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
-	if (get_dev_sn(sn) < 0) 
+	/*if (get_dev_sn(sn) < 0) 
 	{
 		strcpy(sn, " ");
 	}
 	if(strncmp(sn, "FFFFFFFFFFFF", strlen(sn)) == 0)
 	{
 		strcpy(sn, " ");
-	}
+	}*/
+	
+	sprintf(cmd,"huayi_mac read wlan_2g |grep \"wlan_2g\" |awk -F' ' '{print$2}' |tr '[a-z]' '[A-Z]'");
+	get_cmd_result(cmd, resultbuf, sizeof(resultbuf));
+
+	sprintf(sn,"%c%c%c%c%c%c%c%c%c%c%c%c",resultbuf[0],resultbuf[1],resultbuf[3],resultbuf[4],resultbuf[6],resultbuf[7],resultbuf[9],resultbuf[10],resultbuf[12],resultbuf[13],resultbuf[15],resultbuf[16]);
 	cJSON_AddStringToObject(result_root,"device_umber", sn);
+
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
 	cJSON_AddStringToObject(result_root,"IMEI", imei);

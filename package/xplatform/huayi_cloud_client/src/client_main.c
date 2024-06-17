@@ -186,7 +186,7 @@ void* heart_handle()
 	int heartSize = 0;
 	int interval = 60;
 	int status = 0;
-	char buffer[1024] = {0};
+	char buffer[1024] = {0},buf[1024] = {0};
 	char *newbuf;
 	int client_sockfd,written,dataLen;
 	
@@ -228,12 +228,13 @@ void* heart_handle()
 			goto fail;
     	}else CLOUD_CLIENT_LOG("wirte succes!\n");
 
-		//memset(buffer, 0, sizeof(buffer));
-		
+		//memset(buffer, 0, sizeof(buffer));	
+		CLOUD_CLIENT_LOG("11111\n");	
 		dataLen = read(client_sockfd,buffer,sizeof(buffer)-1);
 		if (dataLen >= 0) {
-			buffer[dataLen] = '\0';
-			newbuf = strchr(buffer,'{');
+			//buffer[dataLen] = '\0';
+			strncpy(buf,buffer+1,sizeof(buffer)-1);
+			newbuf = strchr(buf,'{');
 		 	CLOUD_CLIENT_LOG("read:%s,len:%d",newbuf,dataLen);
 			msg_parse(newbuf,&status);
 			if(status != 0)//返回status不等于0马上重新上报
@@ -246,7 +247,7 @@ void* heart_handle()
 		 	CLOUD_CLIENT_LOG("read error!\n");
 			sleep(30);
 		 	goto fail;
-	 	}
+		}
 
 out:
 		close(client_sockfd);
@@ -258,7 +259,7 @@ out:
 		continue;
 fail:
 		close(client_sockfd);
-		sleep(60);
+		sleep(5);
 	}
 	return ;
 }

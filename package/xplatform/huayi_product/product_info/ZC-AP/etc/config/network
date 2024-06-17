@@ -25,7 +25,6 @@ config interface 'wan'
 
 	
 config interface 'wan4g'
-	option ifname 'eth1'
 	option proto 'dhcp'
 	option cc_mtu '1500'
 	option ppp_mtu '1492'

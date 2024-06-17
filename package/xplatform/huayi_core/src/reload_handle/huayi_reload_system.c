@@ -98,8 +98,7 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	char username[OPTION_STR_LEN] = {0};
 	char password[OPTION_STR_LEN] = {0};
 	char ipsec_key[OPTION_STR_LEN] = {0};
-	huayi_uci_get_str(PKG_SYSTEM,"server","amound_start",start);
-	huayi_uci_get_str(PKG_SYSTEM,"server","amound_end",end);
+	huayi_uci_get_str(PKG_SYSTEM,"network","amound_end",end);
 	huayi_uci_get_int(PKG_SYSTEM,"server","limitspeed",&limit);
 	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&enable);
 	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","server_ip",server_ip);
@@ -109,7 +108,6 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","maxstanum",&maxstanum);
 
 	huayi_uci_set_int(PKG_M_SYSTEM,"data","status",1);
-	huayi_uci_set_str(PKG_M_SYSTEM,"data","amound_start",start);
 	huayi_uci_set_str(PKG_M_SYSTEM,"data","amound_end",end);
 	huayi_uci_set_int(PKG_M_SYSTEM,"data","limitspeed",limit);
 	huayi_uci_set_int(PKG_M_SYSTEM,"data","enable",enable);

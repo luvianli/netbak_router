@@ -11,10 +11,11 @@
 #include <signal.h>
 
 
-void huayi_get_network_config(char *gatewayip,char *mac_address,char *ip_address,char *sn,char *start,char *end)
+void huayi_get_network_config(char *gatewayip,char *mac_address,char *ip_address,char *sn,long *start,long *end)
 {
 	char cmd[128] = {0},ssn[24] = {0};
 	char resultbuf[128] = {0};
+	long rx_bytes=0,tx_bytes=0,all=0,endd=0,newend=0;
 
 	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","gateway",gatewayip);
 	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ip_address",ip_address);
@@ -27,9 +28,16 @@ void huayi_get_network_config(char *gatewayip,char *mac_address,char *ip_address
 	strcpy(sn, ssn);
 	strcpy(mac_address, resultbuf);
 
-	huayi_uci_get_str(PKG_SYSTEM,"server","amound_start",start);
-	huayi_uci_get_str(PKG_SYSTEM,"server","amound_end",end);
+	huayi_uci_get_long(PKG_SYSTEM,"network","amound_end",&endd);
+	huayi_uci_get_long(PKG_SYSTEM,"network","all",&all);
+	huayi_uci_get_long(PKG_SYSTEM, "network", "rx_bytes", &rx_bytes);
+	huayi_uci_get_long(PKG_SYSTEM, "network", "tx_bytes", &tx_bytes);
+	
+	*start = endd;
+	newend = all + rx_bytes + tx_bytes;
+	*end = newend;
 
+	huayi_uci_set_long(PKG_SYSTEM,"network","amound_end",newend);	
 	return;
 }
 
@@ -65,12 +73,14 @@ int huayi_set_amound_config(cJSON *response_root)
 		return ;
 	}
 
-	huayi_uci_get_str(PKG_SYSTEM,"server","amound_end",start);
+	huayi_uci_get_str(PKG_SYSTEM,"network","amound_end",start);
 	if((0 != strlen(end)) && (0 != strcmp(end, start)))
 	{
-		huayi_uci_set_str(PKG_SYSTEM,"server","amound_start",start);
-		huayi_uci_set_str(PKG_SYSTEM,"server","amound_end",end);
+		huayi_uci_set_str(PKG_SYSTEM,"network","amound_end",end);
+		huayi_uci_set_long(PKG_SYSTEM, "network", "rx_bytes", 0);
+		huayi_uci_set_long(PKG_SYSTEM, "network", "tx_bytes", 0);
 		huayi_uci_commit(PKG_SYSTEM);
+		system("/etc/init.d/hy_get_bytes restart");
 	}
 	return ;
 }
@@ -85,11 +95,12 @@ int huayi_set_qos_config(cJSON *response_root)
 	if(!huayi_json_get_int(response_root,"limitspeed", &limit)) {
 		return ;
 	}
+	CLOUD_CLIENT_LOG("limitspeed:%d\n",limit);
 
 	huayi_uci_get_int(PKG_SYSTEM,"server","limitspeed",&oldlimit);
 	if(limit != oldlimit)
 	{
-		huayi_uci_set_int(PKG_SYSTEM,"server","limitspeed",&limit);
+		huayi_uci_set_int(PKG_SYSTEM,"server","limitspeed",limit);
 		huayi_uci_commit(PKG_SYSTEM);
 	}
 
@@ -106,8 +117,8 @@ int huayi_set_qos_config(cJSON *response_root)
 		if(enable == 0 || oldspeed != limit)
 		{
 			huayi_uci_set_int(PKG_QOS,"qos","qos_mode", 1);
-			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed", &limit);
-			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed", &limit);
+			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed", limit);
+			huayi_uci_set_int(PKG_QOS,"qos","total_dwspeed", limit);
 			flat = 1;
 		}
 	}

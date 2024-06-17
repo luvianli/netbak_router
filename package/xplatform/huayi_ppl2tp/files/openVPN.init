@@ -45,14 +45,15 @@ EOF
         uci set ppl2tp.openvpn.dev="$DEV"
     fi
     
-  
-    uci commit
+	#echo nameserver 8.8.8.8 > /tmp/resolv.conf.auto
+	#echo nameserver 8.8.4.4 >> /tmp/resolv.conf.auto
+    #uci commit
     chmod 600 /etc/openvpn/openVPN.ovpn
 }
 start() {
     echo "Starting custom OpenVPN client..."
+	killall openvpn #might not be necessary here
     openvpn_client_init
-    # Killall openvpn might not be necessary here
     openvpn --config /etc/openvpn/openVPN.ovpn --daemon
 }
 
