@@ -209,12 +209,12 @@ void huayi_get_mifi_ink(char *mcc,char *mnc,char *btn,char *sim,char *lac,char *
 }
 
 
-void huayi_get_mifi_update(long *flow,char *reptm,char *sign,char *devid,char *iccid,int *db,
+void huayi_get_mifi_update(unsigned long long *flow,char *reptm,char *sign,char *devid,char *iccid,int *db,
 				int *wificount,char *wifipsw,char *ssid,char *imei,int *vspeed)
 {
 	int signal = -121,wifi=0;
 	char key[TEMP_STR_LEN]={0};
-	long rx=0,tx=0;
+	unsigned long long rx=0,tx=0;
 
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 	int simnum = 0,card;
@@ -223,14 +223,14 @@ void huayi_get_mifi_update(long *flow,char *reptm,char *sign,char *devid,char *i
 	if(card != simnum-1)
 	{	
 		huayi_uci_get_str(PKG_SYSTEM, "network", "time", reptm);
-		huayi_uci_get_long(PKG_SYSTEM, "network", "rx_bytes",&rx);
-		huayi_uci_get_long(PKG_SYSTEM, "network", "tx_bytes",&tx);
+		huayi_uci_get_long_long(PKG_SYSTEM, "network", "rx_bytes",&rx);
+		huayi_uci_get_long_long(PKG_SYSTEM, "network", "tx_bytes",&tx);
 		*flow=(rx+tx);
 	}
 #else
 	huayi_uci_get_str(PKG_SYSTEM, "network", "time", reptm);
-	huayi_uci_get_long(PKG_SYSTEM, "network", "rx_bytes",&rx);
-	huayi_uci_get_long(PKG_SYSTEM, "network", "tx_bytes",&tx);
+	huayi_uci_get_long_long(PKG_SYSTEM, "network", "rx_bytes",&rx);
+	huayi_uci_get_long_long(PKG_SYSTEM, "network", "tx_bytes",&tx);
 	*flow=(rx+tx);
 #endif
 

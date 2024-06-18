@@ -4,12 +4,13 @@
 #include <pthread.h>
 #include <wait.h>
 
+
 void get_bytes()
 {
-	int simnum,at_card,i=0;
-	long rx=0,tx=0;
-	long rx_bytes=0,tx_bytes=0;
-	long rx_old=0,tx_old=0;
+	int simnum,at_card;
+	unsigned long long rx=0,tx=0,i=0;
+	unsigned long long rx_bytes=0,tx_bytes=0;
+	unsigned long long rx_old = 0,tx_old = 0;
 	char cmd[OPTION_STR_LEN] = {0},cmd2[OPTION_STR_LEN] = {0},time[OPTION_STR_LEN] = {0};
 	char registStatus[LONG_BUFF_LEN]={0};
 
@@ -23,34 +24,34 @@ void get_bytes()
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "registStatus", registStatus);
 		if (strcmp(registStatus ,"connected") != 0) {
 			CON_LOG("modem is not connected; registStatus is : %d\n",registStatus);
-			sleep(40);
+			sleep(20);
 			continue;
 		}
 
 		get_cmd_result("ifconfig eth1 | grep 'RX bytes' | awk '{print $2}'",cmd, CMD_STR_LEN);
 		strcpy(cmd2, cmd + 6);
 		CON_LOG("rx bytes:%s,%s",cmd,cmd2);
-		rx=atoi(cmd2)/1024;
+		rx=atoll(cmd2)/1024;
 		memset(cmd, 0, CMD_STR_LEN);
 		get_cmd_result("ifconfig eth1 | grep 'TX bytes' | awk '{print $6}'",cmd, CMD_STR_LEN);
 		strcpy(cmd2, cmd+6);
 		CON_LOG("tx bytes:%s,%s",cmd,cmd2);
-		tx=atoi(cmd2)/1024;
-		CON_LOG("rold:%d,told:%d,rx:%d,tx:%d",rx_old,tx_old,rx,tx);
+		tx=atoll(cmd2)/1024;
+		CON_LOG("rold:%lld,told:%lld,rx:%lld,tx:%lld",rx_old,tx_old,rx,tx);
 
-		if(rx_old < rx)
+		if(rx_old <= rx)
 		{
 			i = rx ;
 			rx = rx - rx_old;
 			rx_old = i;
 		}else rx_old = rx;
-		if(tx_old < tx)
+		if(tx_old <= tx)
 		{			
 			i = tx ;
 			tx = tx - tx_old;
 			tx_old = i;
 		}else tx_old = tx;
-		CON_LOG("rold:%d,told:%d,rx:%d,tx:%d",rx_old,tx_old,rx,tx);
+		CON_LOG("rold:%lld,told:%lld,rx:%lld,tx:%lld",rx_old,tx_old,rx,tx);
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
@@ -61,17 +62,17 @@ void get_bytes()
 			continue ;
 		}
 #endif
-		huayi_uci_get_long(PKG_SYSTEM, "network", "rx_bytes", &rx_bytes);
-		huayi_uci_get_long(PKG_SYSTEM, "network", "tx_bytes", &tx_bytes);
+		huayi_uci_get_long_long(PKG_SYSTEM, "network", "rx_bytes", &rx_bytes);
+		huayi_uci_get_long_long(PKG_SYSTEM, "network", "tx_bytes", &tx_bytes);
 
 		rx_bytes = rx_bytes + rx;
 		tx_bytes = tx_bytes + tx;
-		huayi_uci_set_long(PKG_SYSTEM, "network", "rx_bytes", rx_bytes);
-		huayi_uci_set_long(PKG_SYSTEM, "network", "tx_bytes", tx_bytes);
+		huayi_uci_set_long_long(PKG_SYSTEM, "network", "rx_bytes", rx_bytes);
+		huayi_uci_set_long_long(PKG_SYSTEM, "network", "tx_bytes", tx_bytes);
 		get_current_time(time);
 		huayi_uci_set_str(PKG_SYSTEM, "network", "time", time);
 		huayi_uci_commit(PKG_SYSTEM);
-		sleep(60);
+		sleep(30);
 		continue ;
 	}
 	return ;
