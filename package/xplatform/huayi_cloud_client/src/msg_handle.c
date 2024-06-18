@@ -223,7 +223,7 @@ void mifi_update_content(char *heartdata, unsigned int *heartsize)
 {
 	cJSON *result_root = NULL,*output = NULL;
 	char devid[RESULT_STR_LEN] = {0},reptm[RESULT_STR_LEN] = {0},imei[RESULT_STR_LEN]={0};
-	int flow;
+	long flow;
 	char iccid[OPTION_STR_LEN]={0},wifipsw[OPTION_STR_LEN]={0},ssid[OPTION_STR_LEN]={0},sign[OPTION_STR_LEN]={0};
 	int db = 0,vspeed = 0,battery = 0,wificount = 0;
 	//result_root = cJSON_CreateObject();
@@ -250,7 +250,7 @@ void mifi_update_content(char *heartdata, unsigned int *heartsize)
 	if(flow == 0)
 		sprintf(heartdata,"\"c\":\"1101\",\"sign\":\"%s\",\"devid\":\"%s\",\"iccid\":\"%s\",\"db\":\"%d\",\"wificount\":\"%d\",\"wifipsw\":\"%s\",\"ssid\":\"%s\",\"imei\":\"%s\",\"vspeed\":\"%d\",\"battery\":\"100\",\"sessid\":\"0\"",
 			sign,devid,iccid,db,wificount,wifipsw,ssid,imei,vspeed);
-	else sprintf(heartdata,"\"c\":\"1101\",\"flow\":\"%d\",\"reptm\":\"%s\",\"sign\":\"%s\",\"devid\":\"%s\",\"iccid\":\"%s\",\"db\":\"%d\",\"wificount\":\"%d\",\"wifipsw\":\"%s\",\"ssid\":\"%s\",\"imei\":\"%s\",\"vspeed\":\"%d\",\"battery\":\"100\",\"sessid\":\"0\"",
+	else sprintf(heartdata,"\"c\":\"1101\",\"flow\":\"%ld\",\"reptm\":\"%s\",\"sign\":\"%s\",\"devid\":\"%s\",\"iccid\":\"%s\",\"db\":\"%d\",\"wificount\":\"%d\",\"wifipsw\":\"%s\",\"ssid\":\"%s\",\"imei\":\"%s\",\"vspeed\":\"%d\",\"battery\":\"100\",\"sessid\":\"0\"",
 			flow,reptm,sign,devid,iccid,db,wificount,wifipsw,ssid,imei,vspeed);
 	*heartsize = strlen(heartdata);
 	return ;

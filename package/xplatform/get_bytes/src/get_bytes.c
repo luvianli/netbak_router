@@ -7,9 +7,9 @@
 void get_bytes()
 {
 	int simnum,at_card,i=0;
-	int rx=0,tx=0;
-	int rx_bytes=0,tx_bytes=0;
-	int rx_old=0,tx_old=0;
+	long rx=0,tx=0;
+	long rx_bytes=0,tx_bytes=0;
+	long rx_old=0,tx_old=0;
 	char cmd[OPTION_STR_LEN] = {0},cmd2[OPTION_STR_LEN] = {0},time[OPTION_STR_LEN] = {0};
 	char registStatus[LONG_BUFF_LEN]={0};
 
@@ -61,13 +61,13 @@ void get_bytes()
 			continue ;
 		}
 #endif
-		huayi_uci_get_int(PKG_SYSTEM, "network", "rx_bytes", &rx_bytes);
-		huayi_uci_get_int(PKG_SYSTEM, "network", "tx_bytes", &tx_bytes);
+		huayi_uci_get_long(PKG_SYSTEM, "network", "rx_bytes", &rx_bytes);
+		huayi_uci_get_long(PKG_SYSTEM, "network", "tx_bytes", &tx_bytes);
 
 		rx_bytes = rx_bytes + rx;
 		tx_bytes = tx_bytes + tx;
-		huayi_uci_set_int(PKG_SYSTEM, "network", "rx_bytes", rx_bytes);
-		huayi_uci_set_int(PKG_SYSTEM, "network", "tx_bytes", tx_bytes);
+		huayi_uci_set_long(PKG_SYSTEM, "network", "rx_bytes", rx_bytes);
+		huayi_uci_set_long(PKG_SYSTEM, "network", "tx_bytes", tx_bytes);
 		get_current_time(time);
 		huayi_uci_set_str(PKG_SYSTEM, "network", "time", time);
 		huayi_uci_commit(PKG_SYSTEM);
