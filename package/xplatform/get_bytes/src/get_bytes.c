@@ -4,13 +4,13 @@
 #include <pthread.h>
 #include <wait.h>
 
+unsigned long long rx_old = 0,tx_old = 0;
 
 void get_bytes()
 {
 	int simnum,at_card;
 	unsigned long long rx=0,tx=0,i=0;
 	unsigned long long rx_bytes=0,tx_bytes=0;
-	unsigned long long rx_old = 0,tx_old = 0;
 	char cmd[OPTION_STR_LEN] = {0},cmd2[OPTION_STR_LEN] = {0},time[OPTION_STR_LEN] = {0};
 	char registStatus[LONG_BUFF_LEN]={0};
 
