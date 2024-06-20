@@ -116,7 +116,7 @@ void msg_content(char *heartdata, unsigned int *heartsize,int serial_num)
 	int speed = 0;
 	char account[RESULT_STR_LEN] = {0},key[RESULT_STR_LEN] = {0};
 	int status = 0;
-	long start=0,end=0; 
+	unsigned long long start=0,end=0; 
 
 	result_root = cJSON_CreateObject();
 	

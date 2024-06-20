@@ -91,30 +91,34 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	do_wps_led_blinks_slowly();
 #endif
 
-	char start[OPTION_STR_LEN] = {0},end[OPTION_STR_LEN] = {0};
+	char end[OPTION_STR_LEN] = {0};
 	int limit;
 	int enable,maxstanum;
-	char server_ip[LIST_STR_LEN ] = {0};
-	char username[OPTION_STR_LEN] = {0};
-	char password[OPTION_STR_LEN] = {0};
-	char ipsec_key[OPTION_STR_LEN] = {0};
+	int user=0,vpn=0;
+
 	huayi_uci_get_str(PKG_SYSTEM,"network","amound_end",end);
 	huayi_uci_get_int(PKG_SYSTEM,"server","limitspeed",&limit);
-	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&enable);
-	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","server_ip",server_ip);
-	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","username",username);
-	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","password",password);
-	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
+	huayi_uci_get_int(PKG_PPL2TP,"openvpn","enable",&enable);
 	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","maxstanum",&maxstanum);
+	FILE *file = fopen("/path/to/credentials.txt", "r");
+	if (file) 
+	{
+		system("touch /credentials.txt");
+		system("cp /overlay/path/to/credentials.txt /credentials.txt");
+		user = 1;
+	}
+	FILE *file1 = fopen("/etc/openvpn/openVPN.ovpn", "r");
+	if (file1) 
+	{
+		system("touch /openVPN.ovpn");
+		system("cp /etc/openvpn/openVPN.ovpn /openVPN.ovpn");
+		vpn = 1;
+	}
 
 	huayi_uci_set_int(PKG_M_SYSTEM,"data","status",1);
 	huayi_uci_set_str(PKG_M_SYSTEM,"data","amound_end",end);
 	huayi_uci_set_int(PKG_M_SYSTEM,"data","limitspeed",limit);
 	huayi_uci_set_int(PKG_M_SYSTEM,"data","enable",enable);
-	huayi_uci_set_str(PKG_M_SYSTEM,"data","server_ip",server_ip);
-	huayi_uci_set_str(PKG_M_SYSTEM,"data","username",username);
-	huayi_uci_set_str(PKG_M_SYSTEM,"data","password",password);
-	huayi_uci_set_str(PKG_M_SYSTEM,"data","ipsec_key",ipsec_key);
 	huayi_uci_set_int(PKG_M_SYSTEM,"data","maxstanum",maxstanum);
 	huayi_uci_commit(PKG_M_SYSTEM);
 
@@ -122,8 +126,20 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	/*maybe need to fixed led here*/
 	system("rm -rf /overlay/*");	
 	sleep(3);
-	system("mkdir -p /overlay/etc/config/");
+	system("mkdir -p /overlay/etc/config");
 	system("cp /etc/config/m_system /overlay/etc/config/");
+	if(user == 1)
+	{
+		system("mkdir -p /overlay/path/to");
+		system("cp /credentials.txt /overlay/path/to/");
+		system("rm -rf /credentials.txt");
+	}
+	if(user == 1)
+	{
+		system("mkdir -p /overlay/etc/openvpn");
+		system("cp /openVPN.ovpn /overlay/etc/openvpn");
+		system("rm -rf /openVPN.ovpn");
+	}
 	system("/sbin/reboot");
 	return VT_TRUE;
 }

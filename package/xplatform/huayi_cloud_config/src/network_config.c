@@ -8,14 +8,25 @@
  ******************************************************************************************/
 
 #include "huayi_cloud_config.h"
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <ctype.h>
 #include <signal.h>
+#include <wait.h>
+#include <stdio.h>
+#include <string.h>
+#include "libutils.h"
 
 
-void huayi_get_network_config(char *gatewayip,char *mac_address,char *ip_address,char *sn,long *start,long *end)
+void huayi_get_network_config(char *gatewayip,char *mac_address,char *ip_address,char *sn,unsigned long long *start,unsigned long long *end)
 {
 	char cmd[128] = {0},ssn[24] = {0};
 	char resultbuf[128] = {0};
-	long rx_bytes=0,tx_bytes=0,all=0,endd=0,newend=0;
+	unsigned long long rx_bytes=0,tx_bytes=0,all=0,endd=0,newend=0;
+	unsigned long long enddd;
 
 	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","gateway",gatewayip);
 	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ip_address",ip_address);
@@ -28,26 +39,50 @@ void huayi_get_network_config(char *gatewayip,char *mac_address,char *ip_address
 	strcpy(sn, ssn);
 	strcpy(mac_address, resultbuf);
 
-	huayi_uci_get_long(PKG_SYSTEM,"network","amound_end",&endd);
-	huayi_uci_get_long(PKG_SYSTEM,"network","all",&all);
-	huayi_uci_get_long(PKG_SYSTEM, "network", "rx_bytes", &rx_bytes);
-	huayi_uci_get_long(PKG_SYSTEM, "network", "tx_bytes", &tx_bytes);
+	huayi_uci_get_long_long(PKG_SYSTEM,"network","amound_end",&endd);
+	huayi_uci_get_long_long(PKG_SYSTEM,"network","amound_end",&enddd);
+	huayi_uci_get_long_long(PKG_SYSTEM,"network","all",&all);
+	huayi_uci_get_long_long(PKG_SYSTEM, "network", "rx_bytes", &rx_bytes);
+	huayi_uci_get_long_long(PKG_SYSTEM, "network", "tx_bytes", &tx_bytes);
 	
 	*start = endd;
 	newend = all + rx_bytes + tx_bytes;
 	*end = newend;
 
-	huayi_uci_set_long(PKG_SYSTEM,"network","amound_end",newend);	
+	huayi_uci_set_long_long(PKG_SYSTEM,"network","amound_end",newend);	
+	CLOUD_CLIENT_LOG("%ld,%lld",endd,enddd);
 	return;
 }
 
 void huayi_get_vpn_config(char *account,char *key,int *status)
 {
-	int enable = 0;
+	int enable = 0,userlen = 0,passlen = 0;
+	char username[OPTION_STR_LEN] = {0},*user;
+	char password[OPTION_STR_LEN] = {0},*pass;
 
-	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&enable);
-	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","username",account);
-	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","password",key);
+	huayi_uci_get_int(PKG_PPL2TP,"openvpn","enable",&enable);
+	if(enable == 1)
+	{
+	    FILE *file = fopen("/path/to/credentials.txt", "r");
+	    if (file == NULL) {
+	        CLOUD_CLIENT_LOG("Error opening file");
+			*status = enable;
+			return ;
+	    }else
+	    {
+			fgets(username, sizeof(username), file);
+			fgets(password, sizeof(password), file);
+		}
+	}else
+	{
+		*status = enable;
+		return ;
+	}
+
+	user = strtok(username,"\n");
+	pass = strtok(password,"\n");
+	strcpy(account,user);
+	strcpy(key,pass);
 	*status = enable;
 	
 	return;
@@ -131,61 +166,76 @@ int huayi_set_qos_config(cJSON *response_root)
 	return ;
 }
 
-int huayi_set_vpn_config(cJSON *response_root)
+void huayi_set_vpn_config(cJSON *response_root)
 {
-	int status,enable;
-	char server_ip[LIST_STR_LEN ] = {0},oldserver_ip[LIST_STR_LEN ] = {0};
-	char username[OPTION_STR_LEN] = {0},oldusername[OPTION_STR_LEN] = {0};
-	char password[OPTION_STR_LEN] = {0},oldpassword[OPTION_STR_LEN] = {0};
-	char ipsec_key[OPTION_STR_LEN] = {0},oldipsec_key[OPTION_STR_LEN] = {0};
-	int flat = 0;
+	int status,enable,fale=0;
+	char username[OPTION_STR_LEN] = {0};
+	char password[OPTION_STR_LEN] = {0};
+	char cmd[CMD_STR_LEN] = {0},url[CMD_STR_LEN] = {0};
 
-	if(!huayi_json_get_int(response_root,"vpn_status", &status))
-	{
-		return ;
-	}	
-
-	if(status == 0)
-	{
-		huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&enable);
-		if(status != enable)
+	if(huayi_json_get_int(response_root,"vpn_status", &status))
+	{	
+		huayi_uci_set_int(PKG_PPL2TP,"openvpn","enable",status);	
+		if(status == 0)
 		{
 			CLOUD_CLIENT_LOG("close VPN\n");
-			huayi_uci_set_int(PKG_PPL2TP,"xl2tp","enable",status);
-			flat = 1;
-		}
-	}else if(status == 1)
-	{
-		if(!huayi_json_get_str(response_root,"vpn_server",server_ip,OPTION_STR_LEN)||
-			!huayi_json_get_str(response_root,"vpn_account",username,OPTION_STR_LEN)||
-			!huayi_json_get_str(response_root,"vpn_key",password,OPTION_STR_LEN)||
-			!huayi_json_get_str(response_root,"vpn_shard_key",ipsec_key,OPTION_STR_LEN)) 
-		{
-			return ;
-		}
-		huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&enable);
-		huayi_uci_get_str(PKG_PPL2TP,"xl2tp","server_ip",oldserver_ip);
-		huayi_uci_get_str(PKG_PPL2TP,"xl2tp","username",oldusername);
-		huayi_uci_get_str(PKG_PPL2TP,"xl2tp","password",oldpassword);
-		huayi_uci_get_str(PKG_PPL2TP,"xl2tp","ipsec_key",oldipsec_key);
-
-		if(status != enable || 0 != strcmp(oldserver_ip,server_ip) || 0 != strcmp(oldusername,username)
-			|| 0 != strcmp(oldpassword,password) || 0 != strcmp(oldipsec_key,ipsec_key))
-		{
+			huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
+			huayi_uci_delete_option(PKG_NETWORK,"wan4g","dns");
+		}else if(status == 1)
+		{	
 			CLOUD_CLIENT_LOG("open VPN\n");
-			huayi_uci_set_int(PKG_PPL2TP,"xl2tp","enable",status);
-			huayi_uci_set_str(PKG_PPL2TP,"xl2tp","server_ip",server_ip);
-			huayi_uci_set_str(PKG_PPL2TP,"xl2tp","username",username);
-			huayi_uci_set_str(PKG_PPL2TP,"xl2tp","password",password);
-			huayi_uci_set_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
-			flat = 1;
+			huayi_uci_set_int(PKG_PPL2TP,"openvpn","option",1);
+			huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
+			huayi_uci_delete_option(PKG_NETWORK,"wan4g","dns");
+			huayi_uci_add_list(PKG_NETWORK,"wan","dns","8.8.8.8");
+			huayi_uci_add_list(PKG_NETWORK,"wan","dns","8.8.4.4");
+			huayi_uci_add_list(PKG_NETWORK,"wan4g","dns","8.8.8.8");
+			huayi_uci_add_list(PKG_NETWORK,"wan4g","dns","8.8.4.4");
 		}
-	}	
+		fale=1;
+	}
 
-	if(flat == 1)
+	if(huayi_json_get_str(response_root,"vpn_account",username,OPTION_STR_LEN)&&
+		huayi_json_get_str(response_root,"vpn_key",password,OPTION_STR_LEN))
+	{	
+		CLOUD_CLIENT_LOG("account:%s,key:%s\n",username,password);
+		char *filename = "/path/to/credentials.txt";
+	    FILE *file = fopen(filename, "r");
+	    if (file == NULL) {
+			CLOUD_CLIENT_LOG("Error opening file");
+	        //system("mkdir -p /path/to/");
+	        sprintf(cmd,"touch /path/to/credentials.txt");
+			system(cmd);
+	    }else
+			fclose(file);
+		sprintf(cmd,"echo %s > /path/to/credentials.txt",username);
+		system(cmd);
+		memset(cmd, 0, sizeof(cmd));	
+		sprintf(cmd,"echo %s >> /path/to/credentials.txt",password);
+		system(cmd);
+		fale=1;
+	}
+
+	memset(cmd, 0, sizeof(cmd));
+
+	if(huayi_json_get_str(response_root,"vpn_file",url,CMD_STR_LEN)) 
 	{
+		int iState = -1;
+		CLOUD_CLIENT_LOG("url:%s\n",url);
+		sprintf(cmd, "curl \"%s\" -s -L -o %s --connect-timeout 60 -m 43200 --speed-limit 5000 --speed-time 300", url,SCRIPT_FILE);
+    	iState = system(cmd);
+	    if ((WIFEXITED(iState)) && (WEXITSTATUS(iState) == 0) && (iState != -1))
+	    {
+			CLOUD_CLIENT_LOG("download success\n");
+		}else CLOUD_CLIENT_LOG("download fail,iState:%d\n",iState);
+		fale=1;
+	}
+
+	if(fale == 1)
+	{
+		huayi_uci_commit(PKG_NETWORK);
 		huayi_uci_commit(PKG_PPL2TP);
-		system("huayi-reset xl2tpd_ipsec");
+		system("huayi-reset openvpn");
 	}
 	return ;
 

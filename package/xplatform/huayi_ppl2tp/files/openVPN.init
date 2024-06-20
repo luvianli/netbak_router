@@ -59,6 +59,6 @@ start() {
 
 stop() {
     echo "Stopping custom OpenVPN client..."
-    rm -f /etc/openvpn/openVPN.ovpn
+    #rm -f /etc/openvpn/openVPN.ovpn
     killall openvpn
 }

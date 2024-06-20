@@ -91,25 +91,18 @@ void set_acquiesce()
 		huayi_uci_get_str(PKG_M_SYSTEM,"data","amound_end",end);
 		huayi_uci_get_int(PKG_M_SYSTEM,"data","limitspeed",&limit);
 		huayi_uci_get_int(PKG_M_SYSTEM,"data","enable",&enable);
-		huayi_uci_get_str(PKG_M_SYSTEM,"data","server_ip",server_ip);
-		huayi_uci_get_str(PKG_M_SYSTEM,"data","username",username);
-		huayi_uci_get_str(PKG_M_SYSTEM,"data","password",password);
-		huayi_uci_get_str(PKG_M_SYSTEM,"data","ipsec_key",ipsec_key);
 		huayi_uci_get_int(PKG_M_SYSTEM,"data","maxstanum",&maxstanum);
 
 		huayi_uci_set_int(PKG_M_SYSTEM,"data","status",0);
 		huayi_uci_set_str(PKG_SYSTEM,"network","amound_end",end);
 		huayi_uci_set_int(PKG_SYSTEM,"server","limitspeed",limit);
-		huayi_uci_set_int(PKG_PPL2TP,"xl2tp","enable",enable);
-		huayi_uci_set_str(PKG_PPL2TP,"xl2tp","server_ip",server_ip);
-		huayi_uci_set_str(PKG_PPL2TP,"xl2tp","username",username);
-		huayi_uci_set_str(PKG_PPL2TP,"xl2tp","password",password);
-		huayi_uci_set_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
+		huayi_uci_set_int(PKG_PPL2TP,"openvpn","enable",enable);
+		huayi_uci_set_int(PKG_PPL2TP,"openvpn","option",enable);
 		huayi_uci_set_int(PKG_WIRELESS,"radio0_0","maxstanum",maxstanum);
 		huayi_uci_commit(PKG_SYSTEM);
-		huayi_uci_commit(PKG_PPL2TP);
+		//huayi_uci_commit(PKG_PPL2TP);
 		huayi_uci_commit(PKG_WIRELESS);	
-		huayi_uci_commit(PKG_ACQUIESCE);
+		huayi_uci_commit(PKG_M_SYSTEM);
 		if(limit > 0)
 		{	
 			if(limit == 1)

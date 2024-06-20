@@ -157,21 +157,27 @@ out:
 
 int client_socket(char *ip,int port)
 {
-   int client_sockfd;
-   struct sockaddr_in server_address;
-   
-   client_sockfd=socket(AF_INET,SOCK_STREAM,0);
-   if(client_sockfd < 0 )
-   		return -1;
-   memset(&server_address,0,sizeof(server_address));
-   server_address.sin_family=AF_INET;
-   server_address.sin_port=htons(port);
-   server_address.sin_addr.s_addr = inet_addr(ip);
-   if (connect(client_sockfd,(struct sockaddr *)&server_address,sizeof(server_address)) < 0)
-   {
-   		close(client_sockfd);
-   		return -1;
-   }
+	int client_sockfd;
+	struct sockaddr_in server_address;
+	struct timeval tv;
+	
+	client_sockfd=socket(AF_INET,SOCK_STREAM,0);
+	if(client_sockfd < 0 )
+		return -1;
+	memset(&server_address,0,sizeof(server_address));
+	server_address.sin_family=AF_INET;
+	server_address.sin_port=htons(port);
+	server_address.sin_addr.s_addr = inet_addr(ip);
+
+	tv.tv_sec = 10;
+    tv.tv_usec = 0;
+	setsockopt(client_sockfd,SOL_SOCKET,SO_RCVTIMEO,&tv,sizeof(tv));
+	
+	if (connect(client_sockfd,(struct sockaddr *)&server_address,sizeof(server_address)) < 0)
+	{
+		close(client_sockfd);
+		return -1;
+	}
    return client_sockfd;
 }
 
@@ -228,8 +234,7 @@ void* heart_handle()
 			goto fail;
     	}else CLOUD_CLIENT_LOG("wirte succes!\n");
 
-		//memset(buffer, 0, sizeof(buffer));	
-		CLOUD_CLIENT_LOG("11111\n");	
+		memset(buffer, 0, sizeof(buffer));	
 		dataLen = read(client_sockfd,buffer,sizeof(buffer)-1);
 		if (dataLen >= 0) {
 			//buffer[dataLen] = '\0';

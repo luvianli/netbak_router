@@ -343,7 +343,8 @@ VTBool huayi_reload_openvpn(void * arg,cJSON *input_root)
 	else
 		system("/etc/init.d/openVPN start");
 
-	//system("/etc/init.d/network restart");
+	sleep(5);
+	system("/etc/init.d/network restart");
 	return VT_TRUE;
 }
 
