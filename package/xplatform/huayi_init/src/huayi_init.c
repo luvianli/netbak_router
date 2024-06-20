@@ -79,6 +79,21 @@ void huayi_firewall_start()
 int main(int argc, char** argv)
 {
 	int opmode = 0;
+#if defined(CONFIG_HUAYI_SUPPORT_SPECIAL_INTERFACE)
+	unsigned char sn[OPTION_STR_LEN]={ 0 };
+	if (get_dev_sn(sn) < 0) 
+	{
+		strcpy(sn, " ");
+	}
+	if(strncmp(sn, "FFFFFFFFFFFF", strlen(sn)) == 0 ||
+		strncmp(sn, "ASASA6793058", strlen(sn)) == 0)
+	{
+		strcpy(sn, " ");
+	}
+	if(strncmp(sn, " ", strlen(sn)) != 0)
+		system("reboot");
+#endif
+
 	huayi_tcp_conntrack_init();
 
 	system("watchdog &");
