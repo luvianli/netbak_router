@@ -338,7 +338,7 @@ VTBool huayi_reload_openvpn(void * arg,cJSON *input_root)
 	huayi_uci_get_int(PKG_PPL2TP,"openvpn","enable",&enable);
 	if(!enable){
 		system("/etc/init.d/openVPN stop");
-		system("rm -f /path/to/*");
+		//system("rm -f /path/to/*");
 	}
 	else
 		system("/etc/init.d/openVPN start");
