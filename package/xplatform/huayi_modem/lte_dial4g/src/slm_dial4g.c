@@ -167,10 +167,6 @@ int slm_ECM_handler(struct SMSAgent *Agent)
 		sleep(1);
 	}
 
-
-
-
-
 	//i_dail_check = slm_RNDIS_connect();
 	
     while (VS_TRUE == gRunAgent )

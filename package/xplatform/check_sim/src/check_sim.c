@@ -551,12 +551,12 @@ void get_siminfo()
 int main(int argc, char *argv[])
 {
 
-    SLM_init();
+    //SLM_init();
 
     Production_testing_mode();
 
-    check_network();
-    init_cloud_client();
+    //check_network();
+    //init_cloud_client();
 
     return 0;
 }
