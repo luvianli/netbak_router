@@ -95,7 +95,7 @@ void huayi_get_qos_config(int *speed)
 	huayi_uci_get_int(PKG_SYSTEM,"server","limitspeed",&limit);
 	if(limit == 0 || limit == 1)
 		*speed = limit;
-	else *speed = qos;
+	else *speed = qos/8;
 		
 	return;
 }
@@ -148,6 +148,7 @@ int huayi_set_qos_config(cJSON *response_root)
 	{
 		if(limit == 1)
 			limit = 0;
+		limit = limit * 8;
 		huayi_uci_get_int(PKG_QOS,"qos","total_upspeed", &oldspeed);
 		if(enable == 0 || oldspeed != limit)
 		{
