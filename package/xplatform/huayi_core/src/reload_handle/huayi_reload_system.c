@@ -77,11 +77,11 @@ VTBool huayi_sys_upgrade(void * arg,cJSON *input_root)
 
 VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 {
-
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
     huayi_uci_delete_option(PKG_WIRELESS, W24G_IFACE, "def_ssid");
     huayi_uci_set_str(PKG_WIRELESS,W24G_IFACE,"ssid","ZY-");
     huayi_uci_commit(PKG_WIRELESS);
-
+#endif
 
 
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)

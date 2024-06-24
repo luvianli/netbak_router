@@ -805,6 +805,7 @@ static int mask2len(struct in_addr *mask)
 
 VTBool huayi_reload_wifiguestfilter(void * arg, cJSON *input_root)
 {
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	int guest_enable = 0;
 	char strcmdbuf[CMD_STR_LEN] = { 0 };
 	int disabled_24G = 1;
@@ -831,7 +832,7 @@ VTBool huayi_reload_wifiguestfilter(void * arg, cJSON *input_root)
 	if(0 == guest_enable) {
 		XCMD(strcmdbuf, "iptables -w -I %s -p tcp -m mark --mark 5 -j DROP", DROP_WIFIGUEST_FILTER_CHAIN);
 	}
-
+#endif
 	return VT_TRUE;
 }
 

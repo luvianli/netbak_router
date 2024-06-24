@@ -1829,7 +1829,7 @@ LTE_BOOL atcmd_get_iccid(char *iccid)
 	int i = 0;
 	char *ptr = NULL;
 
-	if ( Atcmd("AT+QCCID", strlen("AT+QCCID"), 0) == LTE_FALSE )
+	if ( Atcmd("AT+ICCID", strlen("AT+ICCID"), 0) == LTE_FALSE )
 	{
 		return LTE_FALSE;
 	}
@@ -1852,6 +1852,7 @@ LTE_BOOL atcmd_get_iccid(char *iccid)
 		
 	return LTE_FALSE;
 }
+
 LTE_BOOL atcmd_get_lac(char *lac)
 {
 	char *ptr = NULL;
@@ -2088,6 +2089,27 @@ LTE_BOOL atcmd_get_qeng(char *state)
 		strcpy(state, tmpvalue);
 	}
 	else
+	{
+		return LTE_FALSE;
+	}
+		
+	
+	return LTE_TRUE;
+}
+
+LTE_BOOL atcmd_get_mdialup(void)
+{
+	char *ptr = NULL;
+	char *pKey = NULL;
+	char tmpbuf[AT_CMD_BUFF_LEN] = {0};
+	char tmpvalue[AT_VALUE_BUFF_LEN] = {0};
+	
+	if ( Atcmd("AT+MDIALUP?", strlen("AT+MDIALUP?"), 0) == LTE_FALSE )
+	{
+		return LTE_FALSE;
+	}
+	ptr = ATret;
+	if ((pKey = strstr(ptr, "+MDIALUP")) == NULL )
 	{
 		return LTE_FALSE;
 	}

@@ -126,7 +126,7 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 
 	FastCgiHandleFunction[HYID_STOP_DHCP_DETECT] = stop_dhcp_detect;
 #endif
-	
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)	
 	FastCgiHandleFunction[HYID_GET_WIFI_BASIC_CONFIG] = get_wifi_basic_config;
 
 	FastCgiHandleFunction[HYID_SET_WIFI_BASIC_CONFIG] = set_wifi_basic_config;
@@ -150,7 +150,7 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 	
 	FastCgiHandleFunction[HYID_SET_WIFI_VAP_VLAN] = set_wifi_vlan_config;
 #endif
-	
+#endif	
 	FastCgiHandleFunction[HYID_GET_SYSTEM_OPMODE] = get_system_opmode;
 
 	FastCgiHandleFunction[HYID_SET_SYSTEM_OPMODE] = set_system_opmode;
@@ -158,12 +158,14 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 	FastCgiHandleFunction[HYID_GET_GATEWAY_MODE_CONFIG] = get_gateway_mode_config;
 
 	FastCgiHandleFunction[HYID_DO_WAN_PROTO_DETECT] = do_wan_proto_detect;
-	
+
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)	
 	FastCgiHandleFunction[HYID_SET_WIFI_SCAN] = set_wifi_scan_start;
 
 	FastCgiHandleFunction[HYID_GET_WIFI_SCAN_STATUS] = get_wifi_scanstatus;
 
 	FastCgiHandleFunction[HYID_GET_WIFI_SCAN_LIST] = get_wifi_scanlist;
+#endif
 
 	FastCgiHandleFunction[HYID_GET_NTP_CONFIG] = get_ntp_config;	
 
@@ -203,17 +205,21 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 
 	FastCgiHandleFunction[HYID_SET_BASIC_PAGE_WIFI_CONFIG] = set_basic_page_wifi_config;
 
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	FastCgiHandleFunction[HYID_GET_WIFI_EASY_CONFIG] = get_wifi_easyconf;
 
 	FastCgiHandleFunction[HYID_SET_WIFI_EASY_CONFIG] = set_wifi_easyconf;
+#endif
 
 	FastCgiHandleFunction[HYID_GET_PAGE_SYSTEM_STATUS] = get_all_system_info;
 
 	FastCgiHandleFunction[HYID_GET_PAGE_NETWORK_STATUS] = get_all_network_info;
 
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	FastCgiHandleFunction[HYID_GET_WIFI_SCHE_CONFIG] = get_wifi_sche_config;
 
 	FastCgiHandleFunction[HYID_SET_WIFI_SCHE_CONFIG] = set_wifi_sche_config;
+#endif
 
 #if defined(CONFIG_PACKAGE_HUAYI_CAPWAP_CLIENT)
 	FastCgiHandleFunction[HYID_GET_THINAP_CONFIG] = get_thinap_config;
@@ -229,9 +235,11 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 	FastCgiHandleFunction[HYID_SET_SKIP_QUICK_SETTING] = set_skip_quick_setting;
 #endif
 
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	FastCgiHandleFunction[HYID_GET_WIRLESS_GUEST_CONFIG] = get_guest_network;
 
 	FastCgiHandleFunction[HYID_SET_WIRLESS_GUEST_CONFIG] = set_guest_network;
+#endif
 
 	FastCgiHandleFunction[HYID_GET_INTERNET_STATUS] = get_internet_status;
 
@@ -242,7 +250,8 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 	FastCgiHandleFunction[HYID_GET_HOE_DEVICES] = get_home_devices;
 	
 	FastCgiHandleFunction[HYID_SET_DEVICE_NAME] = set_device_name;
-	
+
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)	
 	FastCgiHandleFunction[HYID_SET_WIRELESS_CLOCK] = set_wireless_clock;
 	
 	FastCgiHandleFunction[HYID_SET_GUEST_CLOCK] = set_guest_clock;
@@ -268,6 +277,7 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 	FastCgiHandleFunction[HYID_GET_WIRELESS_STATUS] = get_wireless_status;
 
 	FastCgiHandleFunction[HYID_SET_WIRELESS_STATUS] = set_wireless_status;
+#endif
 
 #if defined(CONFIG_HUAYI_SUPPORT_VPN)
 	FastCgiHandleFunction[HYID_GET_PPTPD_CONFIG] = get_pptpd_server_config;

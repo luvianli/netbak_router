@@ -19,7 +19,7 @@ int slm_init_set_modem_status(void)
 	char mobile_network[OPTION_STR_LEN] = {0};
 	char operator_str[OPTION_STR_LEN] = {0};
 	char cmd[CMD_STR_LEN] = {0};
-	int signal = 0;
+	int signal = 0,i_ready;
 
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_EC20_imei(lte_value);
@@ -106,7 +106,7 @@ int slm_init_set_modem_status(void)
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem iccid %s",lte_value);
 	system(cmd);
 
-	memset(lte_value, 0, OPTION_STR_LEN);
+	/*memset(lte_value, 0, OPTION_STR_LEN);
 	atcmd_get_lac(lte_value);
 	if(strlen(lte_value) < 2)
 	{
@@ -120,9 +120,9 @@ int slm_init_set_modem_status(void)
 	if(strlen(lte_value) < 2)
 	{
 		strcpy(lte_value, "");
-	}
-	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem ci %s",lte_value);
-	system(cmd);
+	}*/
+	//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem ci 111");
+	//system(cmd);
 
 	atcmd_get_signal(&signal);
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem signal %d",signal);
@@ -132,24 +132,21 @@ int slm_init_set_modem_status(void)
 
 int slm_RNDIS_connect(void)
 {
-	//int ret = 0;
-	char cmd[256] = { 0 };
-	char mode[RESULT_STR_LEN]={0};
-	char user4g[RESULT_STR_LEN]={0},pass4g[RESULT_STR_LEN]={0};
-	char apn[RESULT_STR_LEN]={0},validation[RESULT_STR_LEN]={0};
+	LTE_BOOL mode;
+	char cmd[CMD_STR_LEN] = {0},cmd_result[CMD_STR_LEN];
+	char lte_value[OPTION_STR_LEN] = {0};
 	
-	huayi_uci_get_str(PKG_MODEM, "status", "mode", mode);
-	
-	if(atoi(mode)==0)
+	mode = atcmd_get_mdialup();
+
+	if(mode==0)
 	{
-		
-		AtcmdSendDelay("AT+SFUN=4",sizeof("AT+SFUN=4"),0);
-     
-		AtcmdSendDelay("AT+CGDCONT=1,\"IPV4V6\",\"cmnet\",\"\",0,0",sizeof("AT+CGDCONT=1,\"IPV4V6\",\"cmnet\",\"\",0,0"),0);
-       
-		AtcmdSendDelay("AT+CGDATA=\"M-ETHER\",1",sizeof("AT+CGDATA=\"M-ETHER\",1"),0);
-       
-		AtcmdSendDelay("AT^SPTETHER=\"gadget\",\"on\",1",sizeof("AT^SPTETHER=\"gadget\",\"on\",1"),0);
+		AtcmdSendDelay("AT+MDIALUP=1,1",sizeof("AT+MDIALUP=1,1"),0);
+	}else
+	{
+		get_cmd_result("echo $(huayi_AT_cli AT+MDIALUP?) |awk '{print $2}'", cmd_result, CMD_STR_LEN);
+		strncpy(lte_value,cmd_result+5,12);
+		sprintf(cmd,"huayi_cmd set network wan_ipv4 %s",lte_value);
+		system(cmd);
 	}
 	
 	return 1;
@@ -167,7 +164,7 @@ int slm_ECM_handler(struct SMSAgent *Agent)
 		sleep(1);
 	}
 
-	//i_dail_check = slm_RNDIS_connect();
+	slm_RNDIS_connect();
 	
     while (VS_TRUE == gRunAgent )
     {
@@ -175,11 +172,11 @@ int slm_ECM_handler(struct SMSAgent *Agent)
     	modem_led_control(Agent);
         sleep(GET_SMS_INTERVAL);
 		
-        if ( !huayi_file_exists(DEFAULT_DEV_ATC) )
+        /*if ( !huayi_file_exists(DEFAULT_DEV_ATC) )
         {
         	Agent->lte_led_status = MODEM_NO_MODEM;
         	goto out;//will auto reload module by cs_init
-        }
+        }*/
 		
         atcmd_get_cpin(&i_ready);
 		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem sim_ready %d",i_ready);
@@ -221,7 +218,7 @@ int slm_ECM_handler(struct SMSAgent *Agent)
 				Agent->lte_led_status = MODEM_NO_CONN;
 			}
 
-			neoway_sms_agent_loop(&Agent);
+			//neoway_sms_agent_loop(&Agent);
 			
             continue;
 		}

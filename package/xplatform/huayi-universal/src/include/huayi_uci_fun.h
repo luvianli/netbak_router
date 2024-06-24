@@ -142,7 +142,7 @@ typedef struct Operator {
 #define ETH_DEV_WAN_IFNAME								"eth0.2"
 #define PPPOE_DEV_WAN_IFNAME							"pppoe-wan"
 
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
+
 #define RANDOM_KEY					"h7gtrgCB968tyj4n"
 #define DEF_REP_W24G_SSID			"HUAYI-2.4G_rep"
 #define W24G_DEV					"radio0"
@@ -164,7 +164,7 @@ typedef struct Operator {
 #define W58G_REP_IFNAME				"apclii0"
 
 #define HUAYI_RANDOM_APCLI_NAME		"huayi_p1stdjkdsFG"
-#endif
+
 
 #define WIFI_NO_SCAN 	0
 #define WIFI_24G_SCAN 	1

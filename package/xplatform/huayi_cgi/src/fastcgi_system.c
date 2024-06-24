@@ -2244,6 +2244,8 @@ int get_all_network_info(cJSON *request_root, cJSON *response_root,int *lock_tim
 	
 	port_array = cJSON_CreateArray();
 
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
+
 	if (*lock_time >= FASTCGI_UPDATE_INFO_INTERVAL)
 	{
 		system("ifconfig > /tmp/ifconfig_info");
@@ -2317,6 +2319,7 @@ int get_all_network_info(cJSON *request_root, cJSON *response_root,int *lock_tim
 
 		cJSON_AddItemToObject(result_root,"rep_info",rep_obj);
 	}
+#endif
 
 	if (sys_mode == HUAYI_ROUTE_MODE || sys_mode == HUAYI_WISP_MODE)
 	{
@@ -2496,7 +2499,7 @@ int get_all_network_info(cJSON *request_root, cJSON *response_root,int *lock_tim
 	get_cmd_result("cat /tmp/ifconfig_info | grep ra0 | wc -l", run_cmd, sizeof(run_cmd));
 	wifi_on = atoi(run_cmd);
 	
-	cJSON_AddNumberToObject(wireless_obj,"status",wifi_on);
+	cJSON_AddNumberToObject(wireless_obj,"status",0);
 
 	if (wifi_on == 1)
 	{	  

@@ -61,6 +61,8 @@ int get_basic_page_status_info(cJSON *request_root, cJSON *response_root,int *lo
 		
 		huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_58g_status",&rep_58g_status);	
 	}
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
+
 	rep_status = rep_24g_status|rep_58g_status;
 	cJSON_AddNumberToObject(result_root,"rep_status",rep_status);
 
@@ -68,7 +70,7 @@ int get_basic_page_status_info(cJSON *request_root, cJSON *response_root,int *lo
 	get_wifi_stamacnum("rai0",1,&sta_58g_num);
 	sta_num = sta_24g_num + sta_58g_num;
 	cJSON_AddNumberToObject(result_root,"sta_num",sta_num);
-	
+#endif	
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
 	return FCGI_RESP_CODE_SUCCESS;
@@ -114,6 +116,7 @@ int get_basic_page_all_info(cJSON *request_root, cJSON *response_root,int *lock_
 	huayi_uci_get_int(PKG_SYSTEM,"mode","opmode",&sys_mode);
 	cJSON_AddNumberToObject(all_obj,"sys_mode",sys_mode);
 
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	if (sys_mode == HUAYI_REP_MODE || sys_mode == HUAYI_WISP_MODE)
 	{
 		huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","rep_24g_status",&rep_24g_status);	
@@ -145,6 +148,7 @@ int get_basic_page_all_info(cJSON *request_root, cJSON *response_root,int *lock_
 	//get_wifi_stamacnum("rai0",1,&sta_58g_num);
 	sta_num = sta_24g_num + sta_58g_num;
 	cJSON_AddNumberToObject(all_obj,"sta_num",sta_num);
+#endif
 
 	cJSON_AddItemToObject(result_root,"status_info",all_obj);
 
@@ -234,7 +238,7 @@ int get_basic_page_all_info(cJSON *request_root, cJSON *response_root,int *lock_
 
 int set_basic_page_wifi_config(cJSON *request_root, cJSON *response_root,int *lock_time)
 {
-	
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)	
 	char	ssid_24g[OPTION_STR_LEN] = {0},key_24g[TEMP_STR_LEN] = {0};
 #if defined(CONFIG_HUAYI_SUPPORT_PASSWORD_OPTION)
 	char 	authmode_24g[OPTION_STR_LEN] = {0};
@@ -451,7 +455,7 @@ int set_basic_page_wifi_config(cJSON *request_root, cJSON *response_root,int *lo
 	*lock_time = HUAYI_RELOAD_WIRELESS_TIME;
 	cJSON_AddFalseToObject(response_root,"reconnection");
 	cJSON_AddStringToObject(response_root,"reconnection_addr","");
-	
+#endif	
 	return FCGI_RESP_CODE_SUCCESS;
 }
 

@@ -19,13 +19,14 @@ quectel_E200T="2c7c:6026"
 quectel_E200A="2c7c:6005"
 neoway_N720V5_V1="2949:8700"
 meige_SLM770U="2dee:4d42"
-
+ML307R="2ecc:3012"
 
 quectel_model_1_support=`lsusb | grep $quectel_VID`
 quectel_model_2_support=`lsusb | grep $quectel_EC20`
 quectel_model_3_support=`lsusb | grep $quectel_E200T`
 quectel_model_4_support=`lsusb | grep $quectel_E200A`
 quectel_model_5_support=`lsusb | grep $meige_SLM770U`
+quectel_model_6_support=`lsusb | grep $ML307R`
 neoway_model_1_support=`lsusb | grep $neoway_N720V5_V1`
 
 quectel_dev_name=`ifconfig -a | grep usb0`
@@ -85,6 +86,10 @@ start_service() {
 		DEV_ATC="/dev/ttyUSB0"
 		NET_IFACE="eth0"
 		huayi_cmd set modem modemModel 'SLM770U'
+	elif [ -n "$quectel_model_6_support" ]; then
+		DEV_ATC="/dev/ttyUSB2"
+		NET_IFACE="eth1"
+		huayi_cmd set modem modemModel 'ML307R'
 	else
 		echo "no detect modem"
 		huayi_cmd set modem registStatus noModem

@@ -743,6 +743,7 @@ void check_wps_complete(void* arg)
 
 void wps_to_up(void* arg)
 {
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	int wlan_2g_disabled = 0;
 	int wlan_5g_disabled = 0;
 	int wifi_2g_disabled = 0;
@@ -813,7 +814,7 @@ void wps_to_up(void* arg)
 	huayi_core_add_task(HUAYI_WPS_CHECK_TIME,HUAYI_WIFI_WPS_CHECK_TASK,check_wps_complete, Agent);
 	//check_wps_complete(Agent);
 	huayi_core_add_task(HUAYI_WPS_END_TIME,HUAYI_WPS_END_TASK,do_wps_end, Agent);
-
+#endif
 	return;
 }
 

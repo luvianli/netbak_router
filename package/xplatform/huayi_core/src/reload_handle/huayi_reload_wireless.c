@@ -271,6 +271,7 @@ void string2hex(char *str, int *intVal)
 }
 VTBool huayi_reload_wireless(void * arg,cJSON *input_root)
 {
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
 #if defined(CONFIG_HUAYI_WIFI_MT7628_WLANLED)
 	char resultbuf[OPTION_STR_LEN] = {0};
@@ -334,12 +335,13 @@ VTBool huayi_reload_wireless(void * arg,cJSON *input_root)
 #endif
 
 	system("huayi-reset wifiguesfilter");
-
+#endif
 	return VT_TRUE;
 }
 
 VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 {
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
 	int scan_status = 0;
 	char scan_status_str[SMALL_STR_LEN] = {0};
@@ -427,7 +429,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 		system("huayi_cmd set system scan_state 4");
 	}
 	//system("/etc/action.d/huayi_scan");
-
+#endif
 	return VT_TRUE;
 }
 
@@ -442,6 +444,7 @@ VTBool huayi_reload_wifi_sche(void * arg,cJSON *input_root)
 
 int huayi_change_channel(int wifi_type)
 {
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	char *ptr = NULL;
 	FILE *fp = NULL;
 	char buff[LIST_STR_LEN] = {0};
@@ -501,13 +504,14 @@ int huayi_change_channel(int wifi_type)
 			}
 		}
 	}
-
+#endif
 	return 0;
 }
 
 
 void huayi_core_wifi_timer_scan(void* arg)
 {
+#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT)
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
 	int wifi_timer_scan = 0;
 	int scan_status = 0;
@@ -577,6 +581,7 @@ void huayi_core_wifi_timer_scan(void* arg)
 		Agent->wifi_scan_status = 5;
 	}
 	huayi_core_add_task(wifi_scan_time,HUAYI_WIFI_SCAN_TASK,huayi_core_wifi_timer_scan,Agent);
+#endif	
 }
 
 
