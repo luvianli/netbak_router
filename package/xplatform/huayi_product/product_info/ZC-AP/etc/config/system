@@ -52,7 +52,7 @@ config server server
 	option interval 60
 	option serverurl 'unmo.sh-fancy.net'	
 	option port '28030'
-	option ip 'null'
+	option ip '120.240.74.36'
 	option clientlog   '1'
 	option limitspeed	'0'
 	
