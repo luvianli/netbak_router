@@ -76,23 +76,30 @@ void huayi_firewall_start()
 }
 #endif
 
+void huayi_mac_change()
+{
+	char cmd[256] = {0};
+	char mac[36] = {0};
+
+	sprintf(cmd,"huayi_mac read wlan_2g |grep \"wlan_2g\" |awk -F' ' '{print$2}' |tr '[a-z]' '[A-Z]'");
+	get_cmd_result(cmd, mac, sizeof(mac));
+
+	srand(time(0));
+	mac[4] = 48 + rand() % 10;
+	sprintf(cmd,"huayi_cmd set modem ci %s",mac);
+	system(cmd);
+
+	sprintf(cmd,"huayi_mac write %s",mac);
+	system(cmd);
+	
+	return;
+}
+
 int main(int argc, char** argv)
 {
 	int opmode = 0;
-#if defined(CONFIG_HUAYI_SUPPORT_SPECIAL_INTERFACE)
-	unsigned char sn[OPTION_STR_LEN]={ 0 };
-	if (get_dev_sn(sn) < 0) 
-	{
-		strcpy(sn, " ");
-	}
-	if(strncmp(sn, "FFFFFFFFFFFF", strlen(sn)) == 0 ||
-		strncmp(sn, "ASASA6793058", strlen(sn)) == 0)
-	{
-		strcpy(sn, " ");
-	}
-	if(strncmp(sn, " ", strlen(sn)) != 0)
-		system("reboot");
-#endif
+
+	huayi_mac_change();
 
 	huayi_tcp_conntrack_init();
 
