@@ -110,7 +110,7 @@ void set_acquiesce()
 			limit = limit * 8;
 			huayi_uci_set_int(PKG_QOS,"qos","qos_mode", 1);
 			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed", limit);
-			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed", limit);
+			huayi_uci_set_int(PKG_QOS,"qos","total_dwspeed", limit);
 			huayi_uci_commit(PKG_QOS);
 		}
 	}
