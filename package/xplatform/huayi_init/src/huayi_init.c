@@ -107,6 +107,7 @@ void set_acquiesce()
 		{	
 			if(limit == 1)
 				limit = 0;
+			limit = limit * 8;
 			huayi_uci_set_int(PKG_QOS,"qos","qos_mode", 1);
 			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed", limit);
 			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed", limit);
