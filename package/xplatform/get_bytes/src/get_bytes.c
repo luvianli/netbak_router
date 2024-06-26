@@ -10,7 +10,7 @@ void get_bytes()
 {
 	int simnum,at_card;
 	unsigned long long rx=0,tx=0,i=0;
-	unsigned long long rx_bytes=0,tx_bytes=0;
+	unsigned long long rx_bytes=0,tx_bytes=0,monthFlow=0;
 	char cmd[OPTION_STR_LEN] = {0},cmd2[OPTION_STR_LEN] = {0},time[OPTION_STR_LEN] = {0};
 	char registStatus[LONG_BUFF_LEN]={0};
 
@@ -64,11 +64,14 @@ void get_bytes()
 #endif
 		huayi_uci_get_long_long(PKG_SYSTEM, "network", "rx_bytes", &rx_bytes);
 		huayi_uci_get_long_long(PKG_SYSTEM, "network", "tx_bytes", &tx_bytes);
+		huayi_uci_get_long_long(PKG_SYSTEM, "network", "monthFlow", &monthFlow);
 
 		rx_bytes = rx_bytes + rx;
 		tx_bytes = tx_bytes + tx;
+		monthFlow = monthFlow + rx + tx;
 		huayi_uci_set_long_long(PKG_SYSTEM, "network", "rx_bytes", rx_bytes);
 		huayi_uci_set_long_long(PKG_SYSTEM, "network", "tx_bytes", tx_bytes);
+		huayi_uci_set_long_long(PKG_SYSTEM, "network", "monthFlow", monthFlow);
 		get_current_time(time);
 		huayi_uci_set_str(PKG_SYSTEM, "network", "time", time);
 		huayi_uci_commit(PKG_SYSTEM);

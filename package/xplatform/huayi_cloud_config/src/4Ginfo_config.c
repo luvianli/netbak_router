@@ -189,9 +189,6 @@ void huayi_get_mifi_ink(char *mcc,char *mnc,char *btn,char *sim,char *lac,char *
 		huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "iccid", sim);
 	}
 
-#ifdef	CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
-	*mode = 1;
-#else
 	if(card == 0)
 	{
 		*mode = 2;//内置卡1
@@ -202,7 +199,7 @@ void huayi_get_mifi_ink(char *mcc,char *mnc,char *btn,char *sim,char *lac,char *
 	{
 		*mode = 3;//外插卡
 	}
-#endif
+
 	sprintf(key,"%s%s%s",SKEY,clientId,devid);
 	get_sign(key,sign);
 	return ;

@@ -568,9 +568,7 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 #ifdef CONFIG_HUAYI_SUPPORT_SPECIAL_INTERFACE
 	if(ret == 0)
 	{	
-#ifndef	CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
 		huayi_set_4g_config(format);
-#endif
 	}else if(ret == 1 || ret == 201 || ret == 501 || ret == 502 || ret == 508)//设备无法上网
 	{	
 		//system("route del default");
@@ -627,10 +625,11 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 	}
 	
 	huayi_remote_upgrade(format);
+#endif
 
 out:
 	cJSON_Delete(root);
-#endif
+
 
 	return;
 }

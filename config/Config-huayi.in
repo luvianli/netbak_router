@@ -260,20 +260,53 @@ config HUAYI_SUPPORT_CARD_SUPPORT
 	depends on HUAYI_SUPPORT_CARD_SUPPORT
 	
 	config HUAYI_SUPPORT_MEIGE_SINGLE_CARD
-		bool	"Support for Meige single built-in cards"
+		bool	"Support single cards"
 		default n
 		#depends on !HUAYI_SUPPORT_MEIGE_AFTER_SALES && !HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
-	
-	config HUAYI_SUPPORT_MEIGE_AFTER_SALES
-		bool	"Support for Meige after-sales version"
+		choice
+			prompt "The location of the first card"
+			depends on HUAYI_SUPPORT_MEIGE_SINGLE_CARD
+			config HUAYI_SINGLE_CARD_LEFT
+				bool "left"
+			config HUAYI_SINGLE_CARD_MIDDLE
+				bool "middle"
+			config HUAYI_SINGLE_CARD_RIGHT
+				bool "right"
+			endchoice
+		
+	config HUAYI_SUPPORT_MEIGE_DOUBLE_CARD
+		bool	"Support two cards"
 		default n
-		#depends on !HUAYI_SUPPORT_MEIGE_SINGLE_CARD && !HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
+		choice
+			prompt "The location of the second card"
+			depends on HUAYI_SUPPORT_MEIGE_DOUBLE_CARD
+			config HUAYI_DOUBLE_CARD_LEFT
+				bool "left"
+			config HUAYI_DOUBLE_CARD_MIDDLE
+				bool "middle"
+			config HUAYI_DOUBLE_CARD_RIGHT
+				bool "right"
+			endchoice
 		
 	config HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
-		bool	"Support for between Meige three cards"
+		bool	"Support three cards"
 		default n
 		#depends on !HUAYI_SUPPORT_MEIGE_SINGLE_CARD && !HUAYI_SUPPORT_MEIGE_AFTER_SALES
+		choice
+			prompt "The location of the third card"
+			depends on HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
+			config HUAYI_TRIPLE_CARD_LEFT
+				bool "left"
+			config HUAYI_TRIPLE_CARD_MIDDLE
+				bool "middle"
+			config HUAYI_TRIPLE_CARD_RIGHT
+				bool "right"
+			endchoice
 
+	config HUAYI_SUPPORT_MEIGE_AFTER_SALES
+		bool	"Support after-sales version"
+		default n
+		#depends on !HUAYI_SUPPORT_MEIGE_SINGLE_CARD && !HUAYI_SUPPORT_MEIGE_TRIPLE_CARD			
 	endmenu
 
 config HUAYI_SUPPORT_SPECIAL_INTERFACE

@@ -1,12 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <mosquitto.h>
-#include <string.h>
-
-#define MSG_MAX_SIZE 512
-#define KEEP_ALIVE 60
-
-static int running = 1;
+#include "huayi_mqtt.h"
 
 void my_connect_callback(struct mosquitto *mosq, void *obj, int rc)
 {        
@@ -14,14 +6,14 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int rc)
 	if(rc)
 	{       
 		// 连接错误，退出程序  
-		printf("on_connect error!\n");    
+		MQTT_LOG("on_connect error!\n");    
 		exit(1);       
 	}else{
 		// 订阅主题   
 		// 参数：句柄、id、订阅的主题、qos 
-		if(mosquitto_subscribe(mosq, NULL, "topic2", 2))
+		if(mosquitto_subscribe(mosq, NULL, topic1, 2))
 		{     
-			printf("Set the topic error!\n"); 
+			MQTT_LOG("Set the topic error!\n"); 
 			exit(1);        
 		}        
 	}
@@ -29,44 +21,67 @@ void my_connect_callback(struct mosquitto *mosq, void *obj, int rc)
 
 void my_disconnect_callback(struct mosquitto *mosq, void *obj, int rc)
 { 
-	printf("Call the function: my_disconnect_callback\n");      
+	//MQTT_LOG("Call the function: my_disconnect_callback\n");      
 	running = 0;
 }
 
 void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {       
-	printf("Call the function: on_subscribe\n");
+	//MQTT_LOG("Call the function: on_subscribe\n");
 }
 
 void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {       
-	printf("Call the function: on_message\n"); 
-	printf("Recieve a message of %s : %s\n", (char *)msg->topic, (char *)msg->payload);  
+	//MQTT_LOG("Call the function: on_message\n"); 
+	MQTT_LOG("Recieve a message of %s : %s", (char *)msg->topic, (char *)msg->payload);  
 	if(0 == strcmp(msg->payload, "quit"))
 	{           
 		mosquitto_disconnect(mosq);      
 	}
+
+	FILE *file = fopen("/tmp/log/mqtt_sub_cont", "w");
+	if (file == NULL) {
+		MQTT_LOG("Error opening file");
+    }
+ 
+    fprintf(file, "%s", msg->payload);
+    fclose(file);
+	sleep(2);
+	system("huayi_mqtt_setsub &");
 }
 
+void get_topic()
+{
+	char version[SMALL_STR_LEN] = {0};
+	char imei[RESULT_STR_LEN]={0};
+	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version", version);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
+	sprintf(topic1,"iotv2/zyc100/%s/%s",version,imei);
+	sprintf(topic2,"iotv2/zyc100/%s/push",version);
+	MQTT_LOG("topic1:%s,2:%s",topic1,topic2);
+
+	return ;
+}
 
 int main(int argc,char *argv[])
 {
 	int ret = 0;
 	char buff[MSG_MAX_SIZE] = {0};
 	struct mosquitto *mosq = NULL;
-
+	get_topic();
+	
 	//初始化libmosquitto库
 	ret = mosquitto_lib_init();
 	if(ret)
 	{
-		printf("Init lib error!\n");
+		MQTT_LOG("Init lib error!\n");
         return -1;
 	}
 
 	mosq = mosquitto_new("sub_test",true,NULL);
 	if(!mosq)
 	{
-		printf("create client failed..\n");
+		MQTT_LOG("create client failed..\n");
 		mosquitto_lib_cleanup();
 		return -1;
 	}
@@ -77,17 +92,18 @@ int main(int argc,char *argv[])
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);      
 	mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);    
 	mosquitto_message_callback_set(mosq, my_message_callback);
-	
-	if(mosquitto_connect_async(mosq, "127.0.0.1", 1883, KEEP_ALIVE))
+
+	mosquitto_username_pw_set(mosq, MQUSER, MQPWD);		
+	if(mosquitto_connect_async(mosq, HOST, PORT, KEEP_ALIVE))
 	{
-		printf("Connect server error!\n");
+		MQTT_LOG("Connect server error!\n");
         mosquitto_destroy(mosq);
         mosquitto_lib_cleanup();
 
 		return -1;
 	}
 
-	printf("Start!\n");
+	MQTT_LOG("Start!\n");
 
 	//mosquitto_loop_start作用是开启一个线程，在线程里不停的调用 mosquitto_loop() 来处理网络信息
 	int loop = mosquitto_loop_start(mosq);
@@ -103,7 +119,7 @@ int main(int argc,char *argv[])
 	while(running)
     {
 		//mosquitto_loop(mosq, -1, 1);
-        sleep(1);
+        sleep(10);
      }
 
 	#if 0

@@ -57,6 +57,7 @@ config settings settings
 	
 config server server
 	option interval 60000 #1 min
+	option heartbeat 300	#s
 	option urldomain 'http://device.10086group.com/admin/ylapi/uploadData'
 	option mifiurl '0'
 	option clientlog   '1'
@@ -65,3 +66,4 @@ config network network
 	option rx_bytes 0
 	option tx_bytes 0	
 	option time '0'
+	option monthFlow 0

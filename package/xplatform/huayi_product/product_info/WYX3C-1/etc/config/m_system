@@ -22,7 +22,8 @@ config system system
 	option external_card_enable 0
 	option band -1
 	option at_card 0
-	
+	option all_info 1
+		
 config usesiminfo usesiminfo
 	option operator ''
 	option usegpio 26

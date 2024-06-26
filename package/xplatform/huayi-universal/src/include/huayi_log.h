@@ -75,6 +75,33 @@
 		}\
 	}while(0)
 
+#define MQTT_LOG(format, args...) \
+		do{ \
+			int clientlog = 0; \
+			huayi_uci_get_int(PKG_SYSTEM, "server", "clientlog", &clientlog); \
+			if(1 == clientlog)	\
+			{\
+				FILE *fp = fopen("/tmp/log/mqtt_log", "a"); \
+				if(fp)\
+				{\
+					fprintf(fp, "%s@%s,%d] " format "\n", \
+					__FILE__, __func__,__LINE__, ##args ); \
+				}\
+				fclose(fp);\
+			} \
+		}while(0)
+	
+#define CHECK_MQTT_LOG() \
+		do{ \
+			struct stat statbuf; \
+			stat("/tmp/log/mqtt_log", &statbuf); \
+			int size = statbuf.st_size; \
+			if(size > 4194304) \
+			{\
+				system("rm -fr /tmp/log/cloud_client_log"); \
+			}\
+		}while(0)
+
 #define SIMCARD_CHANGE_LOG(format, args...) \
 	do{ \
 		int enlog = 0; \

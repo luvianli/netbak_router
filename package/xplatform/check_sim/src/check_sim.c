@@ -218,7 +218,7 @@ void set_siminfo()
 
 againt:
 
-    for (i = 0; i < simnum -1; i++)
+    for (i = 0; i < simnum; i++)
     {
         sprintf(cmd, "sim%d", i);
         huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", iccid[i]);	
@@ -374,6 +374,10 @@ void init_cloud_client()
 {
     CON_LOG("Starting communication with cloud platform\n\n");
     system("hy_cloud_client &");
+	system("huayi_mqtt_content &");
+	sleep(10);
+	system("huayi_mqtt_pub &");
+	system("huayi_mqtt_sub &");
     return;
 }
 
@@ -491,8 +495,9 @@ int isProductionMode()
 
 void Production_testing_mode()
 {
-    int mode = 0;
+    int mode = 0,allinfo = 0;
     huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "all_info", &allinfo);
     if (mode == 0)
     {
         CON_LOG("Start production testing");
@@ -511,41 +516,14 @@ void Production_testing_mode()
         CON_LOG("Start working mode");
     }
 
-}
-
-void get_siminfo()
-{
-#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
-    return ;
-#else
-    int mode = 0,simnum,gpio;
-	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
-
-	char iccid[simnum][OPTION_STR_LEN];
-    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
-	huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid[0]);
-	huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid[1]);
-
-    while(mode == 1&& (strlen(iccid[0])< 5||strlen(iccid[1])< 5))
-    {	    
-    	if(strlen(iccid[0])< 5)
-    	{	
-    		huayi_uci_get_int(PKG_M_SYSTEM, "sim0", "gpio", &gpio);
-			switch_sim(0, gpio);
-			huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid[0]);
-		}
-    	if(strlen(iccid[1])< 5)
-    	{	
-    		huayi_uci_get_int(PKG_M_SYSTEM, "sim1", "gpio", &gpio);
-			switch_sim(1, gpio);
-			huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid[1]);
-		}		
-		sleep(2);
-		huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+	if (mode == 1 && allinfo == 1)
+    {
+        CON_LOG("get all sim card info");
+        set_siminfo();
+		huayi_uci_set_int(PKG_M_SYSTEM, "system", "all_info", 0);
+		huayi_uci_commit(PKG_M_SYSTEM);
     }
-	sleep(2);
-#endif
-	return ;
+
 }
 
 int main(int argc, char *argv[])

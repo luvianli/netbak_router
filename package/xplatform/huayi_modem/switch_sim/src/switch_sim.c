@@ -9,12 +9,16 @@
 
 enum SimSelection {
 
-    SIM0_HIGH_LOW,
-#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
-    SIM1_HIGH_HIGH,
-#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
-    SIM2_LOW_HIGH,
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
+    SIM0,
 #endif
+
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_DOUBLE_CARD
+    SIM1,
+#endif
+
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
+    SIM2,
 #endif
 	EXTERNAL_CARD_LOW_LOW,
     INVALID_SELECTION
@@ -47,7 +51,7 @@ void set_wanIp(){
 
 int SlmDial()
 {
-    int count = 0, registered_count = 0, signal = 0,mode = 0;
+    int count = 0, registered_count = 0, signal = 0,mode = 0,allinfo = 0;
     char resultbuf[OPTION_STR_LEN] = {0};
     char cmd[TEMP_STR_LEN] = {0};
     char print_to[TEMP_STR_LEN] = {0};
@@ -61,6 +65,11 @@ int SlmDial()
     while (count < 60)
     {
         get_cmd_result("lsusb", resultbuf, sizeof(resultbuf));
+        if (strstr(resultbuf, "1286:") != NULL)
+        {
+			SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) OK ===", sim, print_to);
+			set_wanIp();
+        }
 
         if (strstr(resultbuf, "2dee:") != NULL && rc4_SLM770U())
         {
@@ -76,8 +85,9 @@ int SlmDial()
             }
 			
 			huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+			huayi_uci_get_int(PKG_M_SYSTEM, "system", "all_info", &allinfo);
 
-            if (mode == 1)
+            if (mode == 1 && allinfo == 0)
             {
                 SWITCH_SIM_LOG("After completing the network injection, start checking for network injection status");
 				for (j = 0; j < 3 && !atcmd_get_imsi(value); j++) {
@@ -141,7 +151,7 @@ int SlmDial()
         count += 3;
         sleep(3);
 
-        if (strstr(resultbuf, "2dee:") == NULL)
+        if (strstr(resultbuf, "2dee:") == NULL || strstr(resultbuf, "1286:") == NULL)
         {
             SWITCH_SIM_LOG("Module not found, retrying, taking (up to 60)");
         }
@@ -159,34 +169,58 @@ int SlmDial()
 int switchSim() {
     switch (sim) {
 
-
-        case SIM0_HIGH_LOW:
-			/*printf("Switching 1; 0 Setting High=3.3V & 2 Setting High=3.3V\n");//左边
-			system("gpio l 0 0 4000 0 0 4000");
-            system("gpio l 2 0 4000 0 0 4000");*/
-			printf("Switching 0; 0 Setting High=3.3V & 2 Setting LOW=2.7V\n");//中间
-            system("gpio l 0 0 4000 0 0 4000");
-            system("gpio l 2 4000 0 0 0 4000");
-            /*printf("Switching 2; 0 Setting LOW=2.7V & 2 Setting High=3.3V\n");//右边
-            system("gpio l 0 4000 0 0 0 4000");
-            system("gpio l 2 0 4000 0 0 4000");*/
-            break;
-#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
-        case SIM1_HIGH_HIGH:
-			/*printf("Switching 0; 0 Setting High=3.3V & 2 Setting LOW=2.7V\n");//中间
-            system("gpio l 0 0 4000 0 0 4000");
-            system("gpio l 2 4000 0 0 0 4000");*/
-            printf("Switching 1; 0 Setting High=3.3V & 2 Setting High=3.3V\n");//左边
-			system("gpio l 0 0 4000 0 0 4000");
-            system("gpio l 2 0 4000 0 0 4000");
-            break;
-#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
-        case SIM2_LOW_HIGH:
-            printf("Switching 2; 0 Setting LOW=2.7V & 2 Setting High=3.3V\n");//右边
-            system("gpio l 0 4000 0 0 0 4000");
-            system("gpio l 2 0 4000 0 0 4000");
-            break;
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
+		case SIM0:
+			#ifdef CONFIG_HUAYI_SINGLE_CARD_LEFT
+				printf("Switching left; 0 Setting High=3.3V & 2 Setting High=3.3V\n");//左边
+				system("gpio l 0 0 4000 0 0 4000");
+	            system("gpio l 2 0 4000 0 0 4000");
+			#elif CONFIG_HUAYI_SINGLE_CARD_MIDDLE
+				printf("Switching middle; 0 Setting High=3.3V & 2 Setting LOW=2.7V\n");//中间
+	            system("gpio l 0 0 4000 0 0 4000");
+	            system("gpio l 2 4000 0 0 0 4000");
+			#elif CONFIG_HUAYI_SINGLE_CARD_RIGHT
+				printf("Switching right; 0 Setting LOW=2.7V & 2 Setting High=3.3V\n");//右边
+	            system("gpio l 0 4000 0 0 0 4000");
+	            system("gpio l 2 0 4000 0 0 4000");
+			#endif
+			break;
 #endif
+
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_DOUBLE_CARD
+        case SIM1:
+			#ifdef CONFIG_HUAYI_DOUBLE_CARD_LEFT
+				printf("Switching left; 0 Setting High=3.3V & 2 Setting High=3.3V\n");//左边
+				system("gpio l 0 0 4000 0 0 4000");
+	            system("gpio l 2 0 4000 0 0 4000");
+			#elif CONFIG_HUAYI_DOUBLE_CARD_MIDDLE
+				printf("Switching middle; 0 Setting High=3.3V & 2 Setting LOW=2.7V\n");//中间
+	            system("gpio l 0 0 4000 0 0 4000");
+	            system("gpio l 2 4000 0 0 0 4000");
+			#elif CONFIG_HUAYI_DOUBLE_CARD_RIGHT
+				printf("Switching right; 0 Setting LOW=2.7V & 2 Setting High=3.3V\n");//右边
+	            system("gpio l 0 4000 0 0 0 4000");
+	            system("gpio l 2 0 4000 0 0 4000");
+			#endif
+			break;
+#endif
+
+#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_TRIPLE_CARD
+        case SIM2:
+			#ifdef CONFIG_HUAYI_TRIPLE_CARD_LEFT
+				printf("Switching left; 0 Setting High=3.3V & 2 Setting High=3.3V\n");//左边
+				system("gpio l 0 0 4000 0 0 4000");
+	            system("gpio l 2 0 4000 0 0 4000");
+			#elif CONFIG_HUAYI_TRIPLE_CARD_MIDDLE
+				printf("Switching middle; 0 Setting High=3.3V & 2 Setting LOW=2.7V\n");//中间
+	            system("gpio l 0 0 4000 0 0 4000");
+	            system("gpio l 2 4000 0 0 0 4000");
+			#elif CONFIG_HUAYI_TRIPLE_CARD_RIGHT
+				printf("Switching right; 0 Setting LOW=2.7V & 2 Setting High=3.3V\n");//右边
+	            system("gpio l 0 4000 0 0 0 4000");
+	            system("gpio l 2 0 4000 0 0 4000");
+			#endif
+			break;
 #endif
 
         case EXTERNAL_CARD_LOW_LOW:
