@@ -383,9 +383,11 @@ void get_pub_content(char *heartdata)
 int main(int argc,char *argv[])
 {
 	char buff[MSG_MAX_SIZE] = {0};
+	int heartbeat = 30;
 
-	while(running)
+	while(1)
 	{
+		huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &heartbeat);
 		get_pub_content(buff);
 		FILE *file = fopen("/tmp/log/mqtt_pub_cont", "w");
     	if (file == NULL) {
@@ -395,7 +397,7 @@ int main(int argc,char *argv[])
  
     	fprintf(file, "%s", buff);
     	fclose(file);
-		sleep(60);
+		sleep(heartbeat);
 	}
 	CHECK_MQTT_LOG();
 	return 0;

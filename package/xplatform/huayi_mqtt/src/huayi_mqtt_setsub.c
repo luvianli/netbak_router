@@ -133,7 +133,7 @@ void huayi_set_system(cJSON *response_root)
 	if(huayi_json_get_int(response_root,"heartbeat",&heartbeat)) 
 	{
 		huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &oldheartbeat);
-		if(heartbeat > 30 && heartbeat != oldheartbeat)
+		if(heartbeat >= 30 && heartbeat != oldheartbeat)
 		{
 			MQTT_LOG("change heartbeat");
 			huayi_uci_set_int(PKG_SYSTEM,"server","heartbeat", heartbeat);
