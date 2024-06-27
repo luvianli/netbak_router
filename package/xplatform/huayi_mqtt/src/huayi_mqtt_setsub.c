@@ -20,7 +20,7 @@ void huayi_set_wifi(cJSON *response_root)
 {	
 	char ssid[TEMP_STR_LEN] = {0},oldssid[OPTION_STR_LEN] = {0};
 	char key[OPTION_STR_LEN] = {0}, oldkey[TEMP_STR_LEN] = {0};
-	int hidden = -1, oldhidden = -1;
+	int hid = -1,hidden = -1, oldhidden = -1;
 	int speedLimit = 1,oldspeedLimit = 0,qos_mode = 0;
 	int flag = 0;
 	unsigned long long monthFlow = 0;
@@ -51,8 +51,12 @@ void huayi_set_wifi(cJSON *response_root)
 		}
 	}
 
-	if(huayi_json_get_int(response_root,"hidden",&hidden)) 
+	if(huayi_json_get_int(response_root,"hidden",&hid)) 
 	{	
+		if(hid == 0)
+			hidden = 1;
+		else if(hid = 1)
+			hidden = 0;
 		huayi_uci_get_int(PKG_WIRELESS,"radio0_0","hidden",&oldhidden);
 		if((hidden == 0||hidden == 1) && (hidden != oldhidden)) {
 			MQTT_LOG("change hidden");
@@ -128,7 +132,7 @@ void huayi_set_system(cJSON *response_root)
 
 	if(huayi_json_get_int(response_root,"heartbeat",&heartbeat)) 
 	{
-		huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &heartbeat);
+		huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &oldheartbeat);
 		if(heartbeat > 30 && heartbeat != oldheartbeat)
 		{
 			MQTT_LOG("change heartbeat");
@@ -163,6 +167,7 @@ void huayi_set_system(cJSON *response_root)
 					return;
 				}
 			}
+			MQTT_LOG("firmware_url is %s !",firmware_url);
 
 			int ret = process_downloadimage(firmware_url);
 			if ( 0 != ret) {

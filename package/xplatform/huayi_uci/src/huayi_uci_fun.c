@@ -1389,7 +1389,7 @@ retry_getccid:
 	}
     count = 0;
 	huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "iccid", lte_value);
-	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
+	//huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
 
 
 retry_getlac:     //尽最大可能取到LAC
