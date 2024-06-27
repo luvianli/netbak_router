@@ -123,7 +123,7 @@ int main(int argc,char *argv[])
 		return 1;
 	}
 	
-	while(running)
+	while(1)
 	{        
 		huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &heartbeat);
 		content(buff);

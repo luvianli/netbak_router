@@ -116,7 +116,7 @@ int main(int argc,char *argv[])
 		return -1;
 	}
 	
-	while(running)
+	while(1)
     {
 		//mosquitto_loop(mosq, -1, 1);
         sleep(10);

@@ -347,7 +347,10 @@ void get_pub_content(char *heartdata)
 	cJSON_AddStringToObject(result_root,"currentTime", currentTime);
 	cJSON_AddStringToObject(result_root,"ssid", ssid);
 	cJSON_AddStringToObject(result_root,"password", password);
-	cJSON_AddNumberToObject(result_root,"hidden", hidden);
+	if(hidden == 0)
+		cJSON_AddNumberToObject(result_root,"hidden", 1);
+	else if(hidden == 1)
+		cJSON_AddNumberToObject(result_root,"hidden", 0);
 	cJSON_AddNumberToObject(result_root,"connCnt", connCnt);
 	cJSON_AddNumberToObject(result_root,"rssi", rssi);
 	cJSON_AddNumberToObject(result_root,"dayFlow", dayFlow);

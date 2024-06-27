@@ -33,7 +33,7 @@ void huayi_set_wifi(cJSON *response_root)
 	if (huayi_json_get_str(response_root, "ssid", ssid,OPTION_STR_LEN))
 	{
 		huayi_uci_get_str(PKG_WIRELESS,"radio0_0","ssid", oldssid);
-		if((strlen(key) <= 20) && 0 != strcmp(ssid, oldssid))
+		if((strlen(ssid) > 0 && strlen(ssid) <= 20) && 0 != strcmp(ssid, oldssid))
 		{	
 			MQTT_LOG("change ssid");
 			huayi_uci_set_str(PKG_WIRELESS,"radio0_0","ssid", ssid);
