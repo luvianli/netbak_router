@@ -55,11 +55,11 @@ void huayi_set_wifi(cJSON *response_root)
 	{	
 		if(hid == 0)
 			hidden = 1;
-		else if(hid = 1)
+		else if(hid == 1)
 			hidden = 0;
 		huayi_uci_get_int(PKG_WIRELESS,"radio0_0","hidden",&oldhidden);
 		if((hidden == 0||hidden == 1) && (hidden != oldhidden)) {
-			MQTT_LOG("change hidden");
+			MQTT_LOG("change hidden %d",hidden);
 			huayi_uci_set_int(PKG_WIRELESS,"radio0_0","hidden",hidden);
 			flag = 1;
 		}
