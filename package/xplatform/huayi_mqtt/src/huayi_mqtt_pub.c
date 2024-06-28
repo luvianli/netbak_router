@@ -104,15 +104,13 @@ int main(int argc,char *argv[])
 	//mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 
 	mosquitto_username_pw_set(mosq, MQUSER, MQPWD);	
-	if(mosquitto_connect(mosq, HOST, PORT, KEEP_ALIVE))
+	while(mosquitto_connect(mosq, HOST, PORT, KEEP_ALIVE))
 	{
-		MQTT_LOG("Connect server error!\n");
-        mosquitto_destroy(mosq);
-        mosquitto_lib_cleanup();
-		return -1;
+		MQTT_LOG("Pub connect server error!\n");
+		sleep(5);
 	}
 
-	MQTT_LOG("Start!\n");
+	MQTT_LOG("Pub start!\n");
 
 	//mosquitto_loop_start作用是开启一个线程，在线程里不停的调用 mosquitto_loop() 来处理网络信息
 	int loop = mosquitto_loop_start(mosq);
