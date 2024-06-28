@@ -125,12 +125,21 @@ int main(int argc,char *argv[])
 	
 	while(1)
 	{        
+		if (mosquitto_loop(mosq, -1, 1) != MOSQ_ERR_SUCCESS)
+        {
+            MQTT_LOG("Connection lost, trying to reconnect...\n");
+            while (mosquitto_reconnect(mosq) != MOSQ_ERR_SUCCESS)
+            {
+                sleep(5);
+            }
+            MQTT_LOG("Reconnected successfully!\n");
+        }
 		huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &heartbeat);
 		content(buff);
 		if(strlen(buff)>0)
 		{		
 			MQTT_LOG("topic:%s,buff:%s\n",topic2,buff);
-			mosquitto_publish(mosq,NULL,topic2,strlen(buff)+1,buff,0,0);
+			ret = mosquitto_publish(mosq,NULL,topic2,strlen(buff)+1,buff,0,0);
 			memset(buff,0,sizeof(buff));
 		}
 		sleep(heartbeat);
@@ -138,7 +147,7 @@ int main(int argc,char *argv[])
 	
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
-	printf("End!\n");
+	MQTT_LOG("End!\n");
 
 	return 0;
 }
