@@ -1676,7 +1676,7 @@ LTE_BOOL atcmd_get_center_number(char *value)
 
 
 LTE_BOOL atcmd_get_EC20_imei(char *value)
-{
+/*{
 	int i = 0;
 	char *ptr = NULL;
 
@@ -1704,6 +1704,39 @@ LTE_BOOL atcmd_get_EC20_imei(char *value)
 
 	return LTE_FALSE;
 }
+LTE_BOOL atcmd_get_L509_imei(char *value)*/
+{
+	int i = 0;
+	char *ptr = NULL;
+	char *pKey = NULL;
+
+	if ( Atcmd("ATI", strlen("ATI"), 0) == LTE_FALSE )
+	{
+		return LTE_FALSE;
+	}
+	
+	ptr = ATret;
+	
+	if ( strstr(ptr, "OK") == NULL )
+	{
+		return LTE_FALSE;
+	}
+
+	if ((pKey = strstr(ptr, "IMEI:")) != NULL )
+	{
+		for ( i=0; i < AT_CMD_MAX_LEN-16; i++ )
+		{
+			if ( pKey[i] && isdigit( pKey[i] ) )
+			{
+				strncpy(value, pKey+i, 15);
+				return LTE_TRUE;
+			}
+		}
+	}
+		
+	return LTE_FALSE;
+}
+
 
 LTE_BOOL atcmd_get_EC20_phoneNumber(char *value)
 {
@@ -1829,7 +1862,7 @@ LTE_BOOL atcmd_get_iccid(char *iccid)
 	int i = 0;
 	char *ptr = NULL;
 
-	if ( Atcmd("AT+QCCID", strlen("AT+QCCID"), 0) == LTE_FALSE )
+	if ( Atcmd("AT+ICCID", strlen("AT+ICCID"), 0) == LTE_FALSE )
 	{
 		return LTE_FALSE;
 	}
@@ -1852,6 +1885,7 @@ LTE_BOOL atcmd_get_iccid(char *iccid)
 		
 	return LTE_FALSE;
 }
+
 LTE_BOOL atcmd_get_lac(char *lac)
 {
 	char *ptr = NULL;

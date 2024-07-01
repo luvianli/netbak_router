@@ -165,6 +165,10 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 		{
 			system("huayi_AT_cli AT+CFUN=1,1");
 		}
+		else if(strncmp("LYNQ509",pmodel, 7) == 0)
+		{
+			system("huayi_AT_cli AT+RESET");
+		}
 		else
 		{
 			printf("Unidentified modem module!!!\n");

@@ -69,6 +69,7 @@ int SlmDial()
         {
 			SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) OK ===", sim, print_to);
 			set_wanIp();
+			return 0;
         }
 
         if (strstr(resultbuf, "2dee:") != NULL && rc4_SLM770U())
@@ -98,12 +99,6 @@ int SlmDial()
 					SWITCH_SIM_LOG("not found sim card\n");
 					return 0;
 				}
-				/*huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
-				if(set_operator_band(value))
-				if(band == -1)
-				{
-					system("huayi-reset band && killall switch_sim");
-				}*/
 				
                 while (registered_count < 60 && atcmd_get_slm_mobile_type(value) == HUAYI_FALSE)
                 {

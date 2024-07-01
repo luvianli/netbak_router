@@ -360,6 +360,10 @@ int main(int argc, char *argv[])
     {
         slm_ECM_handler(&Agent);
     }
+	else if(strncmp("LYNQ509",pmodel, 7) == 0)
+	{
+		slm_ECM_handler(&Agent);
+	}
 	else
 	{
 		printf("Unidentified modem module!!!\n");
