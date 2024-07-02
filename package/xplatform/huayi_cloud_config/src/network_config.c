@@ -251,6 +251,31 @@ void huayi_get_wan_or_wan4g_config(int *type,char *mode,char *access,char *name,
 	return ;
 }
 
+void huayi_set_mac(cJSON *response_root)
+{
+	char mac[RESULT_STR_LEN] = {0},oldmac[RESULT_STR_LEN] = {0};
+	char cmd[256] = {0};
+
+	if(NULL == response_root) 
+	{
+		return ;
+	}
+
+	if(huayi_json_get_str(response_root,"mac",mac,OPTION_STR_LEN)) 
+	{		
+		sprintf(cmd,"huayi_mac read wlan_2g |grep \"wlan_2g\" |awk -F' ' '{print$2}' |tr '[a-z]' '[A-Z]'");
+		get_cmd_result(cmd, oldmac, sizeof(oldmac));
+		CLOUD_CLIENT_LOG("change mac:%s\n",mac);
+		if (0 != strcmp(mac, oldmac)) {
+			memset(cmd, 0, sizeof(cmd));
+			sprintf(cmd,"huayi_mac write %s",mac);
+			system(cmd);
+		}
+	}
+
+	return;
+}
+
 void huayi_set_wan_config(cJSON *response_root)
 {
 	char wan_mode[RESULT_STR_LEN] = {0},oldwan_mode[RESULT_STR_LEN] = {0};

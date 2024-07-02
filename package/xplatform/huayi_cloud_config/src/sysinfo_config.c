@@ -59,15 +59,13 @@ int huayi_sn_read(char *sn)
 	return 0;
 }
 
-void huayi_get_sys_info(char *soft_ver,char *product_name,int *uptime,int *device)
+void huayi_get_sys_info(char *soft_ver,char *product_name,int *uptime)
 {
-	int time = 0,dev = 0;
+	int time = 0;
 	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version", soft_ver);
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_name",product_name);
 	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","uptime",&time);
-	huayi_uci_get_int(PKG_SYSTEM,"mode","device_type", &dev);
 	*uptime = time;
-	*device = dev;
 
 	return ;
 }

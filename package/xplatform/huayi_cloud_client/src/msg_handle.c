@@ -280,29 +280,29 @@ void msg_content(char *heartdata, unsigned int *heartsize)
         
 	result_root = cJSON_CreateObject();
     huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-    if(strcmp(product_model, "WYX3C-1") == 0)
+    if(strcmp(product_model, "WYX3C-10-1") == 0)
     {
-        huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn,&simSwitch);
+        huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn);
         cJSON_AddStringToObject(result_root,"sn", sn);
         cJSON_AddStringToObject(result_root,"iccid", iccid);
         cJSON_AddNumberToObject(result_root,"dbm", sig);
         cJSON_AddStringToObject(result_root,"opname", mobile_type);
-        cJSON_AddNumberToObject(result_root,"simSwitch", simSwitch);
+        //cJSON_AddNumberToObject(result_root,"simSwitch", simSwitch);
         speeddown = 0;
     	speedup = 0 ;
     	huayi_get_qos_config(&speeddown, &speedup);//to do long
     	cJSON_AddNumberToObject(result_root,"speed_downlink", speeddown);
     	cJSON_AddNumberToObject(result_root,"speed_uplink", speedup);
 
-        huayi_get_wireless_config(ssid_2g, key_2g, &hidden_2g, &client_num,&channel,&status);
+        /*huayi_get_wireless_config(ssid_2g, key_2g, &hidden_2g, &client_num,&channel,&status);
     	//cJSON_AddNumberToObject(result_root,"wifi_status",status);
     	cJSON_AddStringToObject(result_root,"ssid", ssid_2g);
     	cJSON_AddStringToObject(result_root,"password", key_2g);
     	//cJSON_AddNumberToObject(result_root,"channel",channel);
     	cJSON_AddNumberToObject(result_root,"hidden", hidden_2g);
-        cJSON_AddNumberToObject(result_root,"count",client_num);
-                cJSON_AddStringToObject(result_root,"cell_id", cellid);
-          cJSON_AddStringToObject(result_root,"lac", lac);
+        cJSON_AddNumberToObject(result_root,"count",client_num);*/
+        cJSON_AddStringToObject(result_root,"cell_id", cellid);
+        cJSON_AddStringToObject(result_root,"lac", lac);
         huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","gateway",gatewayip);
         cJSON_AddStringToObject(result_root,"ip", gatewayip);
         huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version", soft_ver);
@@ -605,11 +605,12 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 	}
 #else	
 	huayi_next_url_time(format);
-	huayi_set_4g_config(format);
+	/*huayi_set_4g_config(format);
 	huayi_set_wifi_config(format);
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	huayi_set_5gwifi_config(format);
-#endif
+#endif*/
+	huayi_set_mac(format);
 	huayi_set_lan_config(format);
 	huayi_set_dhcp_config(format);
 	huayi_set_qos_config(format);

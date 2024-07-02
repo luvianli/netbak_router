@@ -11,15 +11,14 @@
 #include <signal.h>
 
 
-void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char *cellid, char *sn,int *simSwitch)
+void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char *cellid, char *sn)
 {
-    int  signal = -121,sim = 0;
+    int  signal = -121;
 
     huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "operator", mobile_type);
     huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "iccid", iccid);
     huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "lac", lac);
     huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "ci", cellid);
-	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &sim);
     if (get_dev_sn(sn) < 0)
     {
         strcpy(sn, " ");
@@ -28,18 +27,9 @@ void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char
     {
         strcpy(sn, " ");
     }
-    //huayi_uci_get_str(PKG_STATUS_MODEM,"modem","imei",sn);
+
     atcmd_get_signal_for_cloud(&signal);
-	*simSwitch = sim;
-    //huayi_uci_get_int(PKG_STATUS_MODEM,"modem","signal",&signal);
-    //signal = signal/5 - 120;
-
     *sig = signal;
-
-    /*CustomCommunicationClient("echo `uci get m_system.usesiminfo.card_slot`",usesiminfoBuf);
-    if(!(toParsing(usesiminfoBuf, 1,&sim_slot))){
-        CLOUD_CLIENT_LOG("usesiminfoBuf error\n");
-     }else *simSwitch = sim_slot;*/
 
     return;
 }

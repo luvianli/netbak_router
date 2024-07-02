@@ -85,10 +85,16 @@ void huayi_mac_change()
 	get_cmd_result(cmd, mac, sizeof(mac));
 
 	srand(time(0));
-	mac[4] = 48 + rand() % 10;
-	sprintf(cmd,"huayi_cmd set modem ci %s",mac);
-	system(cmd);
+	int random_value = rand() % 22;
+    if (random_value < 10) {
+        mac[4] = 48 + random_value; // 生成数字字符
+    } else if (random_value < 16) {
+        mac[4] = 65 + (random_value - 10); // 生成大写字母
+    } else {
+        mac[4] = 97 + (random_value - 16); // 生成小写字母
+    }
 
+	memset(cmd, 0, OPTION_STR_LEN);
 	sprintf(cmd,"huayi_mac write %s",mac);
 	system(cmd);
 	
