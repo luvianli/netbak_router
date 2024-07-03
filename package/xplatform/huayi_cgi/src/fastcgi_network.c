@@ -2922,7 +2922,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
 	/*set wireless network config*/
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_2G)
+/*#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_2G)
 	if(!huayi_json_get_str(request_root,"ssid_2g",ssid_2g,OPTION_STR_LEN)||
 		!huayi_json_get_int(request_root,"encry_2g",&encry_2g)||
 		!huayi_json_get_str(request_root,"passphrase_2g",passphrase_2g,TEMP_STR_LEN))
@@ -2968,7 +2968,7 @@ int do_set_quick_setting_config(cJSON *request_root, cJSON *response_root,int *l
 	}
 
 	huayi_uci_commit(PKG_WIRELESS);
-#endif
+#endif*/
 #if !defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 	if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
 	{
