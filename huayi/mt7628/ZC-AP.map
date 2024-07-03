@@ -1,6 +1,6 @@
-FILE = 4G1200-H002-HY06_MT7628_DDR2_128M_uboot.bin
+FILE = 4G300-H002-HY05_MT7628_DDR2_64M_uboot.bin
 ADDR = 0
-FILE = 4G1200-H002-HY06-24g-58g-factory.bin
+FILE = 4G300-H002-HY05-firstcard.eeprom.bin
 ADDR = 0x40000
 FILE = huayi_firmware.bin
 ADDR = 0x50000
