@@ -45,8 +45,8 @@ EOF
         uci set ppl2tp.openvpn.dev="$DEV"
     fi
     
-	#echo nameserver 8.8.8.8 > /tmp/resolv.conf.auto
-	#echo nameserver 8.8.4.4 >> /tmp/resolv.conf.auto
+	echo nameserver 8.8.8.8 > /tmp/resolv.conf.auto
+	echo nameserver 8.8.4.4 >> /tmp/resolv.conf.auto
     #uci commit
     chmod 600 /etc/openvpn/openVPN.ovpn
 }

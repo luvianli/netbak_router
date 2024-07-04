@@ -76,7 +76,7 @@ int main(int argc,char *argv[])
 	
 	while(1)
 	{
-		sleep(50);
+		sleep(40);
 
 		huayi_uci_get_int(PKG_PPL2TP,"openvpn","enable",&enable);
 		if(enable)//vpn打开
@@ -105,6 +105,16 @@ int main(int argc,char *argv[])
 					memset(cmd_str,0,sizeof(cmd_str));
 					sprintf(cmd_str,"route add %s gw %s dev %s",detectip,wan_gateway,wan_ifname);
 					system(cmd_str);					
+				}
+
+				memset(cmd_str,0,sizeof(cmd_str));
+				memset(resultbuf,0,sizeof(resultbuf));
+				sprintf(cmd_str, "cat /tmp/resolv.conf.auto | grep 8.8.8.8 | wc -l");
+        		get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+				if(atoi(resultbuf) < 1)
+				{
+					system("echo nameserver 8.8.8.8 > /tmp/resolv.conf.auto");
+					system("echo nameserver 8.8.4.4 >> /tmp/resolv.conf.auto");
 				}
 			}else
 			{

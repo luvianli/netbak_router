@@ -180,18 +180,10 @@ void huayi_set_vpn_config(cJSON *response_root)
 		if(status == 0)
 		{
 			CLOUD_CLIENT_LOG("close VPN\n");
-			huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
-			huayi_uci_delete_option(PKG_NETWORK,"wan4g","dns");
 		}else if(status == 1)
 		{	
 			CLOUD_CLIENT_LOG("open VPN\n");
 			huayi_uci_set_int(PKG_PPL2TP,"openvpn","option",1);
-			huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
-			huayi_uci_delete_option(PKG_NETWORK,"wan4g","dns");
-			huayi_uci_add_list(PKG_NETWORK,"wan","dns","8.8.8.8");
-			huayi_uci_add_list(PKG_NETWORK,"wan","dns","8.8.4.4");
-			huayi_uci_add_list(PKG_NETWORK,"wan4g","dns","8.8.8.8");
-			huayi_uci_add_list(PKG_NETWORK,"wan4g","dns","8.8.4.4");
 		}
 		fale=1;
 	}
@@ -234,7 +226,7 @@ void huayi_set_vpn_config(cJSON *response_root)
 
 	if(fale == 1)
 	{
-		huayi_uci_commit(PKG_NETWORK);
+		//huayi_uci_commit(PKG_NETWORK);
 		huayi_uci_commit(PKG_PPL2TP);
 		system("huayi-reset openvpn");
 	}

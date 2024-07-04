@@ -1157,18 +1157,18 @@ int set_openvpn_config(cJSON *request_root, cJSON *response_root, int *lock_time
 			}
 
 			huayi_uci_set_int(PKG_PPL2TP,"openvpn","option",option);
-			huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
+			/*huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
 			huayi_uci_delete_option(PKG_NETWORK,"wan4g","dns");
 			huayi_uci_add_list(PKG_NETWORK,"wan","dns","8.8.8.8");
 			huayi_uci_add_list(PKG_NETWORK,"wan","dns","8.8.4.4");
 			huayi_uci_add_list(PKG_NETWORK,"wan4g","dns","8.8.8.8");
-			huayi_uci_add_list(PKG_NETWORK,"wan4g","dns","8.8.4.4");
+			huayi_uci_add_list(PKG_NETWORK,"wan4g","dns","8.8.4.4");*/
 		}else
 		{
-			huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
-			huayi_uci_delete_option(PKG_NETWORK,"wan4g","dns");
+			//huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
+			//huayi_uci_delete_option(PKG_NETWORK,"wan4g","dns");
 		}
-		huayi_uci_commit(PKG_NETWORK);
+		//huayi_uci_commit(PKG_NETWORK);
 	}else
 		return FCGI_RESP_CODE_DATA_MISS;
 	huayi_uci_set_int(PKG_PPL2TP,"openvpn","enable",enable);

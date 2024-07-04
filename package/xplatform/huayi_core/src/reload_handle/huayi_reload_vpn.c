@@ -338,13 +338,13 @@ VTBool huayi_reload_openvpn(void * arg,cJSON *input_root)
 	huayi_uci_get_int(PKG_PPL2TP,"openvpn","enable",&enable);
 	if(!enable){
 		system("/etc/init.d/openVPN stop");
+		system("/etc/init.d/network restart");
 		//system("rm -f /path/to/*");
 	}
 	else
 		system("/etc/init.d/openVPN start");
 
 	sleep(5);
-	system("/etc/init.d/network restart");
 	return VT_TRUE;
 }
 
