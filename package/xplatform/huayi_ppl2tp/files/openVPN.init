@@ -37,16 +37,19 @@ EOF
 
 
             uci set ppl2tp.openvpn.dev=tun
+			echo nameserver 8.8.8.8 > /tmp/resolv.conf.auto
+			echo nameserver 8.8.4.4 >> /tmp/resolv.conf.auto
         else
             echo "OpenVPN is not enabled in the configuration."
         fi
+		
     else
         DEV=$(awk '/^dev/ {print $2}' /etc/openvpn/openVPN.ovpn)
         uci set ppl2tp.openvpn.dev="$DEV"
+		echo nameserver 8.8.8.8 > /tmp/resolv.conf.auto
+		echo nameserver 8.8.4.4 >> /tmp/resolv.conf.auto
     fi
     
-	echo nameserver 8.8.8.8 > /tmp/resolv.conf.auto
-	echo nameserver 8.8.4.4 >> /tmp/resolv.conf.auto
     #uci commit
     chmod 600 /etc/openvpn/openVPN.ovpn
 }

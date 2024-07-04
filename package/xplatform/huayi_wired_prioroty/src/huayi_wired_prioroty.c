@@ -128,6 +128,15 @@ int main(int argc,char *argv[])
 					sprintf(cmd_str,"route del %s",detectip);
 					system(cmd_str);
 				}
+
+				memset(cmd_str,0,sizeof(cmd_str));
+				memset(resultbuf,0,sizeof(resultbuf));
+				sprintf(cmd_str, "cat /tmp/resolv.conf.auto | grep 8.8.8.8 | wc -l");
+        		get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+				if(atoi(resultbuf) > 0)
+				{
+					system("huayi-reset network");
+				}
 			}
 		}else
 		{
