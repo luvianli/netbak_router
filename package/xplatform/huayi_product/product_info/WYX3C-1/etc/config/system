@@ -67,3 +67,4 @@ config network network
 	option tx_bytes 0	
 	option time '0'
 	option monthFlow 0
+	option disconn 0

@@ -1,15 +1,25 @@
 #include "huayi_mqtt.h"
 
-void my_message_callback(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message)
-{	    
-	if(message->payloadlen)
-	{      
-		MQTT_LOG("%s %s", message->topic, (char *)message->payload);    
-	}else{
-		MQTT_LOG("%s (null)\n", message->topic);    
-	}  
-	fflush(stdout);
+void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
+{       
+	//MQTT_LOG("Call the function: on_message\n"); 
+	MQTT_LOG("Recieve a message of %s : %s", (char *)msg->topic, (char *)msg->payload);  
+	if(0 == strcmp(msg->payload, "quit"))
+	{           
+		mosquitto_disconnect(mosq);      
+	}
+
+	FILE *file = fopen("/tmp/log/mqtt_sub_cont", "w");
+	if (file == NULL) {
+		MQTT_LOG("Error opening file");
+    }
+ 
+    fprintf(file, "%s", msg->payload);
+    fclose(file);
+	sleep(2);
+	system("huayi_mqtt_setsub &");
 }
+
 
 void my_connect_callback(struct mosquitto *mosq, void *userdata, int result)
 {
@@ -17,7 +27,8 @@ void my_connect_callback(struct mosquitto *mosq, void *userdata, int result)
 	if(!result)
 	{     
 		/* Subscribe to broker information topics on successful connect. */ 
-		//mosquitto_subscribe(mosq, NULL, topic1, 2);  
+		MQTT_LOG("connect success");
+		mosquitto_subscribe(mosq, NULL, topic1, 2);  
 	}else{    
 		fprintf(stderr, "Connect failed\n");    
 	}
@@ -80,9 +91,12 @@ int main(int argc,char *argv[])
 	int ret = 0;
 	char buff[MSG_MAX_SIZE] = {0};
 	struct mosquitto *mosq = NULL;
-	int heartbeat = 0;	
+	int heartbeat = 0;
+	char imei[RESULT_STR_LEN]={0};
+
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);	
 	get_topic();
-	//≥ı ºªØlibmosquittoø‚
+
 	ret = mosquitto_lib_init();
 	if(ret)
 	{
@@ -90,7 +104,7 @@ int main(int argc,char *argv[])
         return -1;
 	}
 
-	mosq = mosquitto_new("pub_test",true,NULL);
+	mosq = mosquitto_new(imei,true,NULL);
 	if(!mosq)
 	{
 		MQTT_LOG("create client failed..\n");

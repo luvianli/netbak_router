@@ -31,8 +31,8 @@ config usesiminfo usesiminfo
 	option switchreq 0
 	option rebootact 0
 	option speedcmd ''
-	option checksignalips '223.5.5.5;www.baidu.com;www.qq.com'
-	option default_checkip '223.5.5.5;www.baidu.com;www.qq.com'
+	option checksignalips '223.5.5.5;www.baidu.com'
+	option default_checkip '223.5.5.5;www.baidu.com'
 	option maxdelay ''
 	option card_slot 1
 	option lock 0

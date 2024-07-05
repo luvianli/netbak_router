@@ -263,7 +263,7 @@ void check_network()
     char iccid[OPTION_STR_LEN] = { 0 };
     int hbq = 0, this_bool = 0;
     int enable = 0;
-
+	int disconn = 0;
 
 
     isProductionMode();
@@ -286,6 +286,9 @@ void check_network()
     system(cmd);
     sleep(30);
 
+	huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
+	return ;//断网停止检测
+	
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 	ret = atcmd_get_iccid(iccid);
 	if(ret == 1 && strlen(iccid)>5)
@@ -377,7 +380,7 @@ void init_cloud_client()
 	system("huayi_mqtt_content &");
 	sleep(10);
 	system("huayi_mqtt_pub &");
-	system("huayi_mqtt_sub &");
+	//system("huayi_mqtt_sub &");
     return;
 }
 

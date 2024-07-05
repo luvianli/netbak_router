@@ -21,13 +21,23 @@ void huayi_set_wifi(cJSON *response_root)
 	char ssid[TEMP_STR_LEN] = {0},oldssid[OPTION_STR_LEN] = {0};
 	char key[OPTION_STR_LEN] = {0}, oldkey[TEMP_STR_LEN] = {0};
 	int hid = -1,hidden = -1, oldhidden = -1;
-	int speedLimit = 1,oldspeedLimit = 0,qos_mode = 0;
+	int speedLimit = 1,oldspeedLimit = 0,qos_mode = 0,get;
 	int flag = 0;
 	unsigned long long monthFlow = 0;
 	
 	if(NULL == response_root) 
 	{
 		return ;
+	}
+
+	if(huayi_json_get_int(response_root,"get",&get))
+	{
+		if(get == 1)
+		{
+			system("killall huayi_mqtt_pub");
+			sleep(2);
+			system("huayi_mqtt_pub &");		
+		}
 	}
 
 	if (huayi_json_get_str(response_root, "ssid", ssid,OPTION_STR_LEN))
@@ -107,11 +117,23 @@ void huayi_set_system(cJSON *response_root)
 	int switchsim = -1,simNum = 0,at_card = 0;
 	int heartbeat = 30,oldheartbeat = 0;
 	int upgrade = 0;
+	int olddisconn = 0,disconn = 0;
 	char firmware_url[LIST_STR_LEN] = {0};
 
 	if(NULL == response_root) 
 	{
 		return;
+	}
+
+	if(huayi_json_get_int(response_root,"disconn",&disconn)) 
+	{
+		huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&olddisconn);		
+		if((disconn == 0 || disconn == 1) && olddisconn != disconn)
+		{
+			MQTT_LOG("change disconn");
+			huayi_uci_set_int(PKG_SYSTEM,"network","disconn",disconn);
+			huayi_uci_commit(PKG_SYSTEM);
+		}
 	}
 
 	if(huayi_json_get_int(response_root,"switch",&switchsim)) 

@@ -316,12 +316,74 @@ int main(int argc,char *argv[])
 	int cpe_status = 0;
 	int wired_link = 0;
 	int cpe_link = 0;
-	int  i = 0;
+	int  i = 0,disconn = 0;
 	char detectip[OPTION_STR_LEN] = {0};
 	delaycount = 1;
 	while(1)
 	{
-		sleep(10);
+		sleep(20);
+		huayi_uci_get_int(PKG_STATUS_NETWORK, "wan", "wan_up", &cpe_status);
+		if(cpe_status == 1)
+	{
+		huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "gateway", del_gateway);
+		huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
+		if(disconn == 1)//断网
+		{
+			memset(cmd_str,0,sizeof(cmd_str));
+			memset(resultbuf,0,sizeof(resultbuf));
+			sprintf(cmd_str, "route | grep default | wc -l");
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+			if(atoi(resultbuf) > 0)//删除默认路由
+			{
+				system("route del default");
+			}
+
+			memset(cmd_str,0,sizeof(cmd_str));
+			memset(resultbuf,0,sizeof(resultbuf));
+			sprintf(cmd_str, "route | grep 106.54.16.153 |wc -l",del_gateway);
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+			if(atoi(resultbuf) == 0)//添加上报路由
+			{
+				memset(cmd_str,0,sizeof(cmd_str));
+				sprintf(cmd_str,"route add 106.54.16.153 gw %s dev eth1",del_gateway);
+				system(cmd_str);
+			}else
+			{
+				memset(cmd_str,0,sizeof(cmd_str));
+				memset(resultbuf,0,sizeof(resultbuf));
+				sprintf(cmd_str, "route | grep 106.54.16.153 | grep %s | wc -l",del_gateway);
+				get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+				if(atoi(resultbuf) == 0)//默认路由不对
+				{
+					system("route del 106.54.16.153");
+					memset(cmd_str,0,sizeof(cmd_str));
+					sprintf(cmd_str,"route add 106.54.16.153 gw %s dev eth1",del_gateway);
+					system(cmd_str);
+				}
+			}
+		}else
+		{
+			memset(cmd_str,0,sizeof(cmd_str));
+			memset(resultbuf,0,sizeof(resultbuf));
+			sprintf(cmd_str, "route | grep default | wc -l");
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+			if(atoi(resultbuf) == 0 && strlen(del_gateway) > 5)//恢复默认路由
+			{
+				memset(cmd_str,0,sizeof(cmd_str));
+				sprintf(cmd_str,"route add default gw %s dev eth1",del_gateway);
+				system(cmd_str);
+			}
+
+			memset(cmd_str,0,sizeof(cmd_str));
+			memset(resultbuf,0,sizeof(resultbuf));
+			sprintf(cmd_str, "route | grep 106.54.16.153 |wc -l",del_gateway);
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+			if(atoi(resultbuf) > 0)
+			{
+				system("route del 106.54.16.153");
+			}			
+		}
+	}
 		memset(wan_type,0,sizeof(wan_type));
 		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 		if(strcmp(wan_type,"rep4g") != 0)
