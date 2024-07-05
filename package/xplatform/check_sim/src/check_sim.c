@@ -287,7 +287,8 @@ void check_network()
     sleep(30);
 
 	huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
-	return ;//断网停止检测
+	if(disconn == 1)
+		return ;//断网停止检测
 	
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 	ret = atcmd_get_iccid(iccid);
