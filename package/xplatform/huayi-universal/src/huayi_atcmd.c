@@ -1680,7 +1680,7 @@ LTE_BOOL atcmd_get_EC20_imei(char *value)
 	int i = 0;
 	char *ptr = NULL;
 
-	if ( AtcmdSendDelay("AT+CGSN", strlen("AT+CGSN"), 0) == LTE_FALSE )
+	if ( AtcmdSendDelay("AT+CGSN=1", strlen("AT+CGSN=1"), 0) == LTE_FALSE )
 	{
 		return LTE_FALSE;
 	}
@@ -1691,6 +1691,8 @@ LTE_BOOL atcmd_get_EC20_imei(char *value)
 	{
 		return LTE_FALSE;
 	}
+
+	ptr = strstr(ptr, "+CGSN:");
 
 	for ( i=0; i < AT_CMD_MAX_LEN-16; i++ )
 	{
