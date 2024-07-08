@@ -35,7 +35,10 @@ void huayi_set_wifi(cJSON *response_root)
 		if(get == 1)
 		{
 			system("killall huayi_mqtt_pub");
+			system("killall huayi_mqtt_content");			
 			sleep(2);
+			system("huayi_mqtt_content &");
+			sleep(5);
 			system("huayi_mqtt_pub &");		
 		}
 	}

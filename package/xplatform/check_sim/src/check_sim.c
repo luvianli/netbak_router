@@ -307,6 +307,7 @@ cretry1:
     {
         save_useing_siminfo(simn);
         CON_LOG("sim %d network ok \n", simn);
+		system("huayi-reset ntpd");
         return;
     }
     else
@@ -352,6 +353,7 @@ cretry2:
             sleep(3);
             save_useing_siminfo(i);
             CON_LOG("sim %d network ok \n", i);
+			system("huayi-reset ntpd");
             this_bool = 1;
             return;
         }
