@@ -321,6 +321,7 @@ void get_pub_content(char *heartdata)
 	unsigned long long dayFlow = 0,monthFlow = 0;
 	unsigned long long rx=0,tx=0;
 	char cmd[SMALL_STR_LEN] = {0};
+	int disconn = 0;
 
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "iccid", iccid);
@@ -339,6 +340,7 @@ void get_pub_content(char *heartdata)
 	huayi_uci_get_long_long(PKG_SYSTEM, "network", "monthFlow",&monthFlow);
 	huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &heartbeat);
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
+	huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);	
 	
 	result_root = cJSON_CreateObject();
 	cJSON_AddStringToObject(result_root,"imei", imei);
@@ -358,6 +360,7 @@ void get_pub_content(char *heartdata)
 	cJSON_AddStringToObject(result_root,"version", version);
 	cJSON_AddNumberToObject(result_root,"speedLimit", speedLimit);
 	cJSON_AddNumberToObject(result_root,"heartbeat", heartbeat);
+	cJSON_AddNumberToObject(result_root,"disconn", disconn);
 
 	arp_array = cJSON_CreateArray();
 	for(i;i<simNum;i++)
