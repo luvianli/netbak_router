@@ -40,7 +40,6 @@ void huayi_get_network_config(char *gatewayip,char *mac_address,char *ip_address
 	strcpy(mac_address, resultbuf);
 
 	huayi_uci_get_long_long(PKG_SYSTEM,"network","amound_end",&endd);
-	huayi_uci_get_long_long(PKG_SYSTEM,"network","amound_end",&enddd);
 	huayi_uci_get_long_long(PKG_SYSTEM,"network","all",&all);
 	huayi_uci_get_long_long(PKG_SYSTEM, "network", "rx_bytes", &rx_bytes);
 	huayi_uci_get_long_long(PKG_SYSTEM, "network", "tx_bytes", &tx_bytes);
@@ -49,8 +48,8 @@ void huayi_get_network_config(char *gatewayip,char *mac_address,char *ip_address
 	newend = all + rx_bytes + tx_bytes;
 	*end = newend;
 
-	huayi_uci_set_long_long(PKG_SYSTEM,"network","amound_end",newend);	
-	CLOUD_CLIENT_LOG("%ld,%lld",endd,enddd);
+	huayi_uci_set_long_long(PKG_SYSTEM,"network","amound_end",newend);
+	huayi_uci_commit(PKG_SYSTEM);
 	return;
 }
 
@@ -103,6 +102,7 @@ void huayi_get_qos_config(int *speed)
 int huayi_set_amound_config(cJSON *response_root)
 {
 	char start[OPTION_STR_LEN] = {0},end[OPTION_STR_LEN] = {0}; 
+	char wan_type[OPTION_STR_LEN] = {0};
 
 	if(!huayi_json_get_str(response_root,"amound_end",end,OPTION_STR_LEN)){
 		return ;
@@ -115,6 +115,14 @@ int huayi_set_amound_config(cJSON *response_root)
 		huayi_uci_set_long(PKG_SYSTEM, "network", "rx_bytes", 0);
 		huayi_uci_set_long(PKG_SYSTEM, "network", "tx_bytes", 0);
 		huayi_uci_commit(PKG_SYSTEM);
+
+		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
+		if (!strcmp(wan_type,"mobile"))
+		{
+			system("ifup wan4g");
+		}else
+			system("ifup wan");
+		
 		system("/etc/init.d/hy_get_bytes restart");
 	}
 	return ;
