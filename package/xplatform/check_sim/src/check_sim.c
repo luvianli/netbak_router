@@ -1,0 +1,471 @@
+/*******************************************************************************************
+ * Project:  check_sim                                                        *
+ *                                                                                         *
+ * Author :  rex									                                       *
+ *  																					   *
+ * Changelist: 																		       *
+ * 20220215 add by rex  Version 1.0
+ * check sim card
+ ******************************************************************************************/
+#include "huayi_atcmd.h"
+#include "huayi_uci_fun.h"
+#include <signal.h>
+#include <pthread.h>
+#include <wait.h>
+void switch_sim(int i, int gpio);
+
+int isProductionMode();
+void save_siminfo(int i, int gpio);
+
+
+void save_siminfo(int i, int gpio)
+{
+    char cmd[OPTION_STR_LEN] = {0};
+    int  netoperator = 0;
+    char tmp[OPTION_STR_LEN] = {0};
+    char checksignalip[OPTION_STR_LEN] = {0}, maxdelay[OPTION_STR_LEN] = {0};
+    int ret = 0, count = 0;
+    int i_ready = 0, i_signal = 0;
+    char lte_value[OPTION_STR_LEN] = {0};
+
+    sprintf(cmd, "sim%d", i);
+    atcmd_get_cpin(&i_ready);
+    while (i_ready != MODEM_SIN_READY)
+    {
+        sleep(1);
+        atcmd_get_cpin(&i_ready);
+        if (count == 3)
+        {
+            break;
+        }
+        count += 1;
+    }
+    count = 0;
+retry_getccid:    //尽最大可能取到ICCID
+    memset(lte_value, 0, OPTION_STR_LEN);
+    ret = atcmd_get_iccid(lte_value);
+    if (strlen(lte_value) < 5 || (strstr(lte_value, "ERR") != NULL) || (0 == ret) || isAlphanumeric(lte_value) == 0)
+    {
+
+        count += 1;
+        if (40 == count) //3.2ms
+        {
+            system("huayi_AT_cli AT+CFUN=0 ");
+            sleep(5);
+            system("huayi_AT_cli AT+CFUN=1 ");
+        }
+        strcpy(lte_value, "");
+        usleep(800);
+        if (count < 55)
+            goto retry_getccid;
+    }
+    count = 0;
+    huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
+    sprintf(tmp, "%d_%s", gpio, lte_value);
+    huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid_gpio", tmp);
+    huayi_uci_set_int(PKG_M_SYSTEM, cmd, "card_slot", i);
+    if (strlen(lte_value)  < 10)
+    {
+        return;     //no iccid, that mean no simcard
+    }
+retry_getlac:	  //尽最大可能取到LAC
+    memset(lte_value, 0, OPTION_STR_LEN);
+    atcmd_get_lac(lte_value);
+    //printf("rex ====   %s, %d  ---lac = %s-\n", __FUNCTION__, __LINE__, lte_value);
+    if (strlen(lte_value) < 2)
+    {
+        strcpy(lte_value, "");
+        count += 1;
+        if (count < 10)
+            goto retry_getlac;
+    }
+    huayi_uci_set_str(PKG_M_SYSTEM, cmd, "lac", lte_value);
+    count = 0;
+
+retry_getci:	  //尽最大可能取到ci
+    memset(lte_value, 0, OPTION_STR_LEN);
+    atcmd_get_ci(lte_value);
+    //printf("rex ====   %s, %d  --ci =%s--\n", __FUNCTION__, __LINE__, lte_value);
+    if (strlen(lte_value) < 2)
+    {
+        strcpy(lte_value, "");
+        count += 1;
+        if (count < 10)
+            goto retry_getci;
+    }
+    huayi_uci_set_str(PKG_M_SYSTEM, cmd, "ci", lte_value);
+    count = 0;
+
+retry_getoperator:	  //尽最大可能取到operator info
+    memset(lte_value, 0, OPTION_STR_LEN);
+    atcmd_get_imsi(lte_value);
+    //printf("rex ====   %s, %d  ---operator = %s-\n", __FUNCTION__, __LINE__, lte_value);
+    if (strncmp(lte_value, "46000", 5) == 0 || strncmp(lte_value, "46002", 5) == 0 || strncmp(lte_value, "46004", 5) == 0 ||
+            strncmp(lte_value, "46007", 5) == 0 || strncmp(lte_value, "46008", 5) == 0 || strncmp(lte_value, "46013", 5) == 0)
+    {
+        netoperator = 3;
+    }
+    else if (strncmp(lte_value, "46001", 5) == 0 || strncmp(lte_value, "46006", 5) == 0 ||
+             strncmp(lte_value, "46009", 5) == 0 ||
+             strncmp(lte_value, "46010", 5) == 0)
+    {
+        netoperator = 2;
+    }
+    else if (strncmp(lte_value, "46003", 5) == 0 || strncmp(lte_value, "46005", 5) == 0 ||
+             strncmp(lte_value, "46011", 5) == 0 ||
+             strncmp(lte_value, "460012", 5) == 0)
+    {
+        netoperator = 1;
+    }
+    else
+    {
+        netoperator = 0;
+        count += 1;
+        if (count < 10)
+            goto retry_getoperator;
+    }
+    huayi_uci_set_int(PKG_M_SYSTEM, cmd, "operator", netoperator);
+    count = 0;
+
+    memset(lte_value, 0, OPTION_STR_LEN);
+    memset(tmp, 0, OPTION_STR_LEN);
+    atcmd_get_quectel_bandLte(lte_value);
+    if (strstr(lte_value, "LTE") != NULL)
+    {
+        strcpy(tmp, "4G");
+    }
+    else if (strstr(lte_value, "WCDMA") != NULL)
+    {
+        strcpy(tmp, "3G");
+    }
+    else
+    {
+        strcpy(tmp, "2G");
+    }
+    huayi_uci_set_str(PKG_M_SYSTEM, cmd, "networktype", tmp);
+
+    atcmd_get_signal_for_cloud(&i_signal);
+    huayi_uci_set_int(PKG_M_SYSTEM, cmd, "signal", i_signal);
+
+    huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", checksignalip);
+    huayi_uci_set_str(PKG_M_SYSTEM, cmd, "checksignalips", checksignalip);
+
+    huayi_uci_commit(PKG_M_SYSTEM);
+
+    return;
+}
+
+
+void switch_sim(int i, int gpio)
+{
+    char tmp[OPTION_STR_LEN];
+
+    isProductionMode();
+
+    snprintf(tmp, OPTION_STR_LEN, "switch_sim %d", i);
+    system(tmp);
+
+    save_siminfo(i, gpio);
+}
+
+int isIccidDuplicate(const char iccidArray[][OPTION_STR_LEN], int currentIndex) {
+	int i;
+	for (i = 0; i < currentIndex; i++) {
+        if (strcmp(iccidArray[i], iccidArray[currentIndex]) == 0 && strcmp(iccidArray[i],"")) {
+			SWITCH_SIM_LOG ("iccid%d:%s == iccid%d:%s ,reset sim info",i ,iccidArray[i],currentIndex, iccidArray[currentIndex]);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void clearAllIccids(int simnum) {
+    char cmd[OPTION_STR_LEN];
+	int i;
+    for (i = 0; i < simnum; i++) {
+        sprintf(cmd, "sim%d", i);
+        huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", "");
+    }
+    huayi_uci_commit(PKG_M_SYSTEM);
+}
+
+void set_siminfo()
+{
+    int i, simnum, usegpio, gpio, def_gpio, card_slot;
+    char cmd[OPTION_STR_LEN] = {0};
+    char lte_value[OPTION_STR_LEN] = {0};
+
+    // Wait until atcmd is true
+    while (LTE_TRUE != atcmd_check())
+    {
+        sleep(1);
+    }
+
+    huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", &usegpio);
+    atcmd_get_EC20_imei(lte_value);
+
+    if (strlen(lte_value) < 5)
+    {
+        strcpy(lte_value, "");
+    }
+
+    huayi_uci_set_str(PKG_M_SYSTEM, "system", "imei", lte_value);
+    huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+
+	
+	char iccid[simnum][OPTION_STR_LEN];
+    huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &card_slot);
+
+againt:
+
+    for (i = 0; i < simnum; i++)
+    {
+        sprintf(cmd, "sim%d", i);
+        huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", iccid[i]);	
+        huayi_uci_get_int(PKG_M_SYSTEM, cmd, "gpio", &gpio);
+
+
+        if (isIccidDuplicate(iccid, i)) {
+            clearAllIccids(simnum);
+			goto againt;
+        }
+
+
+        if (strlen(iccid[i]) < 5 && card_slot != i)
+        {
+            SWITCH_SIM_LOG("\n\nsim%d start switch card", i);
+            switch_sim(i, gpio);
+        }
+        else if (strlen(iccid[i]) > 5)
+        {
+            SWITCH_SIM_LOG("Sim%d information already exists");
+        }
+        else if(card_slot == i)
+        {
+            def_gpio = gpio;
+        }
+    }
+
+    switch_sim(card_slot, def_gpio);
+}
+
+
+void check_network()
+{
+    int totalsimnum = 0, simn = 0, usegpio = 0;
+    char cmd[OPTION_STR_LEN] = {0};
+    int  netoperator = 0;
+    char tmp[OPTION_STR_LEN] = {0};
+    char check_ip[OPTION_STR_LEN] = {0};
+    int ret = 0, count = 0, i = 0;
+    int i_ready = 0, i_signal = 0;
+    char lte_value[OPTION_STR_LEN] = {0};
+    char iccid[OPTION_STR_LEN] = { 0 };
+    int hbq = 0, this_bool = 0;
+    int enable = 0;
+
+
+
+    isProductionMode();
+	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+    sprintf(cmd, "switch_sim %d", simn);
+    system(cmd);
+    sleep(20);
+
+    //huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+cretry1:
+    memset(check_ip, 0, OPTION_STR_LEN);
+    huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
+	CON_LOG("check sim%d %dtimes\n", simn,count);
+    if (networkCheck(check_ip))
+    {
+        save_useing_siminfo(simn);
+        CON_LOG("sim %d network ok \n", simn);
+        return;
+    }
+    else
+    {
+        count += 1;
+        sleep(5);
+        if (count < 6)
+            goto cretry1;
+    }
+    count = 0;
+
+    CON_LOG("sim%d ping bu tong %s", simn, check_ip);
+check_net:
+    huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &totalsimnum);
+    for (i = 0; i < totalsimnum; i++)
+    {
+        if (i == simn)
+            continue;
+        CON_LOG("network error ,switch sim%d", i);
+        isProductionMode();
+        memset(tmp, 0, OPTION_STR_LEN);
+        sprintf(tmp, "switch_sim %d", i);
+        system(tmp);
+        sleep(20);
+cretry2:
+        memset(tmp, 0, OPTION_STR_LEN);
+        huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "default_checkip", tmp);
+		CON_LOG("check sim%d %dtimes\n", i,count);
+        if (networkCheck(tmp))
+        {
+            sleep(3);
+            save_useing_siminfo(i);
+            CON_LOG("sim %d network ok \n", i);
+            this_bool = 1;
+            return;
+        }
+        else
+        {
+            count += 1;
+            sleep(5);
+            if (count < 6)
+                goto cretry2;
+
+        }
+        count = 0;
+        sleep(1);
+    }
+	SWITCH_SIM_LOG("All cards network error -> exe reboot");
+    sleep(15);
+    //system("reboot");
+
+    return;
+}
+
+
+void init_cloud_client()
+{
+    CON_LOG("Starting communication with cloud platform\n\n");
+    system("hy_cloud_client &");
+	//system("hy_internet_strategy &");
+    return;
+}
+
+void at_init()
+{
+    int ret = 0;
+
+    ret = AtcmdSendDelay("AT+QCFG=\"devmode,0\"", strlen("AT+QCFG=\"devmode,0\""), 0);
+    //usleep(500);
+    //system("huayi_AT_cli AT+CFUN=0 ");
+    //sleep(5);
+    //system("huayi_AT_cli AT+CFUN=1 ");
+
+    return;
+}
+
+void gpio_init()
+{
+    system("switch_sim 100");
+    sleep(1);
+
+    return;
+}
+
+
+void TcpServerStart()
+{
+
+
+#if defined(CONFIG_HUAYI_TCP_SOCKET)
+    system("huayi_multi_tcp_server &");
+    CON_LOG("start huayi_multi_tcp_server");
+#endif
+}
+
+
+
+void production_test()
+{
+
+    char iccid[OPTION_STR_LEN] = { 0 };
+    memset(iccid, 0, OPTION_STR_LEN);
+    huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid);
+    if (strlen(iccid) > 10)
+    {
+        system("huayi_production_tcp_server &");
+        CON_LOG("start huayi_production_tcp_server");
+    }
+}
+
+void SLM_init()
+{
+	int ret = 0;
+
+	ret = AtcmdSendDelay("AT+QCFG=\"devmode,0\"",strlen("AT+QCFG=\"devmode,0\""),0);
+	//usleep(500);
+	//system("huayi_AT_cli AT+CFUN=0 ");
+	//sleep(5);
+	//system("huayi_AT_cli AT+CFUN=1 ");
+	system("devmem 0x10000060 32 0x55150451");
+	return 1;
+}
+
+int isProductionMode()
+{
+    int mode = 0 ;
+
+    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+    if (mode == 0)
+    {
+        while (isProcessRunning("ated"))
+        {
+            CON_LOG("Process ated is running. Waiting for 3 seconds...\n");
+            sleep(3);
+        }
+    }
+    CON_LOG("ated not start");
+    return 1;
+
+}
+
+void Production_testing_mode()
+{
+    int mode = 0,allinfo = 0;
+    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "all_info", &allinfo);
+    if (mode == 0)
+    {
+        CON_LOG("Start production testing");
+        set_siminfo();
+        CON_LOG("Information collection completed, waiting for production testing");
+        do
+        {
+            huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+            sleep(2);
+        }
+        while (mode == 0);
+        CON_LOG("End production testing");
+    }
+    else
+    {
+        CON_LOG("Start working mode");
+    }
+
+	if (mode == 1 && allinfo == 1)
+    {
+        CON_LOG("get all sim card info");
+        set_siminfo();
+		huayi_uci_set_int(PKG_M_SYSTEM, "system", "all_info", 0);
+		huayi_uci_commit(PKG_M_SYSTEM);
+    }
+
+}
+
+int main(int argc, char *argv[])
+{
+
+    SLM_init();
+
+    Production_testing_mode();
+
+    check_network();
+    //init_cloud_client();
+
+    return 0;
+}
+
+

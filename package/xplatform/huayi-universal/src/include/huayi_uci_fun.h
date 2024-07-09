@@ -37,11 +37,9 @@ struct DataPacket {
     char returnValue[BUFFER_SIZE];
 };
 
-
-
-
-
-
+#define MAX_CLIENTS 10
+#define MAX_BUFFER_SIZE 1024
+#define MAX_HOSTS 10
 
 
 

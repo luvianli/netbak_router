@@ -526,6 +526,69 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 }
 #endif
 
+#if defined(CONFIG_HUAYI_4G_LED_SUPPORT)
+void huayi_core_start_4g_led(struct VcoreAgent *Agent)
+{
+		int network_status = 0;
+		int i_ready = 0; 
+		
+		if (internet_do_ping_detect(INTERNET_DOMAIN, NULL) == 1)
+		{
+			network_status = 1; 
+	
+		}
+		else
+		{
+			network_status = 0;
+		}
+	
+#if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
+		huayi_uci_get_int(PKG_STATUS_MODEM, "modem", "sim_ready", &i_ready);
+		if(i_ready == 1 && network_status == 1)
+		{
+			char ifname[IPV4_STR_LEN] = {0};
+			huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ifname", ifname);
+			if(!strcmp(ifname, "eth1") || !strcmp(ifname, "wwan0"))
+			{
+				do_4G_online_led_on();
+			}else
+			{
+				do_4G_online_led_off();
+			}
+		}else
+		{
+			do_4G_online_led_off();
+		}
+#endif
+		if(1 == network_status)
+		{
+			int i_signal;
+			atcmd_get_signal(&i_signal);
+			if(i_signal > 80)
+			{
+		
+				do_signal_led_high();
+			}else if(i_signal > 0)
+			{
+		
+				do_signal_led_low();
+			}else
+			{
+		
+				do_signal_led_off();
+			}//rssi=csq*2-113,i_signal=csq*100/31
+		}else
+		{
+			do_signal_led_off();
+		}	
+			
+		huayi_core_add_task(HUAYI_INTERNET_LED_DELAY_TIME,HUAYI_START_CHECK_4G_LED_TASK,huayi_core_start_4g_led,Agent);
+		
+		return;
+
+}
+#endif
+
 void huayi_core_update_led_status(struct VcoreAgent *Agent)
 {
 #if defined(CONFIG_HUAYI_WPS_LED_SUPPORT)
@@ -989,6 +1052,10 @@ void huayi_utimer_functions_start(struct VcoreAgent *Agent)
 
 #if defined(CONFIG_HUAYI_INTERNET_LED_SUPPORT)
 	huayi_core_start_internet_led(Agent);
+#endif
+
+#if defined(CONFIG_HUAYI_4G_LED_SUPPORT)
+	huayi_core_start_4g_led(Agent);
 #endif
 
 #if defined(CONFIG_HUAYI_SUPPORT_FLUSH_ARP)

@@ -1351,5 +1351,248 @@ check:
 }
 
 
+void save_useing_siminfo(int i)
+{
+	char cmd[OPTION_STR_LEN] = {0};
+	int  netoperator = 0;
+	char tmp[OPTION_STR_LEN] = {0};
+	int ret = 0, count = 0, gpio = 0;
+	int i_ready = 0, i_signal = 0;
+	char lte_value[OPTION_STR_LEN] = {0};
+    int AsciiNum[22], j;
+	int signal = 0;
 
+	sprintf(cmd, "sim%d", i);
+	count = 0;
+retry_getccid:
+    memset(lte_value, 0, OPTION_STR_LEN);
+	atcmd_get_iccid(lte_value);
+	for(j=0;j<strlen(lte_value) ,AsciiNum[j]=lte_value[j];j++)		
+	if(strlen(lte_value) < 5 || (strstr(lte_value,"ERR")!= NULL) ||!((AsciiNum[j]>=48 && AsciiNum[j]<=58) || (AsciiNum[j]>=65 && AsciiNum[j]<=90) || (AsciiNum[j]>=97 && AsciiNum[j]<=122)))
+	{
+		count += 1;
+        strcpy(lte_value,"");
+        usleep(800);
+        if(count < 10)
+            goto retry_getccid;
+	}
+    count = 0;
+	huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "iccid", lte_value);
+	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
+
+
+retry_getlac:     //��������ȡ��LAC
+    memset(lte_value, 0, OPTION_STR_LEN);
+    atcmd_get_lac(lte_value);
+    //printf("rex ====   %s, %d  ---lac = %s-\n", __FUNCTION__, __LINE__, lte_value);
+    if(strlen(lte_value) < 2)
+    {
+        strcpy(lte_value, "");
+        count+=1;
+        if(count < 10)
+            goto retry_getlac;
+    }
+    huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "lac", lte_value);
+	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "lac", lte_value);
+    count = 0;
+
+retry_getci:      //��������ȡ��ci
+    memset(lte_value, 0, OPTION_STR_LEN);
+    atcmd_get_ci(lte_value);
+    //printf("rex ====   %s, %d  --ci =%s--\n", __FUNCTION__, __LINE__, lte_value);
+    if(strlen(lte_value) < 2)
+    {
+        strcpy(lte_value, "");
+        count+=1;
+        if(count < 10)
+            goto retry_getci;
+    }
+    huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "ci", lte_value);
+	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "ci", lte_value);
+    count = 0;
+
+
+retry_getoperator:    //��������ȡ��operator info
+    memset(lte_value,0,OPTION_STR_LEN);
+    atcmd_get_imsi(lte_value);
+    //printf("rex ====   %s, %d  ---operator = %s-\n", __FUNCTION__, __LINE__, lte_value);
+    if (strncmp(lte_value,"46000",5) == 0 || strncmp(lte_value,"46002",5) == 0 || strncmp(lte_value,"46004",5) == 0 ||
+        strncmp(lte_value,"46007",5) == 0 || strncmp(lte_value,"46008",5) == 0 || strncmp(lte_value,"46013",5) == 0)
+    {
+        netoperator = 3;
+    }
+    else if (strncmp(lte_value,"46001",5) == 0 || strncmp(lte_value,"46006",5) == 0 || strncmp(lte_value,"46009",5) == 0 ||
+        strncmp(lte_value,"46010",5) == 0 )
+    {
+        netoperator = 2;
+    }
+    else if (strncmp(lte_value,"46003",5) == 0 || strncmp(lte_value,"46005",5) == 0 || strncmp(lte_value,"46011",5) == 0 ||
+        strncmp(lte_value,"460012",5) == 0 )
+    {
+        netoperator = 1;
+    }
+    else
+    {
+        netoperator = 0;
+        count+=1;
+        if(count < 10)
+            goto retry_getoperator;
+    }
+    huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "operator", netoperator);
+	huayi_uci_set_int(PKG_M_SYSTEM, cmd, "operator", netoperator);
+    count = 0;
+
+	
+	atcmd_get_signal(&signal);
+	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "signal", signal);
+	huayi_uci_set_int(PKG_M_SYSTEM, cmd, "signal", signal);
+
+
+
+	memset(tmp, 0, OPTION_STR_LEN);
+	memset(lte_value, 0, OPTION_STR_LEN);
+	huayi_uci_get_str(PKG_M_SYSTEM, cmd, "speedcmd", tmp);
+	if(strlen(tmp) > 5)
+	{
+		ret = get_cmd_result(tmp, lte_value, sizeof(lte_value));
+		if(ret == HUAYI_TRUE)
+		{
+			//todo iperf
+			huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "speedcmd", tmp);
+		}
+		else
+		{
+			huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeddownlink", 0);
+			huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeduplink", 0);
+		}
+	}
+	else
+	{
+		huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeddownlink", 0);
+		huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "speeduplink", 0);
+		huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "speedcmd", "");
+	}
+
+	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
+	huayi_uci_commit(PKG_M_SYSTEM);
+
+	return;
+}
+
+int isAlphanumeric(char *str) {
+    int i;
+
+    for (i = 0; str[i] != '\0'; i++) {
+        if (!isalnum(str[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+float pingCheck(const char* host) {
+    char command[MAX_BUFFER_SIZE];
+    char buffer[MAX_BUFFER_SIZE];
+    FILE* fp;
+
+    sprintf(command, "ping -c 3 -W 1 %s 2>&1", host);
+
+    fp = popen(command, "r");
+    if (fp == NULL) {
+        perror("popen");
+        return -1.0;
+    }
+
+    size_t bytesRead = fread(buffer, sizeof(char), sizeof(buffer) - 1, fp);
+    buffer[bytesRead] = '\0';
+
+    pclose(fp);
+
+    if (strstr(buffer, "bad address") != NULL) {
+        return -1.0;
+    }
+
+    const char* delayStart = strstr(buffer, "time=");
+    if (delayStart != NULL) {
+        delayStart += 5;
+        float delay = strtof(delayStart, NULL);
+        return delay;
+    }
+
+    return -1.0;
+}
+
+
+int networkCheck(const char* hosts) {
+    const char* addresses[MAX_HOSTS];
+    int num_addresses = 0;
+    char hosts_copy[256];
+    char* token;
+    char value[RESULT_STR_LEN] = {0};
+
+    strcpy(hosts_copy, hosts);
+    token = strtok(hosts_copy, ";");
+
+    while (token != NULL && num_addresses < MAX_HOSTS) {
+        addresses[num_addresses++] = token;
+        token = strtok(NULL, ";");
+    }
+
+    static int prevNetworkStatus = -1;
+
+    int networkStatus = 0;
+    float pingDelay =0.0;
+    int i = 0;
+
+    for (i = 0; i < num_addresses; i++) {
+        //INTERNET_LOG("Checking %s...\n", addresses[i]);
+
+
+        pingDelay = pingCheck(addresses[i]);
+        if (pingDelay >= 0.0) {
+            networkStatus = 1;
+            sprintf(value,"%.2f",pingDelay);
+            huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "maxdelay",value);
+            huayi_uci_commit(PKG_M_SYSTEM);
+            break;
+        }
+    }
+    
+    if (networkStatus != prevNetworkStatus) {
+        if (networkStatus == 1) {
+            INTERNET_LOG("Checking %s Internet available\n",addresses[i]);
+            INTERNET_LOG("Network is available (ping check). Delay: %.2f ms\n", pingDelay);
+        } else {
+            INTERNET_LOG("Internet error\n");
+        }
+        prevNetworkStatus = networkStatus;
+    }
+
+
+    return networkStatus;
+}
+
+int isProcessRunning(const char *processName) {
+    FILE *fp;
+    char buffer[1024];
+
+    // Run ps command and read the output
+    fp = popen("ps", "r");
+    if (fp == NULL) {
+        perror("popen");
+        exit(EXIT_FAILURE);
+    }
+
+    // Check if the processName is present in the output
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        if (strstr(buffer, processName) != NULL) {
+            pclose(fp);
+            return 1; // Process is running
+        }
+    }
+
+    pclose(fp);
+    return 0; // Process is not running
+}
 

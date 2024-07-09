@@ -1070,8 +1070,10 @@ void do_power_led_off(void)
 		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", 37); //blue led  off
 		system(cmd);
 		//red led on
+		#if defined(CONFIG_HUAYI_INTERNET_LED_SUPPORT)
 		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
 		system(cmd);
+		#endif
 		return;
 	}
 	/*end by rex*/
@@ -1314,4 +1316,66 @@ void do_internet_led_slowly(void)
 }
 #endif
 
+#if defined(CONFIG_HUAYI_4G_LED_SUPPORT)
+void do_4G_online_led_off(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	
+	snprintf(cmd, CMD_STR_LEN, "gpio l 11 0 4000 0 0 4000");
 
+	system(cmd);
+
+	return;
+}
+
+void do_4G_online_led_on(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	
+	snprintf(cmd, CMD_STR_LEN, "gpio l 11 4000 0 0 0 4000");
+
+	system(cmd);
+
+	return;
+}
+
+void do_signal_led_high(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l 3 4000 0 0 0 4000");
+	system(cmd);
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l 37 4000 0 0 0 4000");
+	system(cmd);
+	
+	return;
+}
+
+void do_signal_led_low(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l 3 4000 0 0 0 4000");
+	system(cmd);
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l 37 0 4000 0 0 4000");
+	system(cmd);
+	
+	return;
+}
+
+void do_signal_led_off(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l 3 0 4000 0 0 4000");
+	system(cmd);
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l 37 0 4000 0 0 4000");
+	system(cmd);
+	
+	return;
+}
+
+#endif

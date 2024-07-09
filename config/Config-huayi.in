@@ -209,6 +209,11 @@ config HUAYI_POWER_LED_SUPPORT
 	int "Which Number of power led gpio"
 	depends on HUAYI_POWER_LED_SUPPORT
 
+config HUAYI_4G_LED_SUPPORT
+	bool	"Support 4g led"
+	depends on HUAYI_PLATFORM_SUPPORT
+	bool
+	
 config HUAYI_BUTTON_WIFI_SUPPORT
 	bool	"Support GPIO WIFI button"
 	depends on HUAYI_SUPPORT_GPIO_EVENT

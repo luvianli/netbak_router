@@ -188,6 +188,51 @@
                             } while (0)
 
 
+#define SWITCH_SIM_LOG_SIN 1
+                                                
+#define SWITCH_SIM_LOG(format, args...) \
+                                                    do { \
+                                                        if (SWITCH_SIM_LOG_SIN) { \
+                                                            time_t rawtime; \
+                                                            struct tm *timeinfo; \
+                                                            char timeString[20]; \
+                                                            time(&rawtime); \
+                                                            timeinfo = localtime(&rawtime); \
+                                                            strftime(timeString, sizeof(timeString), "%Y.%m.%d-%H:%M:%S", timeinfo); \
+                                                            FILE *fp = fopen("/tmp/log/switch_sim_log", "a"); \
+                                                            if (fp) { \
+                                                                fprintf(fp, "[%s] " format "\n", timeString, ##args); \
+                                                                fclose(fp); \
+                                                            } \
+                                                        } \
+                                                        struct stat buf; \
+                                                        int size = stat("/tmp/log/switch_sim_log", &buf); \
+                                                        if (size > 5000) { \
+                                                            system("rm -fr /tmp/log/switch_sim_log"); \
+                                                        } \
+                                                    } while (0)
 
+
+#define INTERNET_LOG_SIN 1
+#define INTERNET_LOG(format, args...) \
+                                                        do { \
+                                                            if (INTERNET_LOG_SIN) { \
+                                                                FILE *fp = fopen("/tmp/log/internet_log", "a"); \
+                                                                if (fp) { \
+                                                                    time_t currentTime = time(NULL);\
+                                                                    struct tm *localTime = localtime(&currentTime);\
+                                                                    fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d] %s@%s,%d] " format "\n", \
+                                                                        localTime->tm_year + 1900, localTime->tm_mon + 1, localTime->tm_mday, \
+                                                                        localTime->tm_hour, localTime->tm_min, localTime->tm_sec, \
+                                                                        __FILE__, __func__, __LINE__, ##args ); \
+                                                                    fclose(fp); \
+                                                                } \
+                                                            } \
+                                                            struct stat buf; \
+                                                            int size = stat("/tmp/log/internet_log", &buf); \
+                                                            if (size > 9000) { \
+                                                                system("rm -fr /tmp/log/internet_log"); \
+                                                            } \
+                                                        } while (0)
 
 #endif /* __HUAYI_LOG_H__ */

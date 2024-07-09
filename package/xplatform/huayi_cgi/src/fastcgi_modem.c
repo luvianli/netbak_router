@@ -1896,7 +1896,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 
 		huayi_uci_delete_option(PKG_NETWORK,"wan","ifname");
 
-		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_4g_ifname",lan_ifname);
+		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_ifname",lan_ifname);
 		if(strlen(lan_ifname)>0)
 		{
 			huayi_uci_set_str(PKG_NETWORK,"lan","ifname",lan_ifname);
@@ -1958,8 +1958,9 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		huayi_uci_set_str(PKG_NETWORK,"wan4g","proto",proto);
 		huayi_uci_set_int(PKG_MODEM,"status","mode",use_apn);
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
+		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"apcli_ssid",HUAYI_RANDOM_APCLI_NAME);
 		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFACE,"disabled","1"); //off
-		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"apcli_enable","1");
+		huayi_uci_set_str(PKG_WIRELESS,W24G_REP_IFNAME,"apcli_enable","1");		
 #endif
 	}
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
@@ -2214,6 +2215,10 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 #else
 	else
 	{
+		if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
+		{
+			return FCGI_RESP_CODE_DATA_MISS;
+		}
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
 
 		huayi_uci_get_str(PKG_CAPABILITY,"cap","lan_ifname",lan_ifname);
