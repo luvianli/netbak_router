@@ -23,19 +23,19 @@ void get_bytes()
 	{
 		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "registStatus", registStatus);
 		if (strcmp(registStatus ,"connected") != 0) {
-			CON_LOG("modem is not connected; registStatus is : %d\n",registStatus);
+			//CON_LOG("modem is not connected; registStatus is : %d\n",registStatus);
 			sleep(20);
 			continue;
 		}
 
 		get_cmd_result("ifconfig eth1 | grep 'RX bytes' | awk '{print $2}'",cmd, CMD_STR_LEN);
 		strcpy(cmd2, cmd + 6);
-		CON_LOG("rx bytes:%s,%s",cmd,cmd2);
+		//CON_LOG("rx bytes:%s,%s",cmd,cmd2);
 		rx=atoll(cmd2)/1024;
 		memset(cmd, 0, CMD_STR_LEN);
 		get_cmd_result("ifconfig eth1 | grep 'TX bytes' | awk '{print $6}'",cmd, CMD_STR_LEN);
 		strcpy(cmd2, cmd+6);
-		CON_LOG("tx bytes:%s,%s",cmd,cmd2);
+		//CON_LOG("tx bytes:%s,%s",cmd,cmd2);
 		tx=atoll(cmd2)/1024;
 		CON_LOG("rold:%lld,told:%lld,rx:%lld,tx:%lld",rx_old,tx_old,rx,tx);
 
@@ -51,7 +51,7 @@ void get_bytes()
 			tx = tx - tx_old;
 			tx_old = i;
 		}else tx_old = tx;
-		CON_LOG("rold:%lld,told:%lld,rx:%lld,tx:%lld",rx_old,tx_old,rx,tx);
+		//CON_LOG("rold:%lld,told:%lld,rx:%lld,tx:%lld",rx_old,tx_old,rx,tx);
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);

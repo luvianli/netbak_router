@@ -1484,7 +1484,6 @@ retry_getoperator:    //尽最大可能取到operator info
 		huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "speedcmd", "");
 	}
 
-	huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
 	huayi_uci_commit(PKG_M_SYSTEM);
 
 	return;

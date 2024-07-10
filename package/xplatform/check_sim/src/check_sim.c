@@ -531,15 +531,104 @@ void Production_testing_mode()
 
 }
 
+void check_network_two()
+{
+    int totalsimnum = 0, simn = 0, usegpio = 0;
+    char cmd[OPTION_STR_LEN] = {0};
+    int  netoperator = 0;
+    char tmp[OPTION_STR_LEN] = {0};
+    char check_ip[OPTION_STR_LEN] = {0};
+    int ret = 0, count = 0, i = 0;
+    int i_ready = 0, i_signal = 0;
+    char lte_value[OPTION_STR_LEN] = {0};
+    char iccid[OPTION_STR_LEN] = { 0 };
+    int hbq = 0, this_bool = 0;
+    int enable = 0;
+	int disconn = 0;
+
+	while(1)
+	{
+		huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
+		if(disconn == 1)
+			goto success ;//断网停止检测
+
+		count = 0;
+	cretry1:
+	    memset(check_ip, 0, OPTION_STR_LEN);
+	    huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
+	    if (networkCheck(check_ip))
+	    {
+	        save_useing_siminfo(simn);
+	        CON_LOG("sim %d network ok \n", simn);
+	        goto success ;
+	    }
+	    else
+	    {
+	        count += 1;
+	        sleep(6);
+	        if (count <= 10)
+	            goto cretry1;
+	    }
+	    count = 0;
+
+	    CON_LOG("sim%d ping bu tong %s", simn, check_ip);
+	check_net:
+	    huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &totalsimnum);
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &simn);
+	    for (i = 0; i < totalsimnum; i++)
+	    {
+	        if (i == simn)
+	            continue;
+
+	        CON_LOG("network error ,switch sim%d", i);
+	        memset(tmp, 0, OPTION_STR_LEN);
+	        sprintf(tmp, "switch_sim %d", i);
+	        system(tmp);
+	        sleep(30);
+	cretry2:
+	        memset(tmp, 0, OPTION_STR_LEN);
+	        huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "default_checkip", tmp);
+	        if (networkCheck(tmp))
+	        {
+	            sleep(3);
+	            save_useing_siminfo(i);
+	            CON_LOG("sim %d network ok \n", i);
+	            this_bool = 1;
+	            goto success;
+	        }
+	        else
+	        {
+	            count += 1;
+	            sleep(6);
+	            if (count <= 10)
+	                goto cretry2;
+
+	        }
+	        count = 0;
+	        sleep(1);
+	    }
+		SWITCH_SIM_LOG("All cards network error -> exe reboot");
+	    sleep(15);
+	    system("reboot");
+
+	success:
+		sleep(60);
+
+	}
+
+	return;
+}
+
 int main(int argc, char *argv[])
 {
+	SLM_init();
 
-    SLM_init();
+	Production_testing_mode();
 
-    Production_testing_mode();
+	check_network();
+	init_cloud_client();
 
-    check_network();
-    init_cloud_client();
+	check_network_two();
 
     return 0;
 }
