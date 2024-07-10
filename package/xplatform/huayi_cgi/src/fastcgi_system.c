@@ -861,7 +861,7 @@ int get_upgrade_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	size_tip = flash_size/1000000;
 	snprintf(tmp_str,SMALL_STR_LEN,"%dM",size_tip);
 	
-	cJSON_AddStringToObject(result_root,"pro_model","MU617");
+	cJSON_AddStringToObject(result_root,"pro_model","MU716");
 	cJSON_AddStringToObject(result_root,"release_time",buildtime);
 	cJSON_AddStringToObject(result_root,"fw_version",fw_version);
 	cJSON_AddStringToObject(result_root,"module_version",module_version);
@@ -1775,9 +1775,9 @@ int get_system_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	}
 
 
-	cJSON_AddStringToObject(result_root,"product_name","MU617");
+	cJSON_AddStringToObject(result_root,"product_name","MU716");
 
-	cJSON_AddStringToObject(result_root,"product_model","MU617");
+	cJSON_AddStringToObject(result_root,"product_model","MU716");
 
 	cJSON_AddStringToObject(result_root,"software_version",software_version);
 
@@ -2141,7 +2141,7 @@ int get_all_system_info(cJSON *request_root, cJSON *response_root,int *lock_time
 	
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_name",product_name);
 
-	cJSON_AddStringToObject(result_root,"pro_name","MU617");
+	cJSON_AddStringToObject(result_root,"pro_name","MU716");
 
 	huayi_uci_get_str(PKG_ABOUT,"about_software","webui_version",webui_version);
 	cJSON_AddStringToObject(result_root,"webui_version",webui_version);
