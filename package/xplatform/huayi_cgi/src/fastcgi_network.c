@@ -1496,7 +1496,7 @@ int set_dhcps_server_config(cJSON *request_root, cJSON *response_root,int *lock_
 
 	if(!huayi_json_get_str(request_root,"end_ip",endip,IPV4_STR_LEN))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;
+		//return FCGI_RESP_CODE_DATA_MISS;
 	}
 
 	if(!huayi_json_get_int(request_root,"dhcp_enable",&enable))
@@ -1536,7 +1536,7 @@ int set_dhcps_server_config(cJSON *request_root, cJSON *response_root,int *lock_
 
 	huayi_uci_set_int(PKG_DHCP,"lan","start",config_start);
 
-	huayi_uci_set_int(PKG_DHCP,"lan","limit",limit);
+	//huayi_uci_set_int(PKG_DHCP,"lan","limit",limit);
 
 	if(enable)
 	{
