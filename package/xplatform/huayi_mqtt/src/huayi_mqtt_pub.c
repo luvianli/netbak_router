@@ -155,6 +155,7 @@ int main(int argc,char *argv[])
 			memset(buff,0,sizeof(buff));
 		}
 		sleep(heartbeat);
+		CHECK_MQTT_LOG();
 	}
 	
 	mosquitto_destroy(mosq);

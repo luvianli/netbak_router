@@ -2,11 +2,11 @@
 #include "oid.h"
 #include <arpa/inet.h>
 #include <linux/wireless.h>
-#include <errno.h>
+//#include <errno.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <sys/mman.h>
-#include <fcntl.h>
+//#include <sys/mman.h>
+//#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -14,7 +14,6 @@
 #include <wait.h>
 #include <stdio.h>
 #include <string.h>
-#include "libutils.h"
 
 int ismac_in_acl(char *mac_address)
 {
@@ -386,7 +385,7 @@ void get_pub_content(char *heartdata)
 
 int main(int argc,char *argv[])
 {
-	char buff[MSG_MAX_SIZE] = {0};
+	char buff[1024] = {0};
 	int heartbeat = 30;
 
 	while(1)
@@ -397,13 +396,12 @@ int main(int argc,char *argv[])
 		FILE *file = fopen("/tmp/log/mqtt_pub_cont", "w");
     	if (file == NULL) {
         	MQTT_LOG("Error opening file");
+			usleep(2*1000000);
         	continue;
-    	}
- 
+    	} 
     	fprintf(file, "%s", buff);
     	fclose(file);
-		sleep(heartbeat);
+		usleep(heartbeat*1000000);
 	}
-	CHECK_MQTT_LOG();
 	return 0;
 }
