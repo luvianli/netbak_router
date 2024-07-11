@@ -40,7 +40,7 @@ huayi_release_update() {
 
 #get software version by tag
 huayi_release_version_control() {	
-	SOFT_VERSION=`git for-each-ref --sort=taggerdate --format '%(refname)' refs/tags | grep $PRODUCT_MODEL | awk 'END {print}' | awk -F "-" '{print $NF}'`
+	SOFT_VERSION=`git for-each-ref --sort=taggerdate --format '%(refname)' refs/tags | grep $PRODUCT_MODEL- | awk 'END {print}' | awk -F "-" '{print $NF}'`
 	[ -z "$SOFT_VERSION" ] && {
 		echo "no software version found !!!"
 		echo "Plesae check $PRODUCT_MODEL software version !!!"

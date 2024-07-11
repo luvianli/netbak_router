@@ -163,6 +163,9 @@ void huayi_set_system(cJSON *response_root)
 			MQTT_LOG("change heartbeat");
 			huayi_uci_set_int(PKG_SYSTEM,"server","heartbeat", heartbeat);
 			huayi_uci_commit(PKG_SYSTEM);
+			system("killall huayi_mqtt_content");			
+			sleep(2);
+			system("huayi_mqtt_content &");
 		}
 	}
 
