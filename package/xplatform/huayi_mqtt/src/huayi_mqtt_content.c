@@ -322,6 +322,7 @@ void get_pub_content(char *heartdata)
 	unsigned long long rx=0,tx=0;
 	char cmd[SMALL_STR_LEN] = {0};
 	int disconn = 0;
+	char *output = NULL;
 
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "iccid", iccid);
@@ -376,7 +377,7 @@ void get_pub_content(char *heartdata)
 		cJSON_AddItemToArray(arp_array,arp_obj);
 	}
 	cJSON_AddItemToObject(result_root,"simList",arp_array);
-	char *output = cJSON_Print(result_root);
+	output = cJSON_Print(result_root);
 	strcpy(heartdata, output);
 	free(output);
 
@@ -390,6 +391,7 @@ int main(int argc,char *argv[])
 
 	while(1)
 	{
+		memset(buff,0,sizeof(buff));
 		huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &heartbeat);
 		get_pub_content(buff);
 		FILE *file = fopen("/tmp/log/mqtt_pub_cont", "w");
