@@ -89,7 +89,7 @@ void get_topic()
 int main(int argc,char *argv[])
 {
 	int ret = 0;
-	char buff[MSG_MAX_SIZE] = {0};
+	char buff[1024] = {0};
 	struct mosquitto *mosq = NULL;
 	int heartbeat = 0;
 	char imei[RESULT_STR_LEN]={0};
