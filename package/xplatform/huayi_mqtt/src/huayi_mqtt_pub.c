@@ -64,7 +64,7 @@ int content(char *heartdata)
     fseek(file, 0, SEEK_SET);
     char *data = (char*)malloc(length + 1);
     fread(data, 1, length, file);
-    //data[length] = '\0';
+    data[length] = '\0';
 
 	fclose(file);
 	strcpy(heartdata, data);
