@@ -102,7 +102,7 @@ struct DataPacket {
 #define WLAN_ENCRTYPE_AES     		0x20
 #define WLAN_ENCRTYPE_WEP     		0x40
 
-
+#define SCRIPT_FILE										"/etc/config/test"
 #define UPLOAD_BIN  									"/tmp/firmware.bin"
 #define UPGRADE_FILE  									"/tmp/firmware.img"
 

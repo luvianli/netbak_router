@@ -22,7 +22,7 @@ config system system
 	option external_card_enable 1
 	option band -1
 	option at_card 0
-	option all_info 1
+	option all_info 0
 	
 config usesiminfo usesiminfo
 	option operator ''

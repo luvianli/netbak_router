@@ -5,6 +5,7 @@
 
 #include "huayi_init.h"
 #include "huayi_uci_fun.h"
+#include <signal.h>
 
 void huayi_tcp_conntrack_init()
 {
@@ -76,13 +77,83 @@ void huayi_firewall_start()
 }
 #endif
 
+void set_acquiesce()
+{
+	int update = 1;
+	char ssid[RESULT_STR_LEN] = {0},password[RESULT_STR_LEN] = {0};
+	char def_ssid[RESULT_STR_LEN] = {0},newssid[RESULT_STR_LEN] = {0};
+	char dhcp[RESULT_STR_LEN] = {0};
+	char ipaddr[IPV4_STR_LEN] = {0};
+	int hidden = 0,SFVersion = 0,softver = 0;
+	int ForceUpgrade = 0;
+	char upgradeURL[RESULT_STR_LEN] = {0};
+	int len,wire = 0;
+
+	system("devmem 0x10000060 32 0x55150451");
+
+	huayi_uci_get_int(PKG_DISPOSITION, "system", "update", &update);	
+	if(update == 0)
+	{
+		if(huayi_uci_get_str(PKG_DISPOSITION, "system", "ssid", ssid))
+		{
+			huayi_uci_get_str(PKG_WIRELESS, "radio0_0", "def_ssid", def_ssid);
+			len = strlen(def_ssid);
+			strncpy(newssid,def_ssid + len-6,6);
+			strcat(ssid,newssid);		
+			huayi_uci_set_str(PKG_WIRELESS, "radio0_0", "def_ssid", ssid);
+			huayi_uci_set_str(PKG_WIRELESS, "radio0_0", "ssid", ssid);
+			wire = 1;
+		}
+		if(huayi_uci_get_str(PKG_DISPOSITION, "system", "password", password))
+		{
+			huayi_uci_set_str(PKG_WIRELESS, "radio0_0", "key", password);
+			wire = 1;
+		}
+		if(huayi_uci_get_int(PKG_DISPOSITION, "system", "hidden", &hidden))
+		{
+			huayi_uci_set_int(PKG_WIRELESS, "radio0_0", "hidden", hidden);
+			wire = 1;			
+		}
+		if(wire == 1)
+		{
+			huayi_uci_commit(PKG_WIRELESS);
+			system("huayi-reset wireless");
+		}
+		
+		if(huayi_uci_get_str(PKG_DISPOSITION, "system", "dhcp", dhcp))
+		{
+			huayi_uci_get_str(PKG_NETWORK,"lan","ipaddr",ipaddr);	
+			if(strcmp(dhcp,ipaddr))
+			{
+				huayi_uci_set_str(PKG_NETWORK,"lan","ipaddr",dhcp);
+				huayi_uci_commit(PKG_NETWORK);
+				system("huayi-reset network");
+			}
+		}
+		huayi_uci_get_int(PKG_DISPOSITION, "system", "SFVersion", &SFVersion);
+		huayi_uci_get_int(PKG_ABOUT,"about_software","fw_version",&softver);
+		if(softver < SFVersion)
+		{
+			huayi_uci_get_int(PKG_DISPOSITION, "system", "ForceUpgrade", &ForceUpgrade);
+			if(ForceUpgrade == 1)
+			{
+				system("upload_url");
+			}
+		}
+		huayi_uci_set_int(PKG_DISPOSITION, "system", "update", 1);
+		huayi_uci_commit(PKG_DISPOSITION);	
+	}
+
+	return ;
+}
+
 int main(int argc, char** argv)
 {
 	int opmode = 0;
 	huayi_tcp_conntrack_init();
 
 	system("watchdog &");
-	
+		
 #if defined(CONFIG_HUAYI_GATEWAY_MODE_SUPPORT)
 	int wan_port_num = 0;
 	int wan_link = 0;
@@ -118,7 +189,8 @@ int main(int argc, char** argv)
 	
 	snprintf(cmd_str,sizeof(cmd_str),"huayi_cmd set network linkport %d",linkport);
 	system(cmd_str);
-#endif
-	
+#endif	
+	set_acquiesce();
+
 	return 0;
 }

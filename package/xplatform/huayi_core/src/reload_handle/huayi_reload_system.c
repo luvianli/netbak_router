@@ -90,10 +90,14 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 #elif defined(CONFIG_HUAYI_WPS_LED_SUPPORT)
 	do_wps_led_blinks_slowly();
 #endif
+	huayi_uci_set_int(PKG_DISPOSITION, "system", "update", 0);
+	huayi_uci_commit(PKG_DISPOSITION);	
 
 	/*maybe need to fixed led here*/
 	system("rm -rf /overlay/*");	
 	sleep(3);
+	system("mkdir -p /overlay/etc/config");
+	system("cp /etc/config/disposition /overlay/etc/config/");
 	system("/sbin/reboot");
 	return VT_TRUE;
 }

@@ -85,6 +85,7 @@ typedef enum
 	FCGI_RESP_CODE_DATA_CONTENT_ERROR				= 4010,
 	FCGI_RESP_CODE_LOGIN_LIMIT						= 4011,
 	FCGI_RESP_CODE_PIN_CODE_ERROR					= 4012,
+	FCGI_RESP_CODE_NETWORK_ERROR					= 4013,
 }FCGI_RESP_CODE;
 
 typedef enum {
@@ -263,6 +264,7 @@ typedef enum
 	HYID_GET_WANMODE_INFO				= 186,
 	HYID_GET_HBP_CONFIG                 = 189,
 	HYID_SET_HBP_CONFIG                 = 190,
+	HYID_SET_UPLOAD_CONFIG              = 193,
 	MAX_HUAYI_HYID,
 }FCGI_HYID_ENUM;
 
@@ -560,4 +562,7 @@ FCGI_BOOL get_vpn_type_list(cJSON *result_root);
 int do_kick_vpn_user(cJSON *request_root, cJSON *response_root, int *lock_time);
 
 #endif
+
+int set_remote_upgrade(cJSON *request_root, cJSON *response_root,int *lock_time);
+
 #endif

@@ -32,7 +32,7 @@ int main(int argc,char *argv[])
 	int cpe_status = 0;
 	int wired_link = 0;
 	int cpe_link = 0;
-	int old_int_mode = INTERNET_UNDEFINE;
+	int old_int_mode = INTERNET_4G;
 	int now_int_mode = INTERNET_UNDEFINE;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
@@ -42,12 +42,10 @@ int main(int argc,char *argv[])
 		sleep(10);
 		memset(wan_type,0,sizeof(wan_type));
 		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
-
-		if(strcmp(wan_type,"prior") != 0)
-		{
-			continue;
-		}
 		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
+
+		if(strcmp(wan_type,"prior") == 0)
+		{
 		memset(wired_device,0,sizeof(wired_device));
 		memset(cpe_device,0,sizeof(cpe_device));
 		wired_link = 0;
@@ -61,10 +59,10 @@ int main(int argc,char *argv[])
 
 		if(wired_link == 1 && cpe_link == 1)//同时在线时，使用有线优先策略
 		{
-			wired_status = internet_do_ping_detect(detectip, wired_device);
+			wired_status = first_internet_do_ping(detectip, wired_device);
 			if(wired_status == 0)
 			{
-				cpe_status = internet_do_ping_detect(detectip, cpe_device);
+				cpe_status = first_internet_do_ping(detectip, cpe_device);
 				if(cpe_status == 0)//使用有线上网方式
 				{
 					sprintf(section,"wired");
@@ -134,7 +132,7 @@ int main(int argc,char *argv[])
 			}
 
 			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
-			if(strcmp(wan_ipv4,net_ipv4))
+			//if(strcmp(wan_ipv4,net_ipv4))
 			{	
 				memset(cmd_str,0,sizeof(cmd_str));
 				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
@@ -166,7 +164,7 @@ int main(int argc,char *argv[])
 
 				if(now_int_mode == INTERNET_4G)
 				{
-					system("ifup wan4g");
+					system("ifup wan4g");					
 				}else if(now_int_mode == INTERNET_WIRED)
 				{
 					system("ifup wan");
@@ -175,7 +173,26 @@ int main(int argc,char *argv[])
 
 			old_int_mode = now_int_mode;
 		}
-		
+		}
+		/*else if(strcmp(wan_type,"mobile") == 0)
+		{	
+			if(!first_internet_do_ping(detectip, "eth1"))
+			{
+				memset(net_ipv4,0,sizeof(net_ipv4));
+				huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ip_address", net_ipv4);
+				memset(wan_ipv4,0,sizeof(wan_ipv4));
+				if(atcmd_get_cgpaddr(wan_ipv4))
+				{
+					if(strcmp(net_ipv4,wan_ipv4))
+					{
+						memset(cmd_str,0,TEMP_STR_LEN);
+						sprintf(cmd_str,"huayi_cmd set network wan_ipv4 %s",wan_ipv4);
+						system(cmd_str);
+					}
+				}
+			}
+			sleep(20);
+		}*/
 	}
 
 	return 0;

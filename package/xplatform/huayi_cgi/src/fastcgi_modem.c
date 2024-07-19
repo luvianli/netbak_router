@@ -2296,6 +2296,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	if (!strcmp(wan_type, WAN_TYPE_4G_MOBILE))
 	{
 		system("huayi-reset lte4g parameter 0");
+		system("/usr/bin/check_sim &");
 	}
 #if defined(CONFIG_PACKAGE_HUAYI_WIRED_PRIORITY)
 	else if(!strcmp(wan_type, WAN_TYPE_WIRED_PRIOROTY))

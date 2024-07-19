@@ -60,7 +60,8 @@ typedef enum{
  	PKG_HUAYI_UDHCPD,
 	PKG_SCHE,
 	PKG_TELNET,
-	PKG_M_SYSTEM,	
+	PKG_M_SYSTEM,
+	PKG_DISPOSITION,
 	PKG_NUM_OF_PKG,
 }PKG_INDEX;
 
@@ -99,6 +100,7 @@ typedef enum{
 #define PKG_SCHE_FILE				"huayi_sche"
 #define PKG_TELNET_FILE				"huayi_telnet"
 #define PKG_M_SYSTEM_FILE			"m_system"
+#define PKG_DISPOSITION_FILE		"disposition"
 
 #define PKG_CAPABILITY_FILE			"capability"
 
@@ -134,6 +136,7 @@ typedef enum{
  (id == PKG_HUAYI_UDHCPD) ? PKG_HUAYI_UDHCPD_FILE: \
  (id ==  PKG_SCHE) ?  PKG_SCHE_FILE: \
  (id == PKG_M_SYSTEM) ?  PKG_M_SYSTEM_FILE: \
+ (id == PKG_DISPOSITION) ?  PKG_DISPOSITION_FILE: \
  (id == PKG_EASYCWMP) ? PKG_EASYCWMP_FILE:"Unknown ID")
 
  /* HUAYI UCI Package File Path, DFEAULT_UCI_CONFIG_PATH is the default if it is not specified */

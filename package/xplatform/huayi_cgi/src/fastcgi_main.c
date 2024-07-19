@@ -327,6 +327,7 @@ FCGI_BOOL FastCgiHandleFunctionInit(void)
 	FastCgiHandleFunction[HYID_GET_WANMODE_INFO] = get_wanmode_info;
     FastCgiHandleFunction[HYID_GET_HBP_CONFIG] = get_hbp_config;
     FastCgiHandleFunction[HYID_SET_HBP_CONFIG] = set_hbp_config;
+    FastCgiHandleFunction[HYID_SET_UPLOAD_CONFIG] = set_remote_upgrade;
 
 	return FCGI_TRUE;
 	

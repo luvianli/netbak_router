@@ -119,6 +119,11 @@ int main (int argc, char *argv[])
 				
 				goto upload_file;
 			}
+			if(!strcmp(rest_data,"streamid=9"))
+			{
+                rest_code = do_disposition_config(&lock_time);
+				goto upload_file;
+			}
 		}
 		
 download_file:

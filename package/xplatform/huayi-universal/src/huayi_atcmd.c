@@ -1526,6 +1526,32 @@ LTE_BOOL atcmd_get_quectel_bandLte(char *vlaue)
 	return LTE_FALSE;
 }
 
+LTE_BOOL atcmd_get_slm_mobile_type(char *vlaue)
+{
+	char *ptr = NULL;
+	char *pKey = NULL;
+	char infoValue[AT_CMD_BUFF_LEN] = {0};
+	if ( Atcmd("AT+cops?", strlen("AT+cops?"), 0) == LTE_FALSE )
+	{
+		return LTE_FALSE;
+	}
+
+	ptr = ATret;
+    if ((strstr(ptr, ",7")) != NULL )
+    {
+
+		char *copsStart = strstr(ptr, "+COPS");
+		if (copsStart) {
+			int length = strcspn(copsStart, "\n"); 
+			strncpy(vlaue, copsStart, length);
+			vlaue[length] = '\0'; 
+		}
+		return LTE_TRUE;
+    }
+	//SWITCH_SIM_LOG("%s",ptr);
+	return LTE_FALSE;
+}
+
 LTE_BOOL atcmd_get_neoway_bandLte(char *vlaue)
 {
 	char *ptr = NULL;

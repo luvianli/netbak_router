@@ -6,6 +6,11 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include "fastcgi_updownload.h"
+#include <signal.h>
+#include <wait.h>
+#include <stdio.h>
+#include <string.h>
 
 int get_pre_login_config(cJSON *request_root, cJSON *response_root,int *lock_time)
 {
@@ -830,6 +835,7 @@ int get_upgrade_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	char tmp_str[SMALL_STR_LEN] = {0};
 	int  flash_size = 0;
 	int  size_tip = 0;
+	int SFVersion = 0;
 	
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
@@ -867,6 +873,9 @@ int get_upgrade_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	cJSON_AddStringToObject(result_root,"module_version",module_version);
 	cJSON_AddNumberToObject(result_root,"maxsize",flash_size);
 	cJSON_AddStringToObject(result_root,"maxsize_tip",tmp_str);
+
+	huayi_uci_get_int(PKG_DISPOSITION, "system", "SFVersion", &SFVersion);
+	cJSON_AddNumberToObject(result_root,"SFVersion",SFVersion);
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 	return FCGI_RESP_CODE_SUCCESS;
@@ -4244,3 +4253,24 @@ int set_tr069_config(cJSON *request_root, cJSON *response_root,int *lock_time)
 }
 
 #endif
+
+int set_remote_upgrade(cJSON *request_root, cJSON *response_root,int *lock_time)
+{	
+	char upgradeURL[RESULT_STR_LEN] = {0};
+	int rest_code = FCGI_RESP_CODE_SUCCESS;
+	
+	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+
+	if (internet_do_ping_detect(INTERNET_DOMAIN, NULL) == 1)
+	{
+		*lock_time = HUAYI_SYSTEM_UPGRADE_TIME;
+		system("upload_url &");	
+	}else
+		rest_code = FCGI_RESP_CODE_NETWORK_ERROR;
+
+	return rest_code;
+}
+
