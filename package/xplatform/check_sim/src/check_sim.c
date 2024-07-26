@@ -579,7 +579,18 @@ void check_network_two()
 	    {
 	        if (i == simn)
 	            continue;
-
+#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
+			if (i == totalsimnum - 1)
+			{
+				huayi_uci_get_int(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
+				if (!enable)
+				{
+					CON_LOG("external_card_enable	  0");
+					//system("reboot");
+					break;
+				}
+			}
+#endif
 	        CON_LOG("network error ,switch sim%d", i);
 	        memset(tmp, 0, OPTION_STR_LEN);
 	        sprintf(tmp, "switch_sim %d", i);
