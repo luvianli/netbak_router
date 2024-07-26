@@ -363,7 +363,7 @@ void get_pub_content(char *heartdata)
 	cJSON_AddNumberToObject(result_root,"disconn", disconn);
 
 	arp_array = cJSON_CreateArray();
-	for(i;i<simNum;i++)
+	for(i;i<simNum-1;i++)
 	{
 		sprintf(cmd, "sim%d", i);
 		huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", simiccid);

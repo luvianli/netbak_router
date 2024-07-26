@@ -218,7 +218,7 @@ void set_siminfo()
 
 againt:
 
-    for (i = 0; i < simnum; i++)
+    for (i = 0; i < simnum-1; i++)
     {
         sprintf(cmd, "sim%d", i);
         huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", iccid[i]);	
