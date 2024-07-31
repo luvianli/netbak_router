@@ -329,7 +329,7 @@ int get_ip_port_filter_config(cJSON *request_root, cJSON *response_root,int *loc
 
 	huayi_uci_get_int(PKG_HUAYI_FIREWALL,"global","ip_port_filter",&ip_port_filter);
 	
-	huayi_add_switch_to_json(result_root,"ip_port_filter",ip_port_filter);
+	cJSON_AddNumberToObject(result_root,"ip_port_filter",ip_port_filter);
 	
 	ipportfilter_array = cJSON_CreateArray();
 	

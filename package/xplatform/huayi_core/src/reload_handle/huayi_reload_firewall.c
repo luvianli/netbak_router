@@ -399,14 +399,17 @@ VTBool huayi_reload_urlfilter(void * arg,cJSON *input_root)
 	return VT_TRUE;	
 }
 
-VTBool huayi_MakeIPPortFilterRule(char *src_ip, int proto, int port_start, int port_end)
+VTBool huayi_MakeIPPortFilterRule(char *src_ip, int proto, int port_start, int port_end,int ip_port_filter)
 {
 	char strcmdbuf[CMD_STR_LEN] = { 0 };
 	char strAction[OPTION_STR_LEN]     = { 0 };
 	char strport[TEMP_STR_LEN] = { 0 };
 	char strproto[OPTION_STR_LEN] = { 0 };
 
-	strcpy(strAction, "-j DROP");
+	if(ip_port_filter == 1)
+		strcpy(strAction, "-j DROP");
+	else
+		strcpy(strAction, "-j ACCEPT");		
 	
 //iptables -w -A IPPORT_FILTER -s s_ip -p proto --dport port_start:port_end
 	
@@ -465,8 +468,16 @@ VTBool huayi_reload_ipportfilter(void * arg,cJSON *input_root)
 			i++;
 			continue;
 		}
-		huayi_MakeIPPortFilterRule(src_ip, proto, port_start, port_end);	
+		huayi_MakeIPPortFilterRule(src_ip, proto, port_start, port_end, ip_port_filter);	
 		i++;
+	}
+	if(2 == ip_port_filter) {
+		char cmd1[4],cmd2[4],cmd3[4];
+		get_cmd_result("uci get network.lan.ipaddr | awk -F '.' '{print $1}'",cmd1,4);
+		get_cmd_result("uci get network.lan.ipaddr | awk -F '.' '{print $2}'",cmd2,4);
+		get_cmd_result("uci get network.lan.ipaddr | awk -F '.' '{print $3}'",cmd3,4);
+		snprintf(strcmdbuf, sizeof(strcmdbuf), "iptables -w -A %s -s %s.%s.%s.0/24 -j DROP",IPPORT_FILTER_CHAIN,cmd1,cmd2,cmd3);
+		system(strcmdbuf);
 	}
 	return VT_TRUE;
 }

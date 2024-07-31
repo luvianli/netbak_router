@@ -1124,10 +1124,12 @@ int set_lan_config(cJSON *request_root, cJSON *response_root,int *lock_time)
 	int 	min	= 0;
 	int		max = 0;
 	int 	ip_range = 0;
+	int  ip_port_filter = 0;
 	char product_model[OPTION_STR_LEN] = {0};
-    huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+	
+    /*huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(strcmp(product_model, "ZC-MCA4-G1") == 0)
-		return FCGI_RESP_CODE_SUCCESS;
+		return FCGI_RESP_CODE_SUCCESS;*/
 
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
@@ -1194,6 +1196,9 @@ int set_lan_config(cJSON *request_root, cJSON *response_root,int *lock_time)
 
 		system("huayi-reset network");
 
+		huayi_uci_get_int(PKG_HUAYI_FIREWALL,"global","ip_port_filter",&ip_port_filter);
+		if(ip_port_filter != 0)
+			system("huayi-reset ipportfilter");
 #if defined(CONFIG_HUAYI_CGI_COOKIE_SUPPORT)
 		session_logout("all");
 #endif
