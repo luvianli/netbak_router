@@ -383,17 +383,36 @@ VTBool huayi_reload_urlfilter(void * arg,cJSON *input_root)
 	XCMD(strcmdbuf, "iptables -w -t filter -F %s ", URL_FILTER_CHAIN);
 	if (0 == url_filter) {
 		return VT_TRUE;
-	}
-	
-	while(1)
+ 	}else if(1 == url_filter)
 	{
-		snprintf(section, sizeof(section),"@urlfilter[%d]",i);
-		if(!huayi_uci_get_str(PKG_HUAYI_FIREWALL,section,"url",url))
+		while(1)
 		{
-			break;
+			snprintf(section, sizeof(section),"@urlfilter[%d]",i);
+			if(!huayi_uci_get_str(PKG_HUAYI_FIREWALL,section,"url",url))
+			{
+				break;
+			}
+			XCMD(strcmdbuf, "iptables -w -A %s -m string --string %s --algo bm -j DROP ", URL_FILTER_CHAIN, url);
+			i++;
 		}
-		XCMD(strcmdbuf, "iptables -w -A %s -m string --string %s --algo bm -j DROP ", URL_FILTER_CHAIN, url);
-		i++;
+	}else
+	{
+		while(1)
+		{
+			snprintf(section, sizeof(section),"@urlfilter[%d]",i);
+			if(!huayi_uci_get_str(PKG_HUAYI_FIREWALL,section,"url",url))
+			{
+				break;
+			}
+			XCMD(strcmdbuf, "iptables -w -A %s -m string --string %s --algo bm -j ACCEPT", URL_FILTER_CHAIN, url);
+			i++;
+		}
+		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .com --algo bm -j DROP ", URL_FILTER_CHAIN);
+		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .net --algo bm -j DROP ", URL_FILTER_CHAIN);
+		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .cn --algo bm -j DROP ", URL_FILTER_CHAIN);
+		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .org --algo bm -j DROP ", URL_FILTER_CHAIN);
+		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .edu --algo bm -j DROP ", URL_FILTER_CHAIN);
+		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .gov --algo bm -j DROP ", URL_FILTER_CHAIN);
 	}
 	
 	return VT_TRUE;	

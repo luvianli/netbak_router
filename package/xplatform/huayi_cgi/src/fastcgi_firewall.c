@@ -204,7 +204,7 @@ int get_url_filter_config(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	huayi_uci_get_int(PKG_HUAYI_FIREWALL,"global","url_filter",&url_filter);
 	
-	huayi_add_switch_to_json(result_root,"url_filter",url_filter);
+	cJSON_AddNumberToObject(result_root,"url_filter",url_filter);
 	
 	urlfilter_array = cJSON_CreateArray();
 	
