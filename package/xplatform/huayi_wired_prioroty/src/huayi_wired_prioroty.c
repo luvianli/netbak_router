@@ -102,10 +102,10 @@ checknet:
 		huayi_uci_get_int(PKG_SYSTEM,"server","success", &cpe_status);
 		if(cpe_status == 0)
 		{		
-			if(!internet_do_ping_detect(serverip, NULL))
+			if(internet_do_ping_detect(serverip, NULL))
 			{
-				NETCHECK_LOG("ping server error,reboot");
-				system("reboot");
+				NETCHECK_LOG("ping server success,restart client");
+				system("/etc/init.d/hy_cloud_client restart");
 				continue ;
 			}
 
@@ -139,7 +139,7 @@ checknet:
 				}
 			}
 
-			NETCHECK_LOG("all check is success");
+			NETCHECK_LOG("ping server error");
 		}
 	}
 
