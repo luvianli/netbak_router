@@ -54,7 +54,7 @@ int main(int argc,char *argv[])
 	int cpe_link = 0;
 	int old_int_mode = INTERNET_UNDEFINE;
 	int now_int_mode = INTERNET_UNDEFINE;
-	int  i = 0;
+	int  i = 0,j = 0;
 	char detectip[OPTION_STR_LEN] = {0};
 
 	while(1)
@@ -139,7 +139,18 @@ checknet:
 				}
 			}
 
-			NETCHECK_LOG("ping server error");
+			if(j < 1)
+			{
+				NETCHECK_LOG("ping server error,reset network");	
+				system("huayi-reset network");
+				goto checknet;
+			}
+			else
+			{				
+				NETCHECK_LOG("ping server error,reboot");
+				system("reboot");
+			}
+			j++;
 		}
 	}
 
