@@ -13,17 +13,17 @@ imei_6_ssid=`huayi_cmd get modem imei | cut -c 10-`
 
 echo $suf_ssid_2G >> /tmp/dat2uci.log
 
-ssid_2G=${def_ssid_prefix}
-ssid_5G=${def_ssid_prefix}_5G
+ssid_2G=${def_ssid_prefix}${suf_ssid_2G}
+ssid_5G=${def_ssid_prefix}${suf_ssid_2G}_5G
 #ssid_2G=${def_ssid_prefix}${suf_ssid_2G}
 #ssid_5G=${def_ssid_prefix}${suf_ssid_2G}_5G
 
 [ -z "$def_ssid" ] &&{
-    #uci set wireless.radio0_0.ssid=${ssid_2G}
-	#uci set wireless.radio0_0.def_ssid=${ssid_2G}
-	#uci set wireless.radio1_0.ssid=${ssid_5G}
-	#uci set wireless.radio1_0.def_ssid=${ssid_5G}
-	#uci commit wireless
+    uci set wireless.radio0_0.ssid=${ssid_2G}
+	uci set wireless.radio0_0.def_ssid=${ssid_2G}
+	uci set wireless.radio1_0.ssid=${ssid_5G}
+	uci set wireless.radio1_0.def_ssid=${ssid_5G}
+	uci commit wireless
 }
 
 echo "update uci config with dat file" >> /tmp/dat2uci.log

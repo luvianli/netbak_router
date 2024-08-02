@@ -307,4 +307,26 @@
                             } \
                         } while (0)
 
+#define NETCHECK_LOG(format, args...) \
+                        do { \
+                            if (1) { \
+                                FILE *fp = fopen("/etc/netcheck.log", "a"); \
+                                if (fp) { \
+                                    time_t now = time(NULL); \
+                                    struct tm *t = localtime(&now); \
+                                    fprintf(fp, "%d/%02d/%02d %02d:%02d:%02d " format "\n", \
+                                            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, \
+                                            t->tm_hour, t->tm_min, t->tm_sec, ##args); \
+                                    fclose(fp); \
+                                    struct stat buf; \
+                                    if (stat("/etc/netcheck.log", &buf) == 0) { \
+                                        if (buf.st_size > (2 * 1024 * 1024)) { \
+                                            REMOVE_OLDEST_LOG("/etc/netcheck.log"); \
+                                        } \
+                                    } \
+                                } \
+                            } \
+                        } while (0)
+
+
 #endif /* __HUAYI_LOG_H__ */

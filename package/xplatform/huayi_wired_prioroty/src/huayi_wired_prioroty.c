@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <huayi_uci_fun.h>
+#include <netdb.h>
 
 typedef enum{
 	INTERNET_UNDEFINE = 0,
@@ -9,6 +10,25 @@ typedef enum{
 	
 }INTERNET_MODE;
 
+#define serverip "device.10086group.com"
+#define check_ip "223.5.5.5;223.5.5.5;114.114.114.114"
+
+int check_dns(const char *hostname) {
+    struct addrinfo hints, *res;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC; // IPv4æˆ–IPv6
+    hints.ai_socktype = SOCK_STREAM;
+
+    // å°è¯•è§£æä¸»æœºå
+    int status = getaddrinfo(hostname, NULL, &hints, &res);
+    if (status != 0) {
+        NETCHECK_LOG("DNSè§£æå¤±è´¥: %s\n", gai_strerror(status));
+        return 0; // DNSä¸æ­£å¸¸
+    }
+
+    freeaddrinfo(res); // é‡Šæ”¾å†…å­˜
+    return 1; // DNSæ­£å¸¸
+}
 
 int main(int argc,char *argv[])
 {
@@ -25,7 +45,7 @@ int main(int argc,char *argv[])
 	char del_gateway[IPV4_STR_LEN] = {0};
 	char resultbuf[SHORT_STR_LEN] = {0};
 
-	char wan_type[OPTION_STR_LEN] = {0};
+	char iccid[OPTION_STR_LEN] = {0};
 	char net_ipv4[IPV4_STR_LEN] = {0};
 
 	int wired_status = 0;
@@ -36,146 +56,91 @@ int main(int argc,char *argv[])
 	int now_int_mode = INTERNET_UNDEFINE;
 	int  i = 0;
 	char detectip[OPTION_STR_LEN] = {0};
-	
+
 	while(1)
 	{
-		sleep(10);
-		memset(wan_type,0,sizeof(wan_type));
-		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
-
-		if(strcmp(wan_type,"prior") != 0)
+		sleep(60);
+		memset(iccid, 0, OPTION_STR_LEN);
+		wired_status = atcmd_get_iccid(iccid);
+		if(wired_status ==0 ||strlen(iccid) < 5)
 		{
-			continue;
-		}
-		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
-		memset(wired_device,0,sizeof(wired_device));
-		memset(cpe_device,0,sizeof(cpe_device));
-		wired_link = 0;
-		cpe_link = 0;
-		wired_status = 0;
-		cpe_status = 0;
-		huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "device", wired_device);
-		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "device", cpe_device);
-		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
-		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
-
-		if(wired_link == 1 && cpe_link == 1)//Í¬Ê±ÔÚÏßÊ±£¬Ê¹ÓÃÓĞÏßÓÅÏÈ²ßÂÔ
-		{
-			wired_status = internet_do_ping_detect(detectip, wired_device);
-			if(wired_status == 0)
+			if(i < 6)
 			{
-				cpe_status = internet_do_ping_detect(detectip, cpe_device);
-				if(cpe_status == 0)//Ê¹ÓÃÓĞÏßÉÏÍø·½Ê½
-				{
-					sprintf(section,"wired");
-					now_int_mode = INTERNET_WIRED;
-					old_int_mode = INTERNET_UNDEFINE;
-				}else//Ê¹ÓÃ4GÉÏÍø·½Ê½
-				{
-					sprintf(section,"cpe");
-					now_int_mode = INTERNET_4G;
-				}
-			}else//Ê¹ÓÃÓĞÏßÉÏÍø·½Ê½
-			{
-				sprintf(section,"wired");
-				now_int_mode = INTERNET_WIRED;
+				i++;
+				continue ;
 			}
+			else
+			{
+				NETCHECK_LOG("get sim card error,reboot");
+				system("reboot");
+			}	
+		}
 
-		}else if(cpe_link == 1)//Ê¹ÓÃ4GÉÏÍø·½Ê½
+		huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","gateway",wan_gateway);
+		if(!internet_do_ping_detect(wan_gateway, NULL))
+		{
+			NETCHECK_LOG("ping gateway error,reboot");
+			system("reboot");
+			continue ;
+		}
+
+		i = 0;
+checknet:
+		if(!networkCheck(check_ip))
 		{	
-			sprintf(section,"cpe");
-			now_int_mode = INTERNET_4G;
-		}else//Ê¹ÓÃÓĞÏßÉÏÍø·½Ê½
-		{
-			sprintf(section,"wired");
-			now_int_mode = INTERNET_WIRED;
+			if(i < 3)
+			{
+				i++;
+				sleep(10);
+				goto checknet;
+			}
+			NETCHECK_LOG("network error,reboot");
+			system("reboot");
+			continue ;
 		}
-		//printf("old_int_mode = %d\n",old_int_mode);
-		//printf("now_int_mode = %d\n",now_int_mode);
-		//if(old_int_mode != now_int_mode || )
-		{
-			memset(cmd_str,0,sizeof(cmd_str));
-			memset(del_gateway,0,sizeof(del_gateway));
-			if(!strncmp(section,"wired",strlen("wired")))//ÓĞÏßÉÏÍø·½Ê½£¬É¾³ı4GÄ¬ÈÏÂ·ÓÉ
+
+		huayi_uci_get_int(PKG_SYSTEM,"server","success", &cpe_status);
+		if(cpe_status == 0)
+		{		
+			if(!internet_do_ping_detect(serverip, NULL))
 			{
-				huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
-			}
-			else//4GÉÏÍø·½Ê½£¬É¾³ıÓĞÏßÄ¬ÈÏÂ·ÓÉ
-			{
-				huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", del_gateway);
+				NETCHECK_LOG("ping server error,reboot");
+				system("reboot");
+				continue ;
 			}
 
-			memset(wan_ifname,0,sizeof(wan_ifname));
-			memset(wan_ipv4,0,sizeof(wan_ipv4));
-			memset(wan_netmask,0,sizeof(wan_netmask));
-			memset(wan_gateway,0,sizeof(wan_gateway));
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "device", wan_ifname);
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "ipv4", wan_ipv4);
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "netmask", wan_netmask);
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "gateway", wan_gateway);
-			huayi_uci_get_str(PKG_STATUS_BLEND, section, "dns_server",temp_dns);
-			//printf("del_gateway = %s\n",del_gateway);
-			if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
-			{
-				sprintf(cmd_str,"route del default gw %s",del_gateway);
-				system(cmd_str);
-				//printf("cmd_str = %s\n",cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				sprintf(cmd_str,"route -n | grep %s | grep UG | grep %s |wc -l",wan_ifname,wan_gateway);
-				get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
-
-				if(atoi(resultbuf) == 0 && strncmp(wan_gateway,"0.0.0.0",strlen("0.0.0.0")))
-				{
-					memset(cmd_str,0,sizeof(cmd_str));
-					sprintf(cmd_str,"route add default gw %s dev %s",wan_gateway,wan_ifname);
-					system(cmd_str);
-				}
-			}
-
-			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
-			if(strcmp(wan_ipv4,net_ipv4))
+			huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "network", detectip);
+			if(strcmp(detectip,"CHINA MOBILE CMCC") == 0)
 			{	
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
-				system(cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_ipv4 %s",wan_ipv4);
-				system(cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_netmask %s",wan_netmask);
-				system(cmd_str);
-
-				memset(cmd_str,0,sizeof(cmd_str));
-				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_gateway %s",wan_gateway);
-				system(cmd_str);
-
-				memset(dns,0,IPV4_STR_LEN);
-				i = 0;
-				//printf("temp_dns = %s\n",temp_dns);
-				while(huayi_get_nth_value(i++, temp_dns, " ", dns, sizeof(dns)))
-				{
-					//printf("dns = %s\n",dns);
-					memset(cmd_str,0,sizeof(cmd_str));
-					snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_dns_server %s",dns);
-					//printf("cmd_str = %s\n",cmd_str);
-					system(cmd_str);
+				strcpy(temp_dns,"10086.cn");
+				if (!check_dns(temp_dns)) {
+					NETCHECK_LOG("dns error,reboot");
+					system("reboot");
+				} else {
+					NETCHECK_LOG("dns success");
 				}
-
-				if(now_int_mode == INTERNET_4G)
-				{
-					system("ifup wan4g");
-				}else if(now_int_mode == INTERNET_WIRED)
-				{
-					system("ifup wan");
+			}else if(strcmp(detectip,"CHN-UNICOM") == 0)
+			{	
+				strcpy(temp_dns,"chinaunicom.com.cn");
+				if (!check_dns(temp_dns)) {
+					NETCHECK_LOG("dns error,reboot");
+					system("reboot");
+				} else {
+					NETCHECK_LOG("dns success");
+				}
+			}else if(strcmp(detectip,"CHN-CT") == 0)
+			{	
+				strcpy(temp_dns,"chinatelecom.com.cn");
+				if (!check_dns(temp_dns)) {
+					NETCHECK_LOG("dns error,reboot");
+					system("reboot");
+				} else {
+					NETCHECK_LOG("dns success");
 				}
 			}
 
-			old_int_mode = now_int_mode;
+			NETCHECK_LOG("all check is success");
 		}
-		
 	}
 
 	return 0;

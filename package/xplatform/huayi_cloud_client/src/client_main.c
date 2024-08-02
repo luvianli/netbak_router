@@ -343,14 +343,18 @@ void* heart_handle()
 			}
 			CLOUD_CLIENT_LOG("===  %s, %d, heartContent = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartContent, heartContentLen);
 			msg_parse(heartContent, heartContentLen);
+			huayi_uci_set_int(PKG_SYSTEM,"server","success", 1);
+			system("rm -rf /etc/netcheck.log");
 		}
 		else {
 			CLOUD_CLIENT_LOG("heart connect fail:%d\n",ret);
+			NETCHECK_LOG("heart connect fail:%d",ret);
+			huayi_uci_set_int(PKG_SYSTEM,"server","success", 0);
 			if(curl != NULL) {
 				curl_easy_cleanup(curl);
 				curl = NULL;
 			}	
-			sleep(10);
+			sleep(30);
 			continue;
 		}
 out:

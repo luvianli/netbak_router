@@ -256,6 +256,27 @@ void mifi_update_content(char *heartdata, unsigned int *heartsize)
 	return ;
 }
 
+int content(char *heartdata)
+{
+    FILE *file = fopen("/etc/netcheck.log", "r");
+    if (file == NULL) {
+        return -1;
+    }
+
+	fseek(file, 0, SEEK_END);
+    long length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    char *data = (char*)malloc(length + 1);
+    fread(data, 1, length, file);
+    data[length] = '\0';
+
+	fclose(file);
+	strcpy(heartdata, data);
+    free(data);
+
+	return 0;
+}
+
 void msg_content(char *heartdata, unsigned int *heartsize)
 {
 	cJSON *result_root = NULL;
@@ -277,6 +298,7 @@ void msg_content(char *heartdata, unsigned int *heartsize)
 	char dns1[IPV4_STR_LEN] = {0},dns2[IPV4_STR_LEN] = {0},p_name[OPTION_STR_LEN] = {0},password[OPTION_STR_LEN] = {0},ac[OPTION_STR_LEN] = {0},service[OPTION_STR_LEN] = {0};
 	char dial_apn[OPTION_STR_LEN] = {0},dial_name[OPTION_STR_LEN] = {0},dial_pass[OPTION_STR_LEN] = {0},dial_auth[OPTION_STR_LEN] = {0};
 	char product_model[OPTION_STR_LEN] = {0};
+	char buff[CMD_STR_LEN] = {0};
         
 	result_root = cJSON_CreateObject();
     huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
@@ -307,6 +329,11 @@ void msg_content(char *heartdata, unsigned int *heartsize)
         cJSON_AddStringToObject(result_root,"ip", gatewayip);
         huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version", soft_ver);
         cJSON_AddStringToObject(result_root,"version", soft_ver);
+		content(buff);
+		if(strlen(buff)>0)
+		{	
+			cJSON_AddStringToObject(result_root,"log", buff);
+		}
     }else{
     	huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn);
     	cJSON_AddStringToObject(result_root,"sn", sn);

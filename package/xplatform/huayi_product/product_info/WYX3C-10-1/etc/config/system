@@ -60,6 +60,7 @@ config server server
 	option urldomain 'http://device.10086group.com/admin/ylapi/uploadData'
 	option mifiurl '0'
 	option clientlog   '1'
+	option success '1' #上报成功
 
 config network network
 	option rx_bytes 0
