@@ -69,7 +69,7 @@
 		struct stat statbuf; \
 		stat("/tmp/log/cloud_client_log", &statbuf); \
 		int size = statbuf.st_size;	\
-		if(size > 1048576) \
+		if(size > 100000) \
 		{\
 			system("rm -fr /tmp/log/cloud_client_log"); \
 		}\
@@ -111,14 +111,18 @@
 								FILE *fp = fopen("/tmp/log/con_log", "a"); \
 								if(fp)\
 								{\
-									fprintf(fp, "%s@%s,%d] " format "\n", \
-									__FILE__, __func__,__LINE__, ##args ); \
+									time_t currentTime = time(NULL);\
+									struct tm *localTime = localtime(&currentTime);\
+									fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d] " format "\n", \
+                                            localTime->tm_year + 1900, localTime->tm_mon + 1, localTime->tm_mday, \
+                                            localTime->tm_hour, localTime->tm_min, localTime->tm_sec, \
+											##args ); \
 								}\
 								fclose(fp);\
 							} \
 							struct stat buf;\
 							int size=stat("/tmp/log/con_log", &buf);\
-							if(size > 20000)\
+							if(size > 1048576)\
 							{\
 								system("rm -fr /tmp/log/con_log");\
 							}\
@@ -234,5 +238,26 @@
                                                                 system("rm -fr /tmp/log/internet_log"); \
                                                             } \
                                                         } while (0)
+                      
+#define NETCHECK_LOG(format, args...) \
+                        do { \
+                            if (1) { \
+                                FILE *fp = fopen("/etc/netcheck.log", "a"); \
+                                if (fp) { \
+                                    time_t currentTime = time(NULL); \
+                                    struct tm *t = localtime(&currentTime); \
+                                    fprintf(fp, "[%d/%02d/%02d %02d:%02d:%02d]" format "\n", \
+                                            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, \
+                                            t->tm_hour, t->tm_min, t->tm_sec, ##args); \
+                                    fclose(fp); \
+                                    struct stat buf; \
+                                    if (stat("/etc/netcheck.log", &buf) == 0) { \
+                                        if (buf.st_size > (10000)) { \
+                                            system("rm -rf /etc/netcheck.log"); \
+                                        } \
+                                    } \
+                                } \
+                            } \
+                        } while (0)
 
 #endif /* __HUAYI_LOG_H__ */

@@ -273,13 +273,27 @@ VTBool huayi_reload_telnet(void * arg,cJSON *input_root)
 
 VTBool huayi_switch_card(void *arg,cJSON *input_root)
 {
-    char cmd[LONG_BUFF_LEN]={0};
-    huayi_uci_get_str(PKG_SYSTEM,"mysocket","send",cmd);
-    
-    CustomCommunicationClient(cmd,NULL);
-    
-    huayi_uci_set_str(PKG_SYSTEM,"mysocket","send","");
-    huayi_uci_commit(PKG_SYSTEM);
+	char product_model[OPTION_STR_LEN] = {0};
+	char cmd[LONG_BUFF_LEN]={0};
+
+	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+	if(!strcmp(product_model, "ZC-GW01-2"))
+	{
+	    huayi_uci_get_str(PKG_SYSTEM,"mysocket","send",cmd);
+	    
+	    CustomCommunicationClient(cmd,NULL);
+	    
+	    huayi_uci_set_str(PKG_SYSTEM,"mysocket","send","");
+	    huayi_uci_commit(PKG_SYSTEM);
+	}else
+	{
+		int card = 0;
+		huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &card);
+		sprintf(cmd, "switch_sim %d &", card);
+		system("killall switch_sim");
+		system(cmd);
+		save_useing_siminfo(card);
+	}
 	return VT_TRUE;
 }
 

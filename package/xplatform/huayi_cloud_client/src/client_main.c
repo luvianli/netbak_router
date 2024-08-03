@@ -102,18 +102,16 @@ void* heart_handle()
 	int heartSize = 0;
 	char registStatus[LONG_BUFF_LEN]={0};
 	int  wan_link = 0;
-
+	int i = 0;
+	
 	huayi_uci_get_int(PKG_SYSTEM,"server","interval", &interval);
 	gTimeWait = interval;
 	while(1) {
-		huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","link",&wan_link);
-		if(wan_link != 1){
-		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "registStatus", registStatus);
-		if (strcmp(registStatus ,"connected") != 0) {
-			CLOUD_CLIENT_LOG("%s, modem is not connected; registStatus is : %d\n",__FUNCTION__, registStatus);
+		if(internet_do_ping_detect(INTERNET_DOMAIN, NULL) != 1){
+			CLOUD_CLIENT_LOG("network error,sleep 20s\n");			
 			sleep(20);
 			continue;
-		}}
+		}
 
 		memset(heartData, 0, sizeof(heartData));
 		memset(url, 0, sizeof(url));
@@ -140,6 +138,7 @@ void* heart_handle()
 		memset(heartContent,0,sizeof(heartContent));
 		ret=curl_easy_perform(curl);
 		if(ret == 0) { //parse html
+			system("rm -rf /etc/netcheck.log");
 			if(strlen(heartContent) == 0) {	
 				CLOUD_CLIENT_LOG("content is null\n");
 				goto out;
@@ -149,11 +148,18 @@ void* heart_handle()
 		}
 		else {
 			CLOUD_CLIENT_LOG("heart connect fail:%d\n",ret);
+			NETCHECK_LOG("heart connect fail:%d",ret);
 			if(curl != NULL) {
 				curl_easy_cleanup(curl);
 				curl = NULL;
-			}	
-			sleep(10);
+			}
+			if(i > 2)
+			{	
+				system("check_network");
+				usleep(20*1000);
+				i = 0;
+			}
+			i++;
 			continue;
 		}
 out:

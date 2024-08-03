@@ -2474,9 +2474,12 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 }
 
 
-int cgi_get_card(cJSON *request_root, cJSON *response_root,int *lock_time){
+int cgi_get_card(cJSON *request_root, cJSON *response_root,int *lock_time)
+{
  	cJSON  *info_root=NULL,*card_info_root=NULL,*result_root=NULL;
- 	int i=0,count=0;
+	char product_model[OPTION_STR_LEN] = {0};
+	char cmd[OPTION_STR_LEN]={0},tmp[OPTION_STR_LEN]={0};
+ 	int i=0,count=0,Simnum=0;
     char usesiminfoBuf[1024] = {0},siminfoBuf[1024] = {0};
     int usesiminfoCard_slot = 0 ,usesiminfoOperator = 0 ,usesiminfoLock = 0 ,usesiminfoSimnum = 0 ,simCard_slot[4] ,simOperator[4];
     char usesiminfoIccid[OPTION_STR_LEN],simIccid[4][OPTION_STR_LEN];
@@ -2490,6 +2493,10 @@ int cgi_get_card(cJSON *request_root, cJSON *response_root,int *lock_time){
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
+
+	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+	if(!strcmp(product_model, "ZC-GW01-2"))
+	{
 	count=0;
 again:
 	result_root=cJSON_CreateObject();
@@ -2526,6 +2533,30 @@ again:
 	}
 end:
 	cJSON_AddItemToObject(result_root,"card_info",card_info_root);
+	}
+	else
+	{
+		result_root=cJSON_CreateObject();
+		card_info_root=cJSON_CreateArray();
+		huayi_uci_get_int(PKG_DISPOSITION, "system", "eSimSUM", &Simnum);
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &usesiminfoCard_slot);
+		huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "operator", &usesiminfoOperator);
+		cJSON_AddNumberToObject(result_root,"card",usesiminfoCard_slot);
+		cJSON_AddNumberToObject(result_root,"operator",usesiminfoOperator);
+		for(i=0;i<Simnum;i++)
+		{
+			memset(cmd, 0, OPTION_STR_LEN);
+			sprintf(cmd, "sim%d", i);
+        	huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", simIccid[i]);
+        	huayi_uci_get_int(PKG_M_SYSTEM, cmd, "operator", &simOperator[i]);
+			info_root=cJSON_CreateObject();
+			cJSON_AddNumberToObject(info_root,"card",i);
+			cJSON_AddNumberToObject(info_root,"operator",simOperator[i]);
+			cJSON_AddStringToObject(info_root,"iccid",simIccid[i]);
+			cJSON_AddItemToArray(card_info_root,info_root);
+		}
+		cJSON_AddItemToObject(result_root,"card_info",card_info_root);
+	}
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
     return FCGI_RESP_CODE_SUCCESS;
 
@@ -2534,10 +2565,11 @@ end:
 int cgi_set_card(cJSON *request_root, cJSON *response_root,int *lock_time){
 
 
-	char cmd[OPTION_STR_LEN]={0};
-	int card=0;
+	char cmd[OPTION_STR_LEN]={0},tmp[OPTION_STR_LEN]={0};
+	int card=0,Simnum=0,sim=0;
     int lock =0;
     //parseRequest(request_root);
+	char product_model[OPTION_STR_LEN] = {0};
 
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time)) 
 	{
@@ -2547,16 +2579,39 @@ int cgi_set_card(cJSON *request_root, cJSON *response_root,int *lock_time){
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
-    if(!huayi_json_get_int(request_root,"lock",&lock))
+
+	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+	if(!strcmp(product_model, "ZC-GW01-2"))
 	{
-		return FCGI_RESP_CODE_DATA_MISS;
+	    if(!huayi_json_get_int(request_root,"lock",&lock))
+		{
+			return FCGI_RESP_CODE_DATA_MISS;
+		}
+	    snprintf(cmd,OPTION_STR_LEN,"custom_switch_sim %d %d &",card,lock);
+	    huayi_uci_set_str(PKG_SYSTEM,"mysocket","send",cmd);
+	    huayi_uci_commit(PKG_SYSTEM);
+		*lock_time = HUAYI_SET_CARD;
+	    CustomCommunicationClient(cmd,NULL);
+		system("huayi-reset switch_sim");
+	}else
+	{    
+	    int mode = 0,allinfo = 0;
+	    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "all_info", &allinfo);
+		if (mode == 1 && allinfo == 0)
+    	{
+			huayi_uci_get_int(PKG_DISPOSITION, "system", "eSimSUM", &Simnum);
+			if(card >=0 && card < Simnum)
+			{
+				//sprintf(cmd, "eSimSlot%d", card);
+				//huayi_uci_get_int(PKG_DISPOSITION, "system", cmd, &sim);
+				huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", card);
+				huayi_uci_commit(PKG_M_SYSTEM);
+				*lock_time = HUAYI_SET_CARD;
+				system("huayi-reset switch_sim");
+			}else return FCGI_RESP_CODE_DATA_FORMAT_ERROR;
+		}else return FCGI_RESP_CODE_SERVER_FAILURE;
 	}
-    snprintf(cmd,OPTION_STR_LEN,"custom_switch_sim %d %d &",card,lock);
-    huayi_uci_set_str(PKG_SYSTEM,"mysocket","send",cmd);
-    huayi_uci_commit(PKG_SYSTEM);
-	*lock_time = HUAYI_SET_CARD;
-    //CustomCommunicationClient(cmd,NULL);
-	system("huayi-reset switch_sim");
 	return FCGI_RESP_CODE_SUCCESS; 
 }
 

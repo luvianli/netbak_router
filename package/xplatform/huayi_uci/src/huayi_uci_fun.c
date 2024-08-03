@@ -813,7 +813,10 @@ int first_internet_do_ping(const char *host, char *ifname) {
 	{
 		huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wan_gateway);
 	}else
-		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", wan_gateway);		
+	{
+		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", wan_gateway);	
+		//system("route del default dev eth0.2");
+	}	
 
     memset(cmd, 0, sizeof(cmd));
 	sprintf(cmd, "route -n | grep %s | grep UG | grep %s | wc -l", ifname, wan_gateway);
@@ -825,7 +828,7 @@ int first_internet_do_ping(const char *host, char *ifname) {
 		system(cmd);
 	}
 	
-	for(i = 0;i < 3; i++)
+	for(i = 0;i < 2; i++)
 	{
 		if (ifname == NULL)
 		{

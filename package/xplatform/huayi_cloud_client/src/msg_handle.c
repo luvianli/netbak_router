@@ -99,6 +99,28 @@ void get_url(char *url)
 	
 	return ;
 }*/
+
+int content(char *heartdata)
+{
+    FILE *file = fopen("/etc/netcheck.log", "r");
+    if (file == NULL) {
+        return -1;
+    }
+
+	fseek(file, 0, SEEK_END);
+    long length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    char *data = (char*)malloc(length + 1);
+    fread(data, 1, length, file);
+    data[length] = '\0';
+
+	fclose(file);
+	strcpy(heartdata, data);
+    free(data);
+
+	return 0;
+}
+
 void msg_content(char *heartdata, unsigned int *heartsize)
 {
 	cJSON *result_root = NULL;
@@ -119,6 +141,7 @@ void msg_content(char *heartdata, unsigned int *heartsize)
 	char mode[RESULT_STR_LEN] = {0},proto[RESULT_STR_LEN] = {0},name[RESULT_STR_LEN] = {0},gateway[IPV4_STR_LEN] = {0};
 	char dns1[IPV4_STR_LEN] = {0},dns2[IPV4_STR_LEN] = {0},p_name[OPTION_STR_LEN] = {0},password[OPTION_STR_LEN] = {0},ac[OPTION_STR_LEN] = {0},service[OPTION_STR_LEN] = {0};
 	char dial_apn[OPTION_STR_LEN] = {0},dial_name[OPTION_STR_LEN] = {0},dial_pass[OPTION_STR_LEN] = {0},dial_auth[OPTION_STR_LEN] = {0};
+	char buff[LIST_STR_LEN] = {0};
 	
 	result_root = cJSON_CreateObject();
 	
@@ -226,6 +249,12 @@ void msg_content(char *heartdata, unsigned int *heartsize)
 	cJSON_AddNumberToObject(result_root,"hour", hour);
 	cJSON_AddNumberToObject(result_root,"minute", minute);
 	cJSON_AddNumberToObject(result_root,"rec_time", rec_time);
+
+	content(buff);
+	if(strlen(buff)>0)
+	{	
+		cJSON_AddStringToObject(result_root,"log", buff);
+	}
 
 	output = cJSON_Print(result_root);
 	strcpy(heartdata, output);

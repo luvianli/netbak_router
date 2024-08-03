@@ -51,6 +51,5 @@ config upgrade upgrade
 
 config server server
 	option interval 60000
-	option urldomain 'https://up.aiotzy.com/api/device/post/uploadData/industryRouting'
+	option urldomain 'http://device.10086group.com/admin/ylapi/uploadData'
 	option clientlog   '1'	
-	

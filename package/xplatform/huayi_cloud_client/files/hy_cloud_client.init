@@ -17,3 +17,8 @@ start_service() {
 stop_service(){
 	service_stop "$PROG"
 }
+
+restart_service(){
+	stop
+	start
+}

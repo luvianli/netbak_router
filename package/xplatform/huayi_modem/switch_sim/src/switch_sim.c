@@ -6,17 +6,60 @@
 #include "huayi_uci_fun.h"
 
 int sim = 0;
+
+void save_siminfo()
+{
+    char lte_value[OPTION_STR_LEN] = {0},iccid[OPTION_STR_LEN] = {0};
+	int	 ret = 0,count = 0;
+	int  netoperator = 0;
+
+	ret = atcmd_get_iccid(lte_value);
+	huayi_uci_get_str(PKG_M_SYSTEM, "sim2", "iccid", iccid);
+	if (ret == 1 && strcmp(lte_value,iccid))
+	{	
+		SWITCH_SIM_LOG ("sim2 change");
+		huayi_uci_set_str(PKG_M_SYSTEM, "sim2", "iccid", lte_value);
+retry_getoperator:
+	    memset(lte_value, 0, OPTION_STR_LEN);
+	    atcmd_get_imsi(lte_value);
+	    if (strncmp(lte_value, "46000", 5) == 0 || strncmp(lte_value, "46002", 5) == 0 || strncmp(lte_value, "46004", 5) == 0 ||
+	            strncmp(lte_value, "46007", 5) == 0 || strncmp(lte_value, "46008", 5) == 0 || strncmp(lte_value, "46013", 5) == 0)
+	    {
+	        netoperator = 3;
+	    }
+	    else if (strncmp(lte_value, "46001", 5) == 0 || strncmp(lte_value, "46006", 5) == 0 ||
+	             strncmp(lte_value, "46009", 5) == 0 ||
+	             strncmp(lte_value, "46010", 5) == 0)
+	    {
+	        netoperator = 2;
+	    }
+	    else if (strncmp(lte_value, "46003", 5) == 0 || strncmp(lte_value, "46005", 5) == 0 ||
+	             strncmp(lte_value, "46011", 5) == 0 ||
+	             strncmp(lte_value, "460012", 5) == 0)
+	    {
+	        netoperator = 1;
+	    }
+	    else
+	    {
+	        netoperator = 0;
+	        count += 1;
+	        if (count < 3)
+	            goto retry_getoperator;
+	    }
+	    huayi_uci_set_int(PKG_M_SYSTEM, "sim2", "operator", netoperator);	
+		huayi_uci_commit(PKG_M_SYSTEM);
+	}
+
+    return;
+
+}
+
 void set_wanIp(){
 	char cmd[TEMP_STR_LEN] = {0};
 	char cmd_result[CMD_STR_LEN];
 	int is_ipv4 = 0,flag = 0;
 	int i = 0;
-    int mode = 0,allinfo = 0;
-    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
-	huayi_uci_get_int(PKG_M_SYSTEM, "system", "all_info", &allinfo);
-	if (mode == 0 || allinfo == 1)
-		return ;
-
+	
 	for(i;i<2;i++)
 	{	
 		memset(cmd_result, 0, CMD_STR_LEN);
@@ -43,7 +86,7 @@ int SlmDial()
 	char value[TEMP_STR_LEN] = {0};
 	int j,simnum,band;
 
-    while (count < 70)
+    while (count < 60)
     {
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "all_info", &allinfo);
@@ -58,7 +101,7 @@ int SlmDial()
 				sleep(2);
             }
 
-            if (registered_count < 60)
+            if (registered_count < 70)
             {
                 SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim, print_to);
 				set_wanIp();
@@ -86,19 +129,19 @@ int switchSim() {
     switch (sim) {
 
 		case 0:
-			printf("Switching CHN-CT\n");
+			SWITCH_SIM_LOG("Switching CHN-CT\n");
 			system("gpio l 0 0 4000 0 0 4000");
 			system("gpio l 36 0 4000 0 0 4000");
 		break;
 		
 		case 1:
-			printf("Switching CHINA MOBILE CMCC\n");
+			SWITCH_SIM_LOG("Switching CHINA MOBILE CMCC\n");
 			system("gpio l 0 0 4000 0 0 4000");
 			system("gpio l 36 4000 0 0 0 4000");
 		break;
 		
 		case 2:
-			printf("Switching 2\n");
+			SWITCH_SIM_LOG("Switching waicha\n");
 			system("gpio l 0 4000 0 0 0 4000");
 			system("gpio l 36 4000 0 0 0 4000");
 		break;
