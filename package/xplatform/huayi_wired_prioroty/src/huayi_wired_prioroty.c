@@ -54,7 +54,7 @@ int main(int argc,char *argv[])
 	int cpe_link = 0;
 	int old_int_mode = INTERNET_UNDEFINE;
 	int now_int_mode = INTERNET_UNDEFINE;
-	int  i = 0,j = 0;
+	int  i = 0,j = 0,k = 0;
 	char detectip[OPTION_STR_LEN] = {0};
 
 	while(1)
@@ -94,11 +94,24 @@ checknet:
 				sleep(10);
 				goto checknet;
 			}
+			if(k == 0)
+			{
+				system("huayi_AT_cli at+CFUN=0");
+				sleep(2);
+				system("huayi_AT_cli at+CFUN=1");
+				sleep(2);
+				system("/etc/init.d/huayi_dial4gcontrol restart");
+				NETCHECK_LOG("network error,reset modem");
+				k == 1;
+				continue ;
+			}
 			NETCHECK_LOG("network error,reboot");
 			system("reboot");
 			continue ;
 		}
 
+		k = 0;
+		
 		huayi_uci_get_int(PKG_SYSTEM,"server","success", &cpe_status);
 		if(cpe_status == 0)
 		{		

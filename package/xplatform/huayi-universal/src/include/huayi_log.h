@@ -320,7 +320,7 @@
                                     fclose(fp); \
                                     struct stat buf; \
                                     if (stat("/etc/netcheck.log", &buf) == 0) { \
-                                        if (buf.st_size > (2 * 1024 * 1024)) { \
+                                        if (buf.st_size > (1024)) { \
                                             REMOVE_OLDEST_LOG("/etc/netcheck.log"); \
                                         } \
                                     } \
