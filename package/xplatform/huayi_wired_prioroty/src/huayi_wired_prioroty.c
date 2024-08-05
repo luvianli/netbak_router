@@ -103,7 +103,7 @@ checknet:
 				sleep(2);
 				system("/etc/init.d/huayi_dial4gcontrol restart");
 				NETCHECK_LOG("network error,reset modem");
-				k == 1;
+				k = 1;
 				sleep(10);
 				goto checknet;
 			}
