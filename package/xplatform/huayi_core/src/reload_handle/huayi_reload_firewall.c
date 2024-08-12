@@ -407,12 +407,8 @@ VTBool huayi_reload_urlfilter(void * arg,cJSON *input_root)
 			XCMD(strcmdbuf, "iptables -w -A %s -m string --string %s --algo bm -j ACCEPT", URL_FILTER_CHAIN, url);
 			i++;
 		}
-		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .com --algo bm -j DROP ", URL_FILTER_CHAIN);
-		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .net --algo bm -j DROP ", URL_FILTER_CHAIN);
-		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .cn --algo bm -j DROP ", URL_FILTER_CHAIN);
-		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .org --algo bm -j DROP ", URL_FILTER_CHAIN);
-		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .edu --algo bm -j DROP ", URL_FILTER_CHAIN);
-		XCMD(strcmdbuf, "iptables -w -A %s -m string --string .gov --algo bm -j DROP ", URL_FILTER_CHAIN);
+		//XCMD(strcmdbuf, "iptables -w -A %s -m string --string https --algo bm -j DROP ", URL_FILTER_CHAIN);
+		XCMD(strcmdbuf, "iptables -w -A %s -m string --string http --algo bm -j DROP ", URL_FILTER_CHAIN);
 	}
 	
 	return VT_TRUE;	
