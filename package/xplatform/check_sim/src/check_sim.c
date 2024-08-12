@@ -435,9 +435,9 @@ void SLM_init()
 
 	//ret = AtcmdSendDelay("AT+QCFG=\"devmode,0\"",strlen("AT+QCFG=\"devmode,0\""),0);
 	//usleep(500);
-	//system("huayi_AT_cli AT+CFUN=0 ");
-	//sleep(5);
-	//system("huayi_AT_cli AT+CFUN=1 ");
+	system("huayi_AT_cli AT+CFUN=0 ");
+	sleep(5);
+	system("huayi_AT_cli AT+CFUN=1 ");
 	system("devmem 0x10000060 32 0x55150451");
 	return 1;
 }
@@ -490,7 +490,8 @@ void Production_testing_mode()
 		huayi_uci_set_int(PKG_M_SYSTEM, "system", "all_info", 0);
 		huayi_uci_commit(PKG_M_SYSTEM);
     }
-
+	if(allinfo == 0)
+		sleep(10);
 }
 
 int check_wan_type()
