@@ -142,7 +142,8 @@ void msg_content(char *heartdata, unsigned int *heartsize)
 	char dns1[IPV4_STR_LEN] = {0},dns2[IPV4_STR_LEN] = {0},p_name[OPTION_STR_LEN] = {0},password[OPTION_STR_LEN] = {0},ac[OPTION_STR_LEN] = {0},service[OPTION_STR_LEN] = {0};
 	char dial_apn[OPTION_STR_LEN] = {0},dial_name[OPTION_STR_LEN] = {0},dial_pass[OPTION_STR_LEN] = {0},dial_auth[OPTION_STR_LEN] = {0};
 	char buff[LIST_STR_LEN] = {0};
-	
+	char time[RESULT_STR_LEN] = {0};
+		
 	result_root = cJSON_CreateObject();
 	
 	huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn);
@@ -249,6 +250,8 @@ void msg_content(char *heartdata, unsigned int *heartsize)
 	cJSON_AddNumberToObject(result_root,"hour", hour);
 	cJSON_AddNumberToObject(result_root,"minute", minute);
 	cJSON_AddNumberToObject(result_root,"rec_time", rec_time);
+	get_current_time(time);
+	cJSON_AddStringToObject(result_root,"time", time);
 
 	content(buff);
 	if(strlen(buff)>0)

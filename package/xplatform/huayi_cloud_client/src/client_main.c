@@ -108,10 +108,13 @@ void* heart_handle()
 	gTimeWait = interval;
 	while(1) {
 		if(internet_do_ping_detect(INTERNET_DOMAIN, NULL) != 1){
+			huayi_uci_set_int(PKG_SYSTEM,"server","status", 1);
 			CLOUD_CLIENT_LOG("network error,sleep 20s\n");			
 			sleep(20);
 			continue;
 		}
+
+		huayi_uci_set_int(PKG_SYSTEM,"server","status", 0);
 
 		memset(heartData, 0, sizeof(heartData));
 		memset(url, 0, sizeof(url));
@@ -138,6 +141,7 @@ void* heart_handle()
 		memset(heartContent,0,sizeof(heartContent));
 		ret=curl_easy_perform(curl);
 		if(ret == 0) { //parse html
+			huayi_uci_set_int(PKG_SYSTEM,"server","status", 1);
 			system("rm -rf /etc/netcheck.log");
 			if(strlen(heartContent) == 0) {	
 				CLOUD_CLIENT_LOG("content is null\n");
@@ -155,7 +159,8 @@ void* heart_handle()
 			}
 			if(i > 2)
 			{	
-				system("check_network");
+				//system("check_network");
+				system("/etc/init.d/hy_cloud_client restart");
 				usleep(20*1000);
 				i = 0;
 			}
