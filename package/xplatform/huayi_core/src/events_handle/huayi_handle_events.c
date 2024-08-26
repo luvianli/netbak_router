@@ -1236,27 +1236,16 @@ void do_repeater_led_high_signal_or_on(void)
 void do_internet_led_on(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
-	char product_model[OPTION_STR_LEN] = {0};
 
-	/*add by rex, 针对这个型号的产品特殊处理，后续考虑删除*/
-	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-	if(!strcmp(product_model, "4G1200-H002-HY06"))
-	{
-		//red led off
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
-		system(cmd);
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", 37); //blue led  on
-		system(cmd);
-		return;
-	}
-	/*end by rex*/
 	if(CONFIG_HUAYI_INTERNET_LED_GPIO_NUM == 3) {
 		/*for 7628DA GPIO3*/
 		strcpy(cmd, "devmem 0x10000060 32 0x4110441");	
 		system(cmd);
 	}
-	snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
 
+	snprintf(cmd, CMD_STR_LEN, "gpio l 4 0 4000 0 0 4000");//red off
+	system(cmd);
+	snprintf(cmd, CMD_STR_LEN, "gpio l 3 4000 0 0 0 4000");//green on
 	system(cmd);
 	
 	return;
@@ -1265,61 +1254,34 @@ void do_internet_led_on(void)
 void do_internet_led_off(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
-	char product_model[OPTION_STR_LEN] = {0};
 
-	/*add by rex, 针对这个型号的产品特殊处理，后续考虑删除*/
-	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-	if(!strcmp(product_model, "4G1200-H002-HY06"))
-	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", 37); //blue led  off
-		system(cmd);
-		//red led on
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
-		system(cmd);
-		return;
-	}
-	/*end by rex*/
-	
 	if(CONFIG_HUAYI_INTERNET_LED_GPIO_NUM == 3) {
 		/*for 7628DA GPIO3*/
 		strcpy(cmd, "devmem 0x10000060 32 0x4110441");	
 		system(cmd);
 	}
-	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
 
+	snprintf(cmd, CMD_STR_LEN, "gpio l 3 0 4000 0 0 4000");//green off
 	system(cmd);
-	
+	snprintf(cmd, CMD_STR_LEN, "gpio l 4 4000 0 0 0 4000");//red on
+	system(cmd);
+
 	return;
 }
-
-
-
 
 void do_internet_led_slowly(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
-	char product_model[OPTION_STR_LEN] = {0};
 
-	/*add by rex, 针对这个型号的产品特殊处理，后续考虑删除*/
-	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-	if(!strcmp(product_model, "4G1200-H002-HY06"))
-	{
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", 37); //blue led  off
-		system(cmd);
-		snprintf(cmd, CMD_STR_LEN, "gpio l %d 8 8 4000 0 4000", 1); //red led
-		system(cmd);
-		return;
-	}
-	/*end by rex*/
-	
 	if(CONFIG_HUAYI_INTERNET_LED_GPIO_NUM == 3) {
 		/*for 7628DA GPIO3*/
 		strcpy(cmd, "devmem 0x10000060 32 0x4110441");	
 		system(cmd);
 	}
 
-	snprintf(cmd, CMD_STR_LEN, "gpio l %d 8 8 4000 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
-
+	snprintf(cmd, CMD_STR_LEN, "gpio l 4 0 4000 0 0 4000");//red off
+	system(cmd);
+	snprintf(cmd, CMD_STR_LEN, "gpio l 3 8 8 4000 0 4000");//green blink
 	system(cmd);
 	
 	return;

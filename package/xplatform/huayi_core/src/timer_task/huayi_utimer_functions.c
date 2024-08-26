@@ -709,6 +709,42 @@ void huayi_core_schedule_reboot(void* arg)
 	return;
 }
 
+void huayi_core_wifi_close(void* arg)
+{
+	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
+	int close = 0;
+	int disabled = -1;
+	char date[32] = {0};
+	
+	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&disabled);
+	if(disabled == 0)
+	{
+		huayi_uci_get_int(PKG_SYSTEM,"server","wificlose",&close);
+
+		if(close > 0)
+		{
+			huayi_uci_get_str(PKG_SYSTEM,"server","time",date);
+			time_t t1, t2;
+			struct tm tm1;
+			huayi_uci_get_str(PKG_SYSTEM,"server","time",date);
+			strptime(date, "%Y-%m-%d %H:%M:%S", &tm1);
+			t1 = mktime(&tm1);
+			time(&t2);
+			int seconds_diff = difftime(t2, t1);
+			if(seconds_diff <= close)
+			{			
+				huayi_uci_set_int(PKG_SYSTEM,"server","wificlose",0);
+				huayi_uci_commit(PKG_SYSTEM);
+				huayi_uci_set_int(PKG_WIRELESS,"radio0_0","disabled",1);
+				huayi_uci_commit(PKG_WIRELESS);	
+				system("huayi-reset wireless");
+				return;
+			}
+		}
+	}
+	huayi_core_add_task(AVG_USAGE_UPDATE_INTERVAL,HUAYI_SCHE_CLOSE_WIFI,huayi_core_wifi_close,Agent);
+	return;
+}
 
 void huayi_core_timer_ifup_wan(void* arg)
 {
@@ -997,6 +1033,7 @@ void huayi_utimer_functions_start(struct VcoreAgent *Agent)
 	huayi_core_add_task(120,HUAYI_SCHE_REBOOT_TASK,huayi_core_schedule_reboot,Agent);
 
 	huayi_core_wifi_schedule_down(Agent);
+	huayi_core_wifi_close(Agent);
 
 #if defined(CONFIG_HUAYI_SPECIAL_LED_SUPPORT)
 	huayi_core_delay_start_special_led(Agent);

@@ -72,6 +72,7 @@ typedef enum
 	HUAYI_RELOAD_MOUNT_TASK,
 	HUAYI_START_CHECK_NETWORK_LED_TASK,
 	HUAYI_START_CHECK_4G_SIGNAL_LED_TASK,
+	HUAYI_SCHE_CLOSE_WIFI,
 }HUAYI_CORE_TASK_ID;
 
 
@@ -84,5 +85,6 @@ void huayi_core_timer_udhcpd(void* arg);
 void huayi_core_wifi_schedule_down(void* arg);
 void huayi_core_mount(void* arg);
 void huayi_core_wifi_timer_scan(void* arg);
+void huayi_core_wifi_close(void* arg);
 
 #endif

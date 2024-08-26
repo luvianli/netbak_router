@@ -248,3 +248,30 @@ void huayi_set_sche_reboot_config(cJSON *response_root)
 	return ;
 }
 
+void get_current_time(char *tmpbuf)
+{
+	FILE *fp = NULL;
+	char *p = NULL;
+	char buf[128]={0};
+	
+	fp = popen("date +\"%Y-%m-%d %H:%M:%S\"", "r");
+	if(fp == NULL) 
+	{
+		return;
+	}
+	
+	while(fgets(buf, sizeof(buf), fp) != NULL)
+	{
+		if((p=strstr(buf, "\n")))
+		{
+			p[0]='\0';
+		}
+	}
+	
+	pclose(fp);
+	
+	strcpy(tmpbuf,buf);
+	
+	return;
+}
+

@@ -327,6 +327,24 @@
                                 } \
                             } \
                         } while (0)
-
+#define MESSAGES_LOG(format, args...) \
+                            do { \
+                                if (1) { \
+                                    FILE *fp = fopen("/tmp/log/messages.log", "a"); \
+                                    if (fp) { \
+                                        time_t currentTime = time(NULL);\
+                                        struct tm *localTime = localtime(&currentTime);\
+                                        fprintf(fp, "[%04d-%02d-%02d %02d:%02d:%02d]" format "\n", \
+                                            localTime->tm_year + 1900, localTime->tm_mon + 1, localTime->tm_mday, \
+                                            localTime->tm_hour, localTime->tm_min, localTime->tm_sec, ##args ); \
+                                        fclose(fp); \
+                                    } \
+                                } \
+                                struct stat buf; \
+                                int size = stat("/tmp/log/messages.log", &buf); \
+                                if (size > 2048) { \
+                                    system("rm -fr /tmp/log/messages.log"); \
+                                } \
+                            } while (0)
 
 #endif /* __HUAYI_LOG_H__ */

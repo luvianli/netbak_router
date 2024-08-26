@@ -41,6 +41,7 @@ VTBool huayi_reload_functions_init(struct VcoreAgent *Agent)
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_HWNAT-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_hwnat;
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_WIRELESS_SCAN-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_wireless_scan;
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_WIFI_SCHE-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_wifi_sche;
+	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_WIFI_CLOSE-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_wifi_close;
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_LTE_4G-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_lte4g;
 #endif

@@ -83,6 +83,10 @@ all: check_config clean def_config
 
 WYX3C-10-1:
 	@$(MAKE) $(t) product=$@ product_name=WYX3C-10-1 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
+
+PT6:
+	@$(MAKE) $(t) product=$@ product_name=PT6 Chip=MT7628DA hardware=mt7628 FLASH_SIZE=$(SIZE8M) FLASH_DRAM_SIZE=8M64M	COMPANY=HUAYI
 	
 help:
 	@echo "eg:  make WYX3C-10-1 -- for 7628NN Router 300M 4G"
+	@echo "eg:  make PT6 -- for 7628NN Router 300M 4G"

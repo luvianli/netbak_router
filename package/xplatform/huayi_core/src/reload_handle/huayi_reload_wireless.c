@@ -316,10 +316,27 @@ VTBool huayi_reload_wireless(void * arg,cJSON *input_root)
 		if(disabled == 0)
 		{
 			regdata |= 0x0;
+			int count = 1 , oldcount = 1;
+			huayi_uci_get_int(PKG_WIRELESS,"radio0_0","maxstanum",&count);
+			huayi_uci_get_int(PKG_DHCP,"lan","limit",&oldcount);
+			if(count + 1 != oldcount)
+			{
+				huayi_uci_set_int(PKG_DHCP,"lan","limit",count+1);
+				huayi_uci_commit(PKG_DHCP);
+				system("huayi-reset dhcps");
+			}
 		}
 		else
 		{
 			regdata |= 0x1;
+			int count = 0;
+			huayi_uci_get_int(PKG_DHCP,"lan","limit",&count);
+			if(count != 1)
+			{
+				huayi_uci_set_int(PKG_DHCP,"lan","limit",1);
+				huayi_uci_commit(PKG_DHCP);
+				system("huayi-reset dhcps");
+			}
 		}
 
 		memset(resultbuf,0,sizeof(resultbuf));
@@ -584,5 +601,11 @@ void huayi_core_wifi_timer_scan(void* arg)
 #endif	
 }
 
+VTBool huayi_reload_wifi_close(void * arg,cJSON *input_root)
+{
+	huayi_core_delete_first_task_by_id(HUAYI_SCHE_CLOSE_WIFI);
+	huayi_core_wifi_close(arg);
+	return VT_TRUE;
+}
 
 

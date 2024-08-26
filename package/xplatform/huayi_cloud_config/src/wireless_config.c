@@ -329,6 +329,8 @@ void huayi_set_wifi_config(cJSON *response_root)
 	int disabled = -1, olddisabled = -1;
 	int channel = -1, oldchannel = -1;
 	int wifireset_flag = 0;
+	int count = 1 , oldcount = 1;
+	int close = 1 , oldclose = 1;
 
 	if(NULL == response_root) 
 	{
@@ -378,6 +380,29 @@ void huayi_set_wifi_config(cJSON *response_root)
 		if((channel >= 0 && channel < 14) && (channel != oldchannel)) {
 			huayi_uci_set_int(PKG_WIRELESS,radio_section,"channel",channel);
 			wifireset_flag = 1;
+		}
+	}
+
+	if(huayi_json_get_int(response_root,"count",&count)) 
+	{
+		huayi_uci_get_int(PKG_WIRELESS,"radio0_0","maxstanum",&oldcount);
+		if((count > 0)&& (count != oldcount)) {
+			huayi_uci_set_int(PKG_WIRELESS,"radio0_0","maxstanum",count);
+			wifireset_flag = 1;
+		}
+	}
+
+	if(huayi_json_get_int(response_root,"wificlose",&close)) 
+	{
+		close = close * 60;
+		huayi_uci_get_int(PKG_SYSTEM,"server","wificlose",&oldclose);
+		if((count >= 0)&& (close != oldclose)) {
+			huayi_uci_set_int(PKG_SYSTEM,"server","wificlose",close);
+			char time[OPTION_STR_LEN]={0};
+			get_current_time(time);
+			huayi_uci_set_str(PKG_SYSTEM,"server","time",time);
+			huayi_uci_commit(PKG_SYSTEM);
+			system("huayi-reset wifi_close");
 		}
 	}
 

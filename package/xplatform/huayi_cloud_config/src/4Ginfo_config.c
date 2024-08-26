@@ -81,45 +81,10 @@ void huayi_set_4g_config(cJSON *response_root)
     {
         return ;
     }
-#ifdef CONFIG_HUAYI_SUPPORT_SPECIAL_INTERFACE
-    if (!huayi_json_get_int(response_root, "mode", &simSwitch))
-    {
-        return;
-    }
-
-	if(simSwitch == 2)
-	{
-		simSwitch = 0;
-	}else if(simSwitch == 4)
-	{
-		simSwitch = 1;
-	}else if(simSwitch == 3)
-	{
-		simSwitch = 2;
-	}else return ;
-	CLOUD_CLIENT_LOG("simSwitch is %d\n",simSwitch);
-
-	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
-	if(simSwitch == at_card)
-		return ;
-#else
     if (!huayi_json_get_int(response_root, "simSwitch", &simSwitch))
     {
         return;
     }
-#endif
-
-#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
-	int simnum;
-	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
-
-    huayi_uci_get_str(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
-    if (simSwitch == simnum -1 && !enable)
-    {
-        SWITCH_SIM_LOG("external_card_enable=%d,switch %d error",enable,simSwitch);
-        return;
-    }
-#endif
 
     CON_LOG("switch sim %d", simSwitch);
     sprintf(cmd, "switch_sim %d", simSwitch);

@@ -92,6 +92,7 @@ VTBool huayi_wps_pbc(void * arg,cJSON *input_root);
 VTBool huayi_wps_pin(void * arg,cJSON *input_root);
 VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root);
 VTBool huayi_reload_wifi_sche(void * arg,cJSON *input_root);
+VTBool huayi_reload_wifi_close(void * arg,cJSON *input_root);
 
 //switch_sim &&save usesiminfo
 VTBool huayi_switch_card(void * arg,cJSON *input_root);

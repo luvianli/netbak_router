@@ -34,6 +34,7 @@ ReloadCmdStructure CmdTable[] = {
 	{"hwnat", HUAYI_MSG_RELOAD_HWNAT,0,"--Reset hardware nat"},
 	{"scan",HUAYI_MSG_RELOAD_WIRELESS_SCAN,1,"--Reset wireless scan"},
 	{"wifi_sche",HUAYI_MSG_RELOAD_WIFI_SCHE,0,"--Reset wifi schedule"},
+	{"wifi_close",HUAYI_MSG_RELOAD_WIFI_CLOSE,0,"--Close wifi schedule"},
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	{"lte4g",HUAYI_MSG_RELOAD_LTE_4G,1,"--Reset LTE 4G, 1 restart model,0 is not"},
 #endif

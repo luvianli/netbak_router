@@ -252,120 +252,108 @@ againt:
 
 void check_network()
 {
-    int totalsimnum = 0, simn = 0, usegpio = 0;
+    int totalsimnum = 0, simn = 0, usegpio = 0,at_card = 0;
     char cmd[OPTION_STR_LEN] = {0};
     int  netoperator = 0;
     char tmp[OPTION_STR_LEN] = {0};
     char check_ip[OPTION_STR_LEN] = {0};
     int ret = 0, count = 0, i = 0;
     int i_ready = 0, i_signal = 0;
+	int status = 1;
     char lte_value[OPTION_STR_LEN] = {0};
     char iccid[OPTION_STR_LEN] = { 0 };
-    int hbq = 0, this_bool = 0;
     int enable = 0;
-
-
 
     isProductionMode();
 
-    //External card
-
-#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
-    int simnum;
-    huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
-	simn = simnum - 1;
-	SWITCH_SIM_LOG ("CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES START");
-
-#else
 	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
-	SWITCH_SIM_LOG ("HUAYI_SUPPORT_MEIGE_TRIPLE_CARD START");
-
-
-#endif
     sprintf(cmd, "switch_sim %d", simn);
     system(cmd);
-    sleep(30);
+    sleep(20);
+	save_useing_siminfo(simn);
 
-#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
-	ret = atcmd_get_iccid(iccid);
-	if(ret == 1 && strlen(iccid)>5)
+	while(1)
 	{
-		save_useing_siminfo(simn);
-		return ;
-	}else goto check_net;
-#endif
-
-    //huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+		count = 0;
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &simn);
+		memset(check_ip, 0, OPTION_STR_LEN);
+		huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
+		
 cretry1:
-    memset(check_ip, 0, OPTION_STR_LEN);
-    huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
-    if (networkCheck(check_ip))
-    {
-        save_useing_siminfo(simn);
-        CON_LOG("sim %d network ok \n", simn);
-        return;
-    }
-    else
-    {
-        count += 1;
-        sleep(6);
-        if (count <= 10)
-            goto cretry1;
-    }
-    count = 0;
+		status = atcmd_get_slm_mobile_type(cmd);
+		if(status == 1)
+		{	
+		    if (networkCheck(check_ip))
+		    {
+		        goto success;
+		    }
+		    else
+		    {
+				count += 1;
+				huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
+				if(at_card != simn)
+				{
+					CON_LOG("at_card change,reload network check\n");
+					count = 0;
+					continue ;
+				}
+		        sleep(6);
+		        if (count <= 5)
+		            goto cretry1;
+		    }
+		    count = 0;
 
-    CON_LOG("sim%d ping bu tong %s", simn, check_ip);
+		    CON_LOG("sim%d ping bu tong %s", simn, check_ip);
+		}else CON_LOG("sim%d cops is error", simn);
 check_net:
-    huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &totalsimnum);
-    for (i = 0; i < totalsimnum; i++)
-    {
-        if (i == simn)
-            continue;
-        //外置卡
-#ifndef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
-        if (i == totalsimnum - 1)
-        {
-            huayi_uci_get_int(PKG_M_SYSTEM, "system", "external_card_enable", &enable);
-            if (!enable)
-            {
-                CON_LOG("external_card_enable     0");
-                //system("reboot");
-                break;
-            }
-        }
-#endif
-        CON_LOG("network error ,switch sim%d", i);
-        isProductionMode();
-        memset(tmp, 0, OPTION_STR_LEN);
-        sprintf(tmp, "switch_sim %d", i);
-        system(tmp);
-        sleep(30);
+	    huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &totalsimnum);
+	    for (i = 0; i < totalsimnum; i++)
+	    {
+	        if (i == simn)
+	            continue;
+
+	        CON_LOG("network error ,switch sim%d", i);
+	        //isProductionMode();
+	        memset(tmp, 0, OPTION_STR_LEN);
+	        sprintf(tmp, "switch_sim %d", i);
+	        system(tmp);
+	        sleep(20);
 cretry2:
-        memset(tmp, 0, OPTION_STR_LEN);
-        huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "default_checkip", tmp);
-        if (networkCheck(tmp))
-        {
-            sleep(3);
-            save_useing_siminfo(i);
-            CON_LOG("sim %d network ok \n", i);
-            this_bool = 1;
-            return;
-        }
-        else
-        {
-            count += 1;
-            sleep(6);
-            if (count <= 10)
-                goto cretry2;
+			huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
+			if(at_card != i)
+			{
+				CON_LOG("at_card change,reload network check\n");
+				count = 0;
+				simn = at_card;
+				goto cretry1;
+			}
+			
+	        memset(tmp, 0, OPTION_STR_LEN);
+	        huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "default_checkip", tmp);
+	        if (networkCheck(tmp))
+	        {
+	            sleep(3);
+	            save_useing_siminfo(i);
+	            CON_LOG("sim %d network ok \n", i);
+	            goto success;
+	        }
+	        else
+	        {
+	            count += 1;
+	            sleep(6);
+	            if (count <= 5)
+	                goto cretry2;
+	        }
+	        count = 0;
+	        sleep(1);
+	    }
+		SWITCH_SIM_LOG("All cards network error -> exe reboot");
+	    sleep(10);
+	    system("reboot");
 
-        }
-        count = 0;
-        sleep(1);
-    }
-	SWITCH_SIM_LOG("All cards network error -> exe reboot");
-    sleep(15);
-    system("reboot");
-
+success:
+		sleep(60);
+	}
     return;
 }
 
@@ -509,43 +497,9 @@ void Production_testing_mode()
     else
     {
         CON_LOG("Start working mode");
+		sleep(10);
     }
 
-}
-
-void get_siminfo()
-{
-#ifdef CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
-    return ;
-#else
-    int mode = 0,simnum,gpio;
-	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
-
-	char iccid[simnum][OPTION_STR_LEN];
-    huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
-	huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid[0]);
-	huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid[1]);
-
-    while(mode == 1&& (strlen(iccid[0])< 5||strlen(iccid[1])< 5))
-    {	    
-    	if(strlen(iccid[0])< 5)
-    	{	
-    		huayi_uci_get_int(PKG_M_SYSTEM, "sim0", "gpio", &gpio);
-			switch_sim(0, gpio);
-			huayi_uci_get_str(PKG_M_SYSTEM, "sim0", "iccid", iccid[0]);
-		}
-    	if(strlen(iccid[1])< 5)
-    	{	
-    		huayi_uci_get_int(PKG_M_SYSTEM, "sim1", "gpio", &gpio);
-			switch_sim(1, gpio);
-			huayi_uci_get_str(PKG_M_SYSTEM, "sim1", "iccid", iccid[1]);
-		}		
-		sleep(2);
-		huayi_uci_get_int(PKG_M_SYSTEM, "system", "working_mode", &mode);
-    }
-	sleep(2);
-#endif
-	return ;
 }
 
 int main(int argc, char *argv[])
@@ -555,7 +509,7 @@ int main(int argc, char *argv[])
 
     Production_testing_mode();
 
-    //check_network();
+    check_network();
     //init_cloud_client();
 
     return 0;

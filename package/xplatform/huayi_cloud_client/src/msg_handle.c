@@ -301,146 +301,53 @@ void msg_content(char *heartdata, unsigned int *heartsize)
 	char buff[LONG_LIST_BUFF_LEN] = {0};
         
 	result_root = cJSON_CreateObject();
-    huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-    if(strcmp(product_model, "WYX3C-10-1") == 0)
-    {
-        huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn);
+
+	{
+        huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn,&simSwitch);
         cJSON_AddStringToObject(result_root,"sn", sn);
         cJSON_AddStringToObject(result_root,"iccid", iccid);
         cJSON_AddNumberToObject(result_root,"dbm", sig);
         cJSON_AddStringToObject(result_root,"opname", mobile_type);
-        //cJSON_AddNumberToObject(result_root,"simSwitch", simSwitch);
+        cJSON_AddNumberToObject(result_root,"simSwitch", simSwitch);
         speeddown = 0;
     	speedup = 0 ;
     	huayi_get_qos_config(&speeddown, &speedup);//to do long
     	cJSON_AddNumberToObject(result_root,"speed_downlink", speeddown);
     	cJSON_AddNumberToObject(result_root,"speed_uplink", speedup);
 
-        /*huayi_get_wireless_config(ssid_2g, key_2g, &hidden_2g, &client_num,&channel,&status);
-    	//cJSON_AddNumberToObject(result_root,"wifi_status",status);
+        huayi_get_wireless_config(ssid_2g, key_2g, &hidden_2g, &client_num,&channel,&status);
+    	cJSON_AddNumberToObject(result_root,"wifi_status",status);
     	cJSON_AddStringToObject(result_root,"ssid", ssid_2g);
     	cJSON_AddStringToObject(result_root,"password", key_2g);
     	//cJSON_AddNumberToObject(result_root,"channel",channel);
-    	cJSON_AddNumberToObject(result_root,"hidden", hidden_2g);
-        cJSON_AddNumberToObject(result_root,"count",client_num);*/
+    	//cJSON_AddNumberToObject(result_root,"hidden", hidden_2g);
+        cJSON_AddNumberToObject(result_root,"count",client_num);
         cJSON_AddStringToObject(result_root,"cell_id", cellid);
         cJSON_AddStringToObject(result_root,"lac", lac);
         huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","gateway",gatewayip);
         cJSON_AddStringToObject(result_root,"ip", gatewayip);
         huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version", soft_ver);
         cJSON_AddStringToObject(result_root,"version", soft_ver);
-		content(buff);
-		if(strlen(buff)>0 ||strlen(buff)<1024)
-		{	
-			cJSON_AddStringToObject(result_root,"log", buff);
-		}
-    }else{
-    	huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn);
-    	cJSON_AddStringToObject(result_root,"sn", sn);
-        
-    	cJSON_AddStringToObject(result_root,"iccid", iccid);
-    	cJSON_AddNumberToObject(result_root,"dbm", sig);
-    	cJSON_AddStringToObject(result_root,"opname", mobile_type);
-    	cJSON_AddStringToObject(result_root,"cell_id", cellid);
-    	cJSON_AddStringToObject(result_root,"lac", lac);
-    	cJSON_AddNumberToObject(result_root,"simSwitch", simSwitch);
-    	
-    	huayi_get_sys_info(soft_ver,productname,&uptime,&devicetype);
-    	cJSON_AddNumberToObject(result_root,"devicetype", devicetype);
-    	cJSON_AddStringToObject(result_root,"productname", productname);
-    	cJSON_AddStringToObject(result_root,"version", soft_ver);
-    	cJSON_AddNumberToObject(result_root,"uptime", uptime);
-    	
-    	huayi_get_wan_confign(gatewayip,&status,ip,netmask,nettype,&speedup, &speeddown);
-    	cJSON_AddStringToObject(result_root,"ip", gatewayip);
-    	cJSON_AddNumberToObject(result_root,"wan_status", status);
-    	cJSON_AddStringToObject(result_root,"wan_ip", ip);
-    	cJSON_AddStringToObject(result_root,"wan_netmask", netmask);
-    	cJSON_AddStringToObject(result_root,"nettype", nettype);
-    	cJSON_AddNumberToObject(result_root,"rx_bps", speeddown);
-    	cJSON_AddNumberToObject(result_root,"tx_bps", speedup);
 
-    	memset(ip,0,sizeof(ip));
-    	memset(netmask,0,sizeof(netmask));
-    	status = 0;
-    	huayi_get_lan_confign(ip,netmask,&status,startip,endip,&lease_time);
-    	cJSON_AddStringToObject(result_root,"lan_ip", ip);
-    	cJSON_AddStringToObject(result_root,"lan_netmask", netmask);
-    	cJSON_AddNumberToObject(result_root,"lan_dhcp", status);
-    	cJSON_AddStringToObject(result_root,"start_ip", startip);
-    	cJSON_AddStringToObject(result_root,"end_ip", endip);
-    	cJSON_AddNumberToObject(result_root,"lease_time", lease_time);
-
-    	speeddown = 0;
-    	speedup = 0 ;
-    	huayi_get_qos_config(&speeddown, &speedup);//to do long
-    	cJSON_AddNumberToObject(result_root,"speed_downlink", speeddown);
-    	cJSON_AddNumberToObject(result_root,"speed_uplink", speedup);
-
-    	status = 0;
-    	huayi_get_wireless_config(ssid_2g, key_2g, &hidden_2g, &client_num,&channel,&status);
-    	cJSON_AddNumberToObject(result_root,"wifi_status",status);
-    	cJSON_AddStringToObject(result_root,"ssid", ssid_2g);
-    	cJSON_AddStringToObject(result_root,"password", key_2g);
-    	cJSON_AddNumberToObject(result_root,"channel",channel);
-    	cJSON_AddNumberToObject(result_root,"count",client_num);
-    	cJSON_AddNumberToObject(result_root,"hidden", hidden_2g);
-
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-    	status = 0;
-    	huayi_get_wireless_5g_config(ssid_2g, key_2g, &hidden_2g, &channel,&status);
-    	cJSON_AddNumberToObject(result_root,"5gmode", 1);
-    	cJSON_AddNumberToObject(result_root,"wifi_5g",status);
-    	cJSON_AddStringToObject(result_root,"ssid_5g", ssid_2g);
-    	cJSON_AddStringToObject(result_root,"password_5g", key_2g);
-    	cJSON_AddNumberToObject(result_root,"channel_5g",channel);
-    	cJSON_AddNumberToObject(result_root,"hidden_5g", hidden_2g);
-#else
-    	cJSON_AddNumberToObject(result_root,"5gmode", 0);
-#endif
-
-    	status = 0;
-    	memset(ip,0,sizeof(ip));
-    	memset(netmask,0,sizeof(netmask));
-
-    	huayi_get_wan_or_wan4g_config(&type,mode,proto,name,&status,ip,netmask,gateway,dns1,dns2
-    		,p_name,password,ac,service,dial_apn,dial_name,dial_pass,dial_auth);
-    	cJSON_AddNumberToObject(result_root,"wan_type", type);
-    	cJSON_AddStringToObject(result_root,"wan_mode", mode);
-    	cJSON_AddStringToObject(result_root,"proto", proto);
-    	cJSON_AddStringToObject(result_root,"host_name", name);
-    	if(!strcmp(proto,"static"))
-    	{
-    		cJSON_AddStringToObject(result_root,"sta_ip", ip);
-    		cJSON_AddStringToObject(result_root,"sta_netmask", netmask);
-    		cJSON_AddStringToObject(result_root,"sta_gateway", gateway);
-    		cJSON_AddStringToObject(result_root,"dns1", dns1);
-    		cJSON_AddStringToObject(result_root,"dns2", dns2);
-    	}else if(!strcmp(proto,"pppoe"))
-    	{
-    		cJSON_AddStringToObject(result_root,"ppp_name", p_name);
-    		cJSON_AddStringToObject(result_root,"ppp_pass", password);
-    		cJSON_AddStringToObject(result_root,"ppp_ac", ac);
-    		cJSON_AddStringToObject(result_root,"ppp_server", service);
-    	}
-    	cJSON_AddNumberToObject(result_root,"dial_way", status);
-    	if(status != 0)
-    	{
-    		cJSON_AddStringToObject(result_root,"dial_apn", dial_apn);
-    		cJSON_AddStringToObject(result_root,"dial_name", dial_name);
-    		cJSON_AddStringToObject(result_root,"dial_pass", dial_pass);
-    		cJSON_AddStringToObject(result_root,"dial_auth", dial_auth);
-    	}
-    	
-    	status = 0;
-    	huayi_get_sche_reboot_config(&status,&rectime,&week,&hour,&minute,&rec_time);
+		status = 0;
+		huayi_get_sche_reboot_config(&status,&rectime,&week,&hour,&minute,&rec_time);
     	cJSON_AddNumberToObject(result_root,"sch_reboot", status);
     	cJSON_AddNumberToObject(result_root,"rectime", rectime);
     	cJSON_AddNumberToObject(result_root,"week", week);
     	cJSON_AddNumberToObject(result_root,"hour", hour);
     	cJSON_AddNumberToObject(result_root,"minute", minute);
     	cJSON_AddNumberToObject(result_root,"rec_time", rec_time);
-    }
+
+		/*content(buff);
+		if(strlen(buff)>0 ||strlen(buff)<1024)
+		{	
+			cJSON_AddStringToObject(result_root,"log", buff);
+		}*/
+		get_current_time(dial_apn);
+		cJSON_AddStringToObject(result_root,"time",dial_apn);
+		//huayi_uci_get_str(PKG_SYSTEM,"server","checkcode",dial_name);
+		//cJSON_AddStringToObject(result_root,"checkcode",dial_name);
+	}
 	output = cJSON_Print(result_root);
 	strcpy(heartdata, output);
 	*heartsize = strlen(output);
@@ -586,63 +493,18 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 		return;
 	format = cJSON_GetObjectItem(root,"data");
 	if(format == NULL) {
-		format = cJSON_GetObjectItem(root,"json");
-		if(format == NULL) {
-			return;
-		}
+		return;
 	}
-
-#ifdef CONFIG_HUAYI_SUPPORT_SPECIAL_INTERFACE
-	if(ret == 0)
-	{	
-#ifndef	CONFIG_HUAYI_SUPPORT_MEIGE_SINGLE_CARD
-		huayi_set_4g_config(format);
-#endif
-	}else if(ret == 1 || ret == 201 || ret == 501 || ret == 502 || ret == 508)//设备无法上网
-	{	
-		//system("route del default");
-		system("ifdown wan4g");
-	}else if(ret == 509)//重启
-	{	
-		system("reboot");
-	}/*else if(ret == 506)//限速
-	{	
-		huayi_set_wifi_qos();
-	}else if(ret == 507)//取消限速
-	{	
-		int mode = -1;
-		huayi_uci_get_int(PKG_QOS,"qos","qos_mode",&mode);
-		if(mode != 0)
-		{
-			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed",0);
-			huayi_uci_set_int(PKG_QOS,"qos","total_dwspeed",0);
-			huayi_uci_set_int(PKG_QOS,"qos","qos_mode", 0);
-			huayi_uci_commit(PKG_QOS);	
-			system("huayi-reset iplimit");
-		}
-	}*/else if(ret == 511)//修改wifi密码
-	{	
-		huayi_set_wifi_psw(format);
-	}else if(ret == 514)//修改wifi名
-	{	
-		huayi_set_wifi_ssid(format);
-	}else if(ret == 515)//恢复出厂
-	{	
-		system("huayi-reset reset");
-	}
-#else	
+	
 	huayi_next_url_time(format);
-	/*huayi_set_4g_config(format);
+	huayi_set_4g_config(format);
 	huayi_set_wifi_config(format);
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-	huayi_set_5gwifi_config(format);
-#endif*/
-	huayi_set_mac(format);
-	huayi_set_lan_config(format);
-	huayi_set_dhcp_config(format);
+	//huayi_set_mac(format);
+	//huayi_set_lan_config(format);
+	//huayi_set_dhcp_config(format);
 	huayi_set_qos_config(format);
 	huayi_set_sche_reboot_config(format);
-	huayi_set_wan_config(format);
+	//huayi_set_wan_config(format);
 	ret = huayi_isreboot_config(format);
 	if(1 == ret) {
 		//need reboot. wait other config save success.
@@ -658,7 +520,6 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 
 out:
 	cJSON_Delete(root);
-#endif
 
 	return;
 }
