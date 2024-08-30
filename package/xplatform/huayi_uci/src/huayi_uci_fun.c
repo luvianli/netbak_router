@@ -1392,7 +1392,7 @@ retry_getccid:
 	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
 
 
-retry_getlac:     //尽最大可能取到LAC
+/*retry_getlac:     //尽最大可能取到LAC
     memset(lte_value, 0, OPTION_STR_LEN);
     atcmd_get_lac(lte_value);
     //printf("rex ====   %s, %d  ---lac = %s-\n", __FUNCTION__, __LINE__, lte_value);
@@ -1420,7 +1420,7 @@ retry_getci:      //尽最大可能取到ci
     }
     huayi_uci_set_str(PKG_M_SYSTEM, "usesiminfo", "ci", lte_value);
 	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "ci", lte_value);
-    count = 0;
+    count = 0;*/
 
 
 retry_getoperator:    //尽最大可能取到operator info

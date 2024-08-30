@@ -54,12 +54,17 @@ int main(int argc,char *argv[])
 	int cpe_link = 0;
 	int old_int_mode = INTERNET_UNDEFINE;
 	int now_int_mode = INTERNET_UNDEFINE;
-	int  i = 0,j = 0,k = 0;
+	int  i = 0,j = 0,k = 0,interval = 0;
 	char detectip[OPTION_STR_LEN] = {0};
+	char product_model[OPTION_STR_LEN] = {0};
+
+	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 
 	while(1)
 	{
 		sleep(60);
+		if(!strcmp(product_model, "WYX3C-10-1"))
+	{
 		memset(iccid, 0, OPTION_STR_LEN);
 		wired_status = atcmd_get_iccid(iccid);
 		if(wired_status ==0 ||strlen(iccid) < 5)
@@ -111,61 +116,43 @@ checknet:
 			system("reboot");
 			continue ;
 		}
+	}
 
-		k = 0;
-		
-		huayi_uci_get_int(PKG_SYSTEM,"server","success", &cpe_status);
-		if(cpe_status == 0)
-		{		
-			if(internet_do_ping_detect(serverip, NULL))
+check_cloud:
+		if(!isProcessRunning("hy_cloud_client"))
+		{
+			NETCHECK_LOG("client not found,restart");
+			system("rm -fr /tmp/log/cloud_client_log");
+			system("/etc/init.d/hy_cloud_client start");
+		}else
+		{
+			huayi_uci_get_int(PKG_SYSTEM,"server","success", &cpe_status);
+			if(cpe_status == 0)
+			{		
+				if(internet_do_ping_detect(serverip, NULL))
+				{
+					if(k > 1)
+					{
+						NETCHECK_LOG("ping server success,restart client");
+						system("/etc/init.d/hy_cloud_client restart");
+					}else
+					{
+						k++;
+						huayi_uci_get_int(PKG_SYSTEM,"server","interval", &interval);
+						usleep(interval);
+						goto check_cloud;
+					}
+				}else if(j < 1)
+				{
+					NETCHECK_LOG("ping server error,reset network");	
+					system("huayi-reset network");
+					j++;
+				}
+			}else
 			{
-				NETCHECK_LOG("ping server success,restart client");
-				system("/etc/init.d/hy_cloud_client restart");
-				continue ;
+				j = 0;
+				k = 0;
 			}
-
-			huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "network", detectip);
-			if(strcmp(detectip,"CHINA MOBILE CMCC") == 0)
-			{	
-				strcpy(temp_dns,"10086.cn");
-				if (!check_dns(temp_dns)) {
-					NETCHECK_LOG("dns error,reboot");
-					system("reboot");
-				} else {
-					NETCHECK_LOG("dns success");
-				}
-			}else if(strcmp(detectip,"CHN-UNICOM") == 0)
-			{	
-				strcpy(temp_dns,"chinaunicom.com.cn");
-				if (!check_dns(temp_dns)) {
-					NETCHECK_LOG("dns error,reboot");
-					system("reboot");
-				} else {
-					NETCHECK_LOG("dns success");
-				}
-			}else if(strcmp(detectip,"CHN-CT") == 0)
-			{	
-				strcpy(temp_dns,"chinatelecom.com.cn");
-				if (!check_dns(temp_dns)) {
-					NETCHECK_LOG("dns error,reboot");
-					system("reboot");
-				} else {
-					NETCHECK_LOG("dns success");
-				}
-			}
-
-			if(j < 1)
-			{
-				NETCHECK_LOG("ping server error,reset network");	
-				system("huayi-reset network");
-				goto checknet;
-			}
-			else
-			{				
-				NETCHECK_LOG("ping server error,reboot");
-				system("reboot");
-			}
-			j++;
 		}
 	}
 

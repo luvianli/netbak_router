@@ -63,10 +63,4 @@ config server server
 	option success '1' #上报成功
 	option checkcode 0
 	option wificlose '0'
-	option time 0'
-	option test 0
-	
-config network network
-	option rx_bytes 0
-	option tx_bytes 0	
-	option time '0'
+	option time 0

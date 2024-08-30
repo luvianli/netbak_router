@@ -68,7 +68,7 @@ int SlmDial()
             if (registered_count < 70)
             {
                 SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim, print_to);
-				set_wanIp();
+				//set_wanIp();
                 return 1;
             }
             else
@@ -121,9 +121,9 @@ int main(int argc, char *argv[]) {
         system("devmem 0x10000060 32 0x4110441");	
         switchSim();
 		sleep(2);
-		system("huayi_AT_cli AT+CFUN=0");
+		system("gpio l 2 0 4000 0 0 4000");
         sleep(5);
-		system("huayi_AT_cli AT+CFUN=1");
+		system("gpio l 2 4000 0 0 0 4000");
 		sleep(2);
         // Assuming SlmDial function exists
         SlmDial();
