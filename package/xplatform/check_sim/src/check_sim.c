@@ -491,7 +491,7 @@ void Production_testing_mode()
 		huayi_uci_commit(PKG_M_SYSTEM);
     }
 	if(allinfo == 0)
-		sleep(10);
+		sleep(12);
 }
 
 int check_wan_type()

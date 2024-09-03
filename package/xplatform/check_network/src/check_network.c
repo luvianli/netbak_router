@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
 	char ifname[IPV4_STR_LEN] = {0};
 	char gateway[RESULT_STR_LEN] = {0},ip_address[RESULT_STR_LEN] = {0};
 	int interval = 0,status = 0;
+	char product_model[OPTION_STR_LEN] = {0};	
 	
 	while(1)
 	{
@@ -52,33 +53,37 @@ int main(int argc, char *argv[])
 			}
 		} 
 
-		if(internet_do_ping_detect(INTERNET_DOMAIN, NULL) != 1)
+		huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+		if(!strcmp(product_model, "ZC-GW01-2"))
 		{
-			NETCHECK_LOG("check ping error");
-			if(j == 0)
+			if(internet_do_ping_detect(INTERNET_DOMAIN, NULL) != 1)
 			{
-				ret = get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
-				if(ret != 1 && i < 3)
+				NETCHECK_LOG("check ping error");
+				if(j == 0)
 				{
-					NETCHECK_LOG("not found usb,restart usb");
-					system("huayi_AT_cli AT+CFUN=0");
-			        sleep(5);
-					system("huayi_AT_cli AT+CFUN=1");
+					ret = get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
+					if(ret != 1 && i < 3)
+					{
+						NETCHECK_LOG("not found usb,restart usb");
+						system("huayi_AT_cli AT+CFUN=0");
+				        sleep(5);
+						system("huayi_AT_cli AT+CFUN=1");
+						i++;
+						continue;
+					}
 					i++;
-					continue;
+					if(i > 5)
+					{
+						j++;
+						system("huayi-reset network");
+					}
 				}
-				i++;
-				if(i > 5)
-				{
-					j++;
-					system("huayi-reset network");
-				}
+			}else 
+			{
+				i = 0;
+				j = 0;
+				//NETCHECK_LOG("check ping success");
 			}
-		}else 
-		{
-			i = 0;
-			j = 0;
-			//NETCHECK_LOG("check ping success");
 		}
 		sleep(60);
 	}

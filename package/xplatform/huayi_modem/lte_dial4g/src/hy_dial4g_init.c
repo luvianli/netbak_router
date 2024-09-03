@@ -149,7 +149,6 @@ int main(int argc, char *argv[])
 		huayi_to_ext_simcard();
 		return 0;
 	}
-    CON_LOG("===");
      if(!strcmp(product_model, "ZC-MEIGE"))
     {
         CON_LOG("===");
@@ -163,13 +162,12 @@ int main(int argc, char *argv[])
 		ret = get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
 		if(ret == HUAYI_TRUE)
 		{
-            CON_LOG("===");
 			if((strstr(resultbuf,"2c7c:") != NULL) ||
 				(strstr(resultbuf,"05c6:") != NULL) ||
 				(strstr(resultbuf,"2949:") != NULL) ||
 				(strstr(resultbuf,"2dee:") !=NULL))
 			{
-				if(count == 3) {
+				if(count == 0) {
                     CON_LOG("/etc/init.d/huayi_dial4gcontrol restart");
 					system("/etc/init.d/huayi_dial4gcontrol restart");
 					break;

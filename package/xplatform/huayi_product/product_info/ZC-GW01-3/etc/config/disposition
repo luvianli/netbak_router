@@ -4,7 +4,7 @@ config system system
 	option eSimSlot2 1
 	option eSimSlot3 2
 	option eSimSlot4 3	#0电信,1移动,2外插
-	option switchsim "1,3,2,4"
+	option switchsim "1,2,3,4"
 	option ssid 'WIFI-'
 	option password '987654321'
 	option dhcp '192.168.1.1'
