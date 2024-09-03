@@ -556,7 +556,13 @@ cretry1:
 		{
 			goto success ;
 		}
-		
+
+		while (isProcessRunning("switch_sim"))
+        {
+            CON_LOG("switch_sim. Waiting for 3 seconds...\n");
+            sleep(3);
+        }		
+
 		status = atcmd_get_slm_mobile_type(cmd);
 		if(status == 1)
 		{		
