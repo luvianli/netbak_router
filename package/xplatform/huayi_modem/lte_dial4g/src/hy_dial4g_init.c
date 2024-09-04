@@ -148,9 +148,9 @@ int main(int argc, char *argv[])
 		huayi_to_ext_simcard();
 		return 0;
 	}
-     if(!strcmp(product_model, "WYX3C-1"))
+     if(!strcmp(product_model, "PT6"))
     {
-        meige_module_init();
+        system("gpio l 2 4000 0 0 0 4000");
     }
 
 
@@ -163,12 +163,13 @@ int main(int argc, char *argv[])
 				(strstr(resultbuf,"05c6:") != NULL) ||
 				(strstr(resultbuf,"2949:") != NULL) ||
 				(strstr(resultbuf,"2dee:") !=NULL)	||
-				(strstr(resultbuf,"2ecc:") !=NULL))
+				(strstr(resultbuf,"2ecc:") !=NULL) ||
+				(strstr(resultbuf,"3563:") !=NULL))
 			{
 				if(count == 3) {
                     CON_LOG("/etc/init.d/huayi_dial4gcontrol restart");
 					system("/etc/init.d/huayi_dial4gcontrol restart");
-                    
+                    system("/etc/init.d/check_sim start");
 					break;
 				} else {
 					sleep(1);
@@ -182,7 +183,7 @@ int main(int argc, char *argv[])
                 if(i == 15){
 					i = 0;
                     CON_LOG("LSUSB not recognized, power on the module again");
-					system("gpio l 3 4000 0 0 0 4000 && sleep 1 && gpio l 3 0 4000 0 0 4000");
+					system("gpio l 2 0 4000 0 0 4000 && sleep 1 && gpio l 2 4000 0 0 0 4000");
                 }
                 i++;
                 

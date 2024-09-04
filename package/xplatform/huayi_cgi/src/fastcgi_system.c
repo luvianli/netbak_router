@@ -2499,7 +2499,7 @@ int get_all_network_info(cJSON *request_root, cJSON *response_root,int *lock_tim
 	get_cmd_result("cat /tmp/ifconfig_info | grep ra0 | wc -l", run_cmd, sizeof(run_cmd));
 	wifi_on = atoi(run_cmd);
 	
-	cJSON_AddNumberToObject(wireless_obj,"status",0);
+	cJSON_AddNumberToObject(wireless_obj,"status",wifi_on);
 
 	if (wifi_on == 1)
 	{	  

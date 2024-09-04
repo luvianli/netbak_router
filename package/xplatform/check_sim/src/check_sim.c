@@ -269,7 +269,6 @@ void check_network()
 	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
     sprintf(cmd, "switch_sim %d", simn);
     system(cmd);
-	system("/etc/init.d/huayi_dial4gcontrol restart");
     sleep(10);
 	save_useing_siminfo(simn);
 
@@ -498,7 +497,6 @@ void Production_testing_mode()
     else
     {
         CON_LOG("Start working mode");
-		sleep(10);
     }
 
 }
