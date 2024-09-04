@@ -88,7 +88,10 @@ void set_acquiesce()
 	int ForceUpgrade = 0;
 	char upgradeURL[RESULT_STR_LEN] = {0};
 	int len,wire = 0;
-
+	char cmd[OPTION_STR_LEN] = {0};
+	char card[SHORT_STR_LEN],sim[SHORT_STR_LEN];
+	int switch_card = 0;
+	
 	system("devmem 0x10000060 32 0x55150451");
 
 	huayi_uci_get_int(PKG_DISPOSITION, "system", "update", &update);	
@@ -140,6 +143,16 @@ void set_acquiesce()
 				system("upload_url");
 			}
 		}
+
+		if(huayi_uci_get_str(PKG_DISPOSITION, "system", "switchsim", card))
+		{
+			huayi_get_nth_value(0,card,',',sim,sizeof(sim));
+			sprintf(cmd, "eSimSlot%s", sim);
+			huayi_uci_get_int(PKG_DISPOSITION, "system", cmd, &switch_card);
+			huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", switch_card);
+			huayi_uci_commit(PKG_M_SYSTEM);
+		}
+
 		huayi_uci_set_int(PKG_DISPOSITION, "system", "update", 1);
 		huayi_uci_commit(PKG_DISPOSITION);	
 	}

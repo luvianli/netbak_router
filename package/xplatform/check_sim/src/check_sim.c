@@ -435,9 +435,9 @@ void SLM_init()
 
 	//ret = AtcmdSendDelay("AT+QCFG=\"devmode,0\"",strlen("AT+QCFG=\"devmode,0\""),0);
 	//usleep(500);
-	system("huayi_AT_cli AT+CFUN=0 ");
-	sleep(5);
-	system("huayi_AT_cli AT+CFUN=1 ");
+	//system("huayi_AT_cli AT+CFUN=0 ");
+	//sleep(5);
+	//system("huayi_AT_cli AT+CFUN=1 ");
 	system("devmem 0x10000060 32 0x55150451");
 	return 1;
 }
@@ -491,7 +491,7 @@ void Production_testing_mode()
 		huayi_uci_commit(PKG_M_SYSTEM);
     }
 	if(allinfo == 0)
-		sleep(12);
+		sleep(10);
 }
 
 int check_wan_type()
@@ -559,9 +559,18 @@ cretry1:
 
 		while (isProcessRunning("switch_sim"))
         {
-            CON_LOG("switch_sim. Waiting for 3 seconds...\n");
-            sleep(3);
+            CON_LOG("switch_sim. Waiting for 5 seconds...\n");
+            sleep(5);
         }		
+
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
+		if(at_card != simn)
+		{
+			CON_LOG("at_card change,reload network check\n");
+			count = 0;
+			simn = at_card;
+			continue ;
+		}
 
 		status = atcmd_get_slm_mobile_type(cmd);
 		if(status == 1)
@@ -574,14 +583,6 @@ cretry1:
 		    else
 		    {
 		        count += 1;
-				huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
-				if(at_card != simn)
-				{
-					CON_LOG("at_card change,reload network check\n");
-					count = 0;
-					simn = at_card;
-					continue ;
-				}
 				ret = atcmd_get_cgpaddr(cmd_str);
 				if(ret == 1)
 				{
