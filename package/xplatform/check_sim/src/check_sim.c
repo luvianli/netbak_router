@@ -68,7 +68,8 @@ retry_getccid:    //尽最大可能取到ICCID
     {
         return;     //no iccid, that mean no simcard
     }
-retry_getlac:	  //尽最大可能取到LAC
+
+/*retry_getlac:	  //尽最大可能取到LAC
     memset(lte_value, 0, OPTION_STR_LEN);
     atcmd_get_lac(lte_value);
     //printf("rex ====   %s, %d  ---lac = %s-\n", __FUNCTION__, __LINE__, lte_value);
@@ -94,7 +95,7 @@ retry_getci:	  //尽最大可能取到ci
             goto retry_getci;
     }
     huayi_uci_set_str(PKG_M_SYSTEM, cmd, "ci", lte_value);
-    count = 0;
+    count = 0;*/
 
 retry_getoperator:	  //尽最大可能取到operator info
     memset(lte_value, 0, OPTION_STR_LEN);
@@ -218,27 +219,25 @@ void set_siminfo()
 
 againt:
 
-    for (i = 0; i < simnum -1; i++)
+    for (i = 0; i < simnum; i++)
     {
         sprintf(cmd, "sim%d", i);
         huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", iccid[i]);	
         huayi_uci_get_int(PKG_M_SYSTEM, cmd, "gpio", &gpio);
-
 
         if (isIccidDuplicate(iccid, i)) {
             clearAllIccids(simnum);
 			goto againt;
         }
 
-
         if (strlen(iccid[i]) < 5 && card_slot != i)
         {
-            SWITCH_SIM_LOG("\n\nsim%d start switch card", i);
+            CON_LOG("\n\nsim%d start switch card", i);
             switch_sim(i, gpio);
         }
         else if (strlen(iccid[i]) > 5)
         {
-            SWITCH_SIM_LOG("Sim%d information already exists");
+            CON_LOG("Sim%d information already exists");
         }
         else if(card_slot == i)
         {
