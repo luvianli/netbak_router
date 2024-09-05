@@ -91,12 +91,12 @@ int SlmDial()
 
 int switchSim() {
     switch (sim) {
-        case 0:
+        case 1:
 			printf("Switching 0; 0 Setting LOW=0V & 2 Setting High=3.3V\n");
 			system("gpio l 11 4000 0 0 0 4000");
             system("gpio l 5 0 4000 0 0 4000");
             break;
-        case 1:
+        case 0:
             printf("Switching 1; 0 Setting High=3.3V & 2 Setting LOW=0V\n");
             system("gpio l 11 0 4000 0 0 4000");
             system("gpio l 5 4000 0 0 0 4000");

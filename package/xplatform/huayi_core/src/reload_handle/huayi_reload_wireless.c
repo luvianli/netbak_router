@@ -312,7 +312,7 @@ VTBool huayi_reload_wireless(void * arg,cJSON *input_root)
 	{
 		regdata  = strtol(resultbuf,NULL,16);
 		regdata &= 0xfffffffc;
-		char product_model[OPTION_STR_LEN] = {0};
+		/*char product_model[OPTION_STR_LEN] = {0};
 		huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 		if(!strcmp(product_model, "PT6"))
 		{
@@ -342,7 +342,7 @@ VTBool huayi_reload_wireless(void * arg,cJSON *input_root)
 					system("huayi-reset dhcps");
 				}
 			}
-		}
+		}*/
 
 		memset(resultbuf,0,sizeof(resultbuf));
 		sprintf(resultbuf,"devmem 0x10000064 32 0x%x",regdata);

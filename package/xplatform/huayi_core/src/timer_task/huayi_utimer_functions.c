@@ -498,17 +498,22 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 	}
 
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
-	huayi_uci_get_int(PKG_STATUS_MODEM, "modem", "sim_ready", &i_ready);
-
-	if(i_ready == 1 && network_status == 0)
-	{
-		do_internet_led_slowly();
-	}else if(i_ready == 1 && network_status == 1)
+	if(network_status == 1)
 	{
 		do_internet_led_on();
 	}else
-	{
-		do_internet_led_off();
+	{	
+		char resultbuf[OPTION_STR_LEN] = {0};
+		int ret = 0;
+		ret = get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
+		if(ret == 1)
+		{
+			if(strstr(resultbuf,"2ecc:") != NULL)
+				do_internet_led_slowly();
+			else
+				do_internet_led_off();
+		}else
+			do_internet_led_off();
 	}
 #else
 	if(1 == network_status)

@@ -346,10 +346,18 @@ cretry2:
 	        count = 0;
 	        sleep(1);
 	    }
-		SWITCH_SIM_LOG("All cards network error -> exe reboot");
-	    sleep(10);
+		SWITCH_SIM_LOG("All cards network error -> wait 6 mins reboot");
+		int k = 0;
+		for(k = 0;k < 6;k++)
+	    {
+			sleep(60);
+			if (networkCheck(tmp))
+	        {
+				goto success;
+			}
+		}
 	    system("reboot");
-
+		
 success:
 		sleep(60);
 	}

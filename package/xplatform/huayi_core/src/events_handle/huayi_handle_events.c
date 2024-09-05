@@ -1085,7 +1085,7 @@ void do_power_led_off(void)
 	}
 	/*end by rex*/
 	
-	snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_POWER_LED_GPIO_NUM);
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_POWER_LED_GPIO_NUM);
 
 	system(cmd);
 	
@@ -1097,7 +1097,8 @@ void do_power_led_blinks_fast(void)
 	char cmd[CMD_STR_LEN] = {0};
 
 	snprintf(cmd, CMD_STR_LEN, "gpio l %d 2 2 4000 0 4000", CONFIG_HUAYI_POWER_LED_GPIO_NUM);
-
+	system(cmd);
+	snprintf(cmd, CMD_STR_LEN, "gpio l 3 0 4000 0 0 4000");//green off
 	system(cmd);
 	
 	return;
@@ -1286,6 +1287,27 @@ void do_internet_led_slowly(void)
 	
 	return;
 }
+
+void do_camera_on(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l 0 0 4000 0 0 4000");
+	system(cmd);
+	
+	return;
+}
+
+void do_camera_off(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+
+	snprintf(cmd, CMD_STR_LEN, "gpio l 0 4000 0 0 0 4000");
+	system(cmd);
+	
+	return;
+}
+
 #endif
 
 

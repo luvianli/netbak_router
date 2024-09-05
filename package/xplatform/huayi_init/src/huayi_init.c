@@ -105,7 +105,7 @@ int main(int argc, char** argv)
 {
 	int opmode = 0;
 
-	huayi_mac_change();
+	//huayi_mac_change();
 
 	huayi_tcp_conntrack_init();
 

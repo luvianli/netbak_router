@@ -3,7 +3,7 @@
 
 SERVICE_USE_PID=1
 
-#START=50
+START=50
 
 start() {
 	user_exists http || user_add http
