@@ -312,30 +312,35 @@ VTBool huayi_reload_wireless(void * arg,cJSON *input_root)
 	{
 		regdata  = strtol(resultbuf,NULL,16);
 		regdata &= 0xfffffffc;
-		huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&disabled);
-		if(disabled == 0)
+		char product_model[OPTION_STR_LEN] = {0};
+		huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+		if(!strcmp(product_model, "PT6"))
 		{
-			regdata |= 0x0;
-			int count = 1 , oldcount = 1;
-			huayi_uci_get_int(PKG_WIRELESS,"radio0_0","maxstanum",&count);
-			huayi_uci_get_int(PKG_DHCP,"lan","limit",&oldcount);
-			if(count + 1 != oldcount)
+			huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&disabled);
+			if(disabled == 0)
 			{
-				huayi_uci_set_int(PKG_DHCP,"lan","limit",count+1);
-				huayi_uci_commit(PKG_DHCP);
-				system("huayi-reset dhcps");
+				regdata |= 0x0;
+				int count = 1 , oldcount = 1;
+				huayi_uci_get_int(PKG_WIRELESS,"radio0_0","maxstanum",&count);
+				huayi_uci_get_int(PKG_DHCP,"lan","limit",&oldcount);
+				if(count + 1 != oldcount)
+				{
+					huayi_uci_set_int(PKG_DHCP,"lan","limit",count+1);
+					huayi_uci_commit(PKG_DHCP);
+					system("huayi-reset dhcps");
+				}
 			}
-		}
-		else
-		{
-			regdata |= 0x1;
-			int count = 0;
-			huayi_uci_get_int(PKG_DHCP,"lan","limit",&count);
-			if(count != 1)
+			else
 			{
-				huayi_uci_set_int(PKG_DHCP,"lan","limit",1);
-				huayi_uci_commit(PKG_DHCP);
-				system("huayi-reset dhcps");
+				regdata |= 0x1;
+				int count = 0;
+				huayi_uci_get_int(PKG_DHCP,"lan","limit",&count);
+				if(count != 1)
+				{
+					huayi_uci_set_int(PKG_DHCP,"lan","limit",1);
+					huayi_uci_commit(PKG_DHCP);
+					system("huayi-reset dhcps");
+				}
 			}
 		}
 
