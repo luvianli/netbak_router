@@ -24,7 +24,7 @@ config dnsmasq
 config dhcp lan
 	option interface	lan
 	option start 	1
-	option limit	245
+	option limit	254
 	option leasetime	'7200'
 	option ignore	'0'
 

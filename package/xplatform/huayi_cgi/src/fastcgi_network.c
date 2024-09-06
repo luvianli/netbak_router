@@ -1536,7 +1536,7 @@ int set_dhcps_server_config(cJSON *request_root, cJSON *response_root,int *lock_
 
 	huayi_uci_set_int(PKG_DHCP,"lan","start",config_start);
 
-	//huayi_uci_set_int(PKG_DHCP,"lan","limit",limit);
+	huayi_uci_set_int(PKG_DHCP,"lan","limit",limit);
 
 	if(enable)
 	{
