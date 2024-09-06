@@ -88,7 +88,7 @@ int main(int argc,char *argv[])
 			{
 				huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ifname", wan_ifname);
 				huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "gateway", wan_gateway);
-				huayi_uci_get_str(PKG_SYSTEM, "server", "ip", detectip);
+				huayi_uci_get_str(PKG_SYSTEM, "server", "serverip", detectip);
 
 				memset(cmd_str,0,sizeof(cmd_str));
 				memset(resultbuf,0,sizeof(resultbuf));

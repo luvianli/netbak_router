@@ -47,9 +47,10 @@ int get_server(char *ip,int *port)
 			CLOUD_CLIENT_LOG("get server ip error\n");
 			return -1;
 		}
-		huayi_uci_set_str(PKG_SYSTEM,"server","ip",serverip);
-		huayi_uci_commit(PKG_SYSTEM);
+		//huayi_uci_set_str(PKG_SYSTEM,"server","ip",serverip);
+		//huayi_uci_commit(PKG_SYSTEM);
 	}
+	huayi_uci_set_str(PKG_SYSTEM,"server","serverip",serverip);
 	//CLOUD_CLIENT_LOG("%s%d,ip:%s,port:%d\n",__FUNCTION__,__LINE__,serverip,serverport);
 
 	strcpy(ip, serverip);
