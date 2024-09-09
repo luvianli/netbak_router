@@ -279,6 +279,11 @@ void check_network()
 		huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
 		
 cretry1:
+	    while (isProcessRunning("switch_sim"))
+        {
+            CON_LOG("Process switch_sim is running. Waiting for 5 seconds...\n");
+            sleep(5);
+        }
 		status = atcmd_get_slm_mobile_type(cmd);
 		if(status == 1)
 		{	

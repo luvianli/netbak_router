@@ -69,6 +69,7 @@ int SlmDial()
             {
                 SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim, print_to);
 				//set_wanIp();
+				system("/etc/init.d/huayi_dial4g restart");
                 return 1;
             }
             else
@@ -124,8 +125,8 @@ int main(int argc, char *argv[]) {
 		system("gpio l 2 0 4000 0 0 4000");
         sleep(5);
 		system("gpio l 2 4000 0 0 0 4000");
-		sleep(2);
-		system("/etc/init.d/huayi_dial4g restart");
+		//sleep(2);
+		//system("/etc/init.d/huayi_dial4g restart");
         // Assuming SlmDial function exists
         SlmDial();
     } else 
