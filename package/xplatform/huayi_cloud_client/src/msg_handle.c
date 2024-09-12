@@ -316,11 +316,11 @@ void msg_content(char *heartdata, unsigned int *heartsize)
     	cJSON_AddNumberToObject(result_root,"speed_uplink", speedup);
 
         huayi_get_wireless_config(ssid_2g, key_2g, &hidden_2g, &client_num,&channel,&status);
-    	cJSON_AddNumberToObject(result_root,"wifi_status",status);
+    	cJSON_AddNumberToObject(result_root,"status",status);
     	cJSON_AddStringToObject(result_root,"ssid", ssid_2g);
     	cJSON_AddStringToObject(result_root,"password", key_2g);
-    	//cJSON_AddNumberToObject(result_root,"channel",channel);
-    	//cJSON_AddNumberToObject(result_root,"hidden", hidden_2g);
+    	cJSON_AddNumberToObject(result_root,"channel",channel);
+    	cJSON_AddNumberToObject(result_root,"hidden", hidden_2g);
         cJSON_AddNumberToObject(result_root,"count",client_num);
         cJSON_AddStringToObject(result_root,"cell_id", cellid);
         cJSON_AddStringToObject(result_root,"lac", lac);
@@ -513,6 +513,14 @@ void msg_parse(char *heartdata, unsigned int heartsize)
         
 		system("huayi-reset reboot");
         system("reboot");
+		goto out;
+	}
+
+	ret = huayi_isreset_config(format);
+	if(1 == ret) {
+        CON_LOG("reset ");
+        sleep(5);
+		system("huayi-reset reset");
 		goto out;
 	}
 	

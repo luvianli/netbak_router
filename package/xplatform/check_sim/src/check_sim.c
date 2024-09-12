@@ -29,6 +29,11 @@ void save_siminfo(int i, int gpio)
     char lte_value[OPTION_STR_LEN] = {0};
 
     sprintf(cmd, "sim%d", i);
+	huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
+    if (strlen(lte_value)  > 5)
+    {
+        return;
+    }	
     atcmd_get_cpin(&i_ready);
     while (i_ready != MODEM_SIN_READY)
     {

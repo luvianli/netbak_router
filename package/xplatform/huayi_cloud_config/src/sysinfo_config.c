@@ -187,6 +187,29 @@ int huayi_isreboot_config(cJSON *response_root)
 	return 0;
 }
 
+int huayi_isreset_config(cJSON *response_root)
+{
+	char vap_section[OPTION_STR_LEN] = {0}, radio_section[OPTION_STR_LEN] = {0};	
+	char ssid[OPTION_STR_LEN] = {0}, key[TEMP_STR_LEN] = {0};
+	int isreboot = -1;
+
+
+	if(NULL == response_root) 
+	{
+		return 0;
+	}
+
+	if(!huayi_json_get_int(response_root,"reset",&isreboot)) {
+		return 0;
+	} else {
+		if(1 == isreboot) {
+			printf("%s, %d, isreset = %d !\n", __FUNCTION__, __LINE__, isreboot);
+			return 1;
+		}
+	}	
+	return 0;
+}
+
 void huayi_set_sche_reboot_config(cJSON *response_root)
 {
 	int sche_reboot_mode = 0;
