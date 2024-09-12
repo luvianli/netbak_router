@@ -341,9 +341,9 @@ void huayi_set_wifi_config(cJSON *response_root)
 	snprintf(radio_section,OPTION_STR_LEN,"radio%d",0);
 	huayi_uci_get_int(PKG_WIRELESS,vap_section,"disabled",&olddisabled);
 
-	if(huayi_json_get_int(response_root,"wifi_status",&disabled)) 
+	if(huayi_json_get_int(response_root,"status",&disabled)) 
 	{
-		if((disabled == 0||disabled == 1)&& (disabled != olddisabled)) {
+		if(disabled != olddisabled) {
 			huayi_uci_set_int(PKG_WIRELESS,vap_section,"disabled",disabled);
 			wifireset_flag = 1;
 		}
@@ -356,7 +356,7 @@ void huayi_set_wifi_config(cJSON *response_root)
 		
 	if(huayi_json_get_int(response_root,"hidden",&hidden)) 
 	{
-		if((hidden == 0||hidden == 1) && (hidden != oldhidden)) {
+		if(hidden != oldhidden) {
 			huayi_uci_set_int(PKG_WIRELESS,vap_section,"hidden",hidden);
 			wifireset_flag = 1;
 		}
