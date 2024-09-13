@@ -39,7 +39,7 @@ void save_siminfo(int i, int gpio)
     {
         sleep(1);
         atcmd_get_cpin(&i_ready);
-        if (count == 3)
+        if (count == 10)
         {
             break;
         }
