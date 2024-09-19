@@ -94,6 +94,8 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	/*maybe need to fixed led here*/
 	system("rm -rf /overlay/*");	
 	sleep(3);
+	system("mkdir -p /overlay/etc/config");
+	system("cp /etc/config/wireless /overlay/etc/config/");
 	system("/sbin/reboot");
 	return VT_TRUE;
 }
