@@ -512,7 +512,7 @@ void msg_parse(char *heartdata, unsigned int heartsize)
         sleep(5);
         
 		system("huayi-reset reboot");
-        system("reboot");
+        //system("reboot");
 		goto out;
 	}
 

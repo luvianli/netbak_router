@@ -366,7 +366,7 @@ cretry2:
 				goto success;
 			}
 		}
-	    system("reboot");
+	    system("huayi-reset reboot");
 		
 success:
 		sleep(60);
