@@ -29,7 +29,7 @@ config	wifi-iface	'radio0_0'
 	option  maxstanum	'10'
 	option	hidden		'0'
 	option  noforward	'0'
-	option	key		'123456789'
+	option	key		'12345678'
 	option  disabled    '0'
 	
 config	wifi-iface	'radio0_cli0'
