@@ -3,28 +3,31 @@
 local base_addr=$(echo $(mtd_get_mac_binary Factory 4 | tr '[a-z]' '[A-Z]'))
 local def_ssid_prefix=$(echo $(uci -q -c /etc/huayi/brand_info get capability.cap.def_ssid_prefix))
 local def_ssid=$(echo $(uci -q get wireless.radio0_0.def_ssid))
+local read_sn=$(echo &(huayi_sn read info))
 
 echo $base_addr >> /tmp/dat2uci.log
 echo $def_ssid_prefix >> /tmp/dat2uci.log
 
 suf_ssid_2G=`echo $base_addr | awk -F ":" '{print $5""$6 }'`
 imei_6_ssid=`huayi_cmd get modem imei | cut -c 10-`
-
+sn=`echo $read_sn | awk -F ";" '{print $1}'`
 
 echo $suf_ssid_2G >> /tmp/dat2uci.log
 
 ssid_2G=${def_ssid_prefix}${suf_ssid_2G}
-ssid_5G=${def_ssid_prefix}${suf_ssid_2G}_5G
-#ssid_2G=${def_ssid_prefix}${suf_ssid_2G}
 #ssid_5G=${def_ssid_prefix}${suf_ssid_2G}_5G
 
-[ -z "$def_ssid" ] &&{
+if [ -z "$sn" ] && [ -z "$def_ssid" ]; then
     uci set wireless.radio0_0.ssid=${ssid_2G}
 	uci set wireless.radio0_0.def_ssid=${ssid_2G}
-	uci set wireless.radio1_0.ssid=${ssid_5G}
-	uci set wireless.radio1_0.def_ssid=${ssid_5G}
+	#uci set wireless.radio1_0.ssid=${ssid_5G}
+	#uci set wireless.radio1_0.def_ssid=${ssid_5G}
 	uci commit wireless
-}
+elif [ -z "$def_ssid" ] && [ -n "$sn" ]; then
+    uci set wireless.radio0_0.ssid=${sn}
+	uci set wireless.radio0_0.def_ssid=${sn}
+	uci commit wireless
+fi
 
 echo "update uci config with dat file" >> /tmp/dat2uci.log
 #[ -e /etc/config/wireless ] && rm /etc/config/wireless
