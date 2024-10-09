@@ -1,4 +1,4 @@
-FILE = 4G300-H002-HY05_MT7628_DDR2_64M_uboot.bin
+FILE = ZC-MCA4-G1_MT7628_DDR2_64M_uboot.bin
 ADDR = 0
 FILE = 4G300-H002-HY05-firstcard.eeprom.bin
 ADDR = 0x40000
