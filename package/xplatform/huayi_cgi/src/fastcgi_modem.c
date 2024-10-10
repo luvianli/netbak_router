@@ -2507,12 +2507,11 @@ again:
         CLIENT_SOCKET_LOG("usesiminfoBuf error");
         goto end;
      }
-    CustomCommunicationClient("echo `uci get m_system.sim1.operator;uci get m_system.sim1.card_slot;uci get m_system.sim1.iccid;uci get m_system.sim2.operator;uci get m_system.sim2.card_slot;uci get m_system.sim2.iccid;uci get m_system.sim3.operator;uci get m_system.sim3.card_slot;uci get m_system.sim3.iccid;uci get m_system.sim4.operator;uci get m_system.sim4.card_slot;uci get m_system.sim4.iccid`",siminfoBuf);
-    if(!(toParsing(siminfoBuf,12,
+    CustomCommunicationClient("echo `uci get m_system.sim2.operator;uci get m_system.sim2.card_slot;uci get m_system.sim2.iccid;uci get m_system.sim3.operator;uci get m_system.sim3.card_slot;uci get m_system.sim3.iccid;uci get m_system.sim4.operator;uci get m_system.sim4.card_slot;uci get m_system.sim4.iccid`",siminfoBuf);
+    if(!(toParsing(siminfoBuf,9,
     &simOperator[0],&simCard_slot[0],simIccid[0],
     &simOperator[1],&simCard_slot[1],simIccid[1],
-    &simOperator[2],&simCard_slot[2],simIccid[2],
-    &simOperator[3],&simCard_slot[3],simIccid[3]))){
+    &simOperator[2],&simCard_slot[2],simIccid[2]))){
         CLIENT_SOCKET_LOG("siminfoBuf error");
         goto end;
     }
