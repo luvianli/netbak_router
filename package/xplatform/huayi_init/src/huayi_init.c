@@ -112,6 +112,11 @@ void set_simcarinfo()
 int main(int argc, char** argv)
 {
 	int opmode = 0;
+	int reset = -1;
+	huayi_uci_get_int(PKG_SIMINFO, "system", "status", &reset);	
+	if(reset == 0)
+		system("huayi-reset reset");
+	
 #if defined(CONFIG_HUAYI_SUPPORT_SPECIAL_INTERFACE)
 	unsigned char sn[OPTION_STR_LEN]={ 0 };
 	if (get_dev_sn(sn) < 0) 

@@ -189,6 +189,22 @@ int huayi_isreboot_config(cJSON *response_root)
 	return 0;
 }
 
+int huayi_reset_config(cJSON *response_root)
+{
+	int isreset = -1;
+
+	if(NULL == response_root) 
+	{
+		return 0;
+	}
+
+	if(huayi_json_get_int(response_root,"reset",&isreset)) {
+		if(isreset == 1)
+			system("huayi-reset reset");
+	} 
+	return 0;
+}
+
 void huayi_set_sche_reboot_config(cJSON *response_root)
 {
 	int sche_reboot_mode = 0;

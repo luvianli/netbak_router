@@ -121,6 +121,7 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &card_slot);
 	huayi_uci_set_int(PKG_SIMINFO, "system", "card_slot", card_slot);
 	huayi_uci_set_int(PKG_SIMINFO, "system", "status", 1);
+	huayi_uci_set_int(PKG_SIMINFO, "system", "reset", 1);
 	huayi_uci_commit(PKG_SIMINFO);
 
 	Atcmd("AT+SPLBAND=1,0,482,2056,213,0", strlen("AT+SPLBAND=1,0,482,2056,213,0"), 0);

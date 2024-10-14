@@ -1,4 +1,5 @@
 config system system
+	option reset 0
 	option status 0
 	option card_slot 0
 	

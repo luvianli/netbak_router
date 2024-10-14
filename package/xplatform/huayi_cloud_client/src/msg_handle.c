@@ -619,7 +619,7 @@ void msg_parse(char *heartdata, unsigned int heartsize)
         system("reboot");
 		goto out;
 	}
-	
+	huayi_reset_config(format);
 	huayi_remote_upgrade(format);
 #endif
 
