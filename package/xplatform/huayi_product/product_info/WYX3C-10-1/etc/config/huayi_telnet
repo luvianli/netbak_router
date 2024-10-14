@@ -1,2 +1,2 @@
 config telnet telnet
-	option disenable 1
+	option disenable 0
