@@ -69,7 +69,7 @@
 		struct stat statbuf; \
 		stat("/tmp/log/cloud_client_log", &statbuf); \
 		int size = statbuf.st_size;	\
-		if(size > 4194304) \
+		if(size > 1000000) \
 		{\
 			system("rm -fr /tmp/log/cloud_client_log"); \
 		}\

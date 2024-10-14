@@ -76,6 +76,39 @@ void huayi_firewall_start()
 }
 #endif
 
+void set_simcarinfo()
+{
+	int status = 0,card_slot = 0;
+	huayi_uci_get_int(PKG_SIMINFO, "system", "status", &status);
+	if(status == 1)
+	{
+		int i,simnum = 0;
+		char cmd[SHORT_STR_LEN] = {0};
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+		char iccid[simnum][OPTION_STR_LEN],operat[simnum][1];
+	    for (i = 0; i < simnum-1; i++)
+	    {
+			sprintf(cmd, "sim%d", i);
+ 			huayi_uci_get_str(PKG_SIMINFO, cmd, "iccid", iccid[i]);
+			huayi_uci_get_str(PKG_SIMINFO, cmd, "operator", operat[i]);
+			if(strlen(iccid[i]) > 9)
+	        {
+	        	huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", iccid[i]);
+				huayi_uci_set_str(PKG_M_SYSTEM, cmd, "operator", operat[i]);
+			}
+			else
+				huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", "");
+	    }
+		huayi_uci_get_int(PKG_SIMINFO, "system", "card_slot", &card_slot);
+		huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", card_slot);
+		huayi_uci_set_int(PKG_SIMINFO, "system", "status", 0);
+		huayi_uci_commit(PKG_SIMINFO);
+		huayi_uci_commit(PKG_M_SYSTEM);
+	}
+
+	return ;
+}
+
 int main(int argc, char** argv)
 {
 	int opmode = 0;
@@ -134,6 +167,6 @@ int main(int argc, char** argv)
 	snprintf(cmd_str,sizeof(cmd_str),"huayi_cmd set network linkport %d",linkport);
 	system(cmd_str);
 #endif
-	
+	set_simcarinfo();
 	return 0;
 }

@@ -98,12 +98,11 @@ int SlmDial()
 					SWITCH_SIM_LOG("not found sim card\n");
 					return 0;
 				}
-				/*huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+
 				if(set_operator_band(value))
-				if(band == -1)
 				{
 					system("huayi-reset band && killall switch_sim");
-				}*/
+				}
 				
                 while (registered_count < 60 && atcmd_get_slm_mobile_type(value) == HUAYI_FALSE)
                 {
@@ -245,7 +244,7 @@ int main(int argc, char *argv[]) {
     huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
 
     if (sim >= 0 && sim < simnum) {
-        system("devmem 0x10000060 32 0x4110441");
+	 system("devmem 0x10000060 32 0x4110441");
 		
         switchSim();
         system("gpio l 1 4000 0 0 0 4000");

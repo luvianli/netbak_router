@@ -316,14 +316,15 @@ VTBool huayi_meige_set_band(void *arg,cJSON *input_root){
 	char value[TEMP_STR_LEN] = {0};
 agint:
 	i = 1;
-	/*for (j = 0; j < 15 && !atcmd_get_imsi(value); j++) {
+	for (j = 0; j < 15 && !atcmd_get_imsi(value); j++) {
         sleep(2);
     }
-	set_operator_band(value);*/
-	
-	huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", 0);
-	huayi_uci_commit (PKG_M_SYSTEM);
-	band = 0;
+
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+	if(band != 0)
+		set_operator_band(value);
+
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
 	if (band) {
 		SWITCH_SIM_LOG("custom set band %d", band);
 		
@@ -334,11 +335,12 @@ agint:
 			Atcmd(cmd, strlen(cmd), 0);
 		} else if (band == 10008) Atcmd("AT+SPLBAND=1,0,0,0,149,0", strlen("AT+SPLBAND=1,0,0,0,149,0"), 0);
 		else if (band == 34041) Atcmd("AT+SPLBAND=1,0,482,0,0,0", strlen("AT+SPLBAND=1,0,482,0,0,0"), 0);
+		else if (band == 999) Atcmd("AT+SPLBAND=1,0,482,2056,69,0", strlen("AT+SPLBAND=1,0,482,2056,69,0"), 0);//禁用5和8
 	} else {Atcmd("AT+SPLBAND=1,0,482,2056,213,0", strlen("AT+SPLBAND=1,0,482,2056,213,0"), 0); flag =1;}
 	Atcmd("AT+CFUN=0", strlen("AT+CFUN=0"), 0);
 	
 	Atcmd("AT+CFUN=1", strlen("AT+CFUN=1"), 0);
-    for (i = 0; i < 15 && !atcmd_get_slm_mobile_type(value); i++) {
+    /*for (i = 0; i < 15 && !atcmd_get_slm_mobile_type(value); i++) {
         sleep(2);
     }
 	if(i == 15){SWITCH_SIM_LOG ("cops:%s error ->> Switch default band",value);goto FALSE;}
@@ -358,7 +360,7 @@ agint:
 		count ++;
 	}
 	SWITCH_SIM_LOG("error ---> start reboot");
-	system("huayi-reset reboot");
+	system("huayi-reset reboot");*/
 
 	
 TRUE:
@@ -371,5 +373,16 @@ FALSE:
 }
 
 
-
-
+VTBool huayi_meige_clean_cardinfo(void *arg,cJSON *input_root){
+	int i;
+	char cmd[8] = {0};
+	for (i = 0; i < 4; i++)
+	{
+		sprintf(cmd, "sim%d", i);
+		huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", "");
+		huayi_uci_set_str(PKG_M_SYSTEM, cmd, "operator", 0);
+	}
+	huayi_uci_set_int(PKG_M_SYSTEM, "system", "all_info", 1);
+	huayi_uci_commit(PKG_M_SYSTEM);
+	return VT_TRUE;
+}

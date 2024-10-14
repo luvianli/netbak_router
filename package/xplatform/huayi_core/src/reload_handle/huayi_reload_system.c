@@ -40,7 +40,7 @@ VTBool huayi_power_off_lte4g(void)
 
 VTBool huayi_sys_upgrade(void * arg,cJSON *input_root)
 {
-	int keep_setting = 1;
+	int keep_setting = 1,card_slot = 0;
 	char cmd[CMD_STR_LEN] = {0};
 	
 	if(!huayi_file_exists(UPGRADE_FILE))
@@ -51,7 +51,9 @@ VTBool huayi_sys_upgrade(void * arg,cJSON *input_root)
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	huayi_power_off_lte4g();
 #endif
-	
+	Atcmd("AT+SPLBAND=1,0,482,2056,213,0", strlen("AT+SPLBAND=1,0,482,2056,213,0"), 0);
+	Atcmd("AT+CFUN=0", strlen("AT+CFUN=0"), 0);
+	Atcmd("AT+CFUN=1", strlen("AT+CFUN=1"), 0);	
 	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","upgrade_keep_setting",&keep_setting);
 	
 	if(keep_setting == 0)  // 0 - upgrade and reset
@@ -98,10 +100,38 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	do_wps_led_blinks_slowly();
 #endif
 
+	int i,simnum = 0,card_slot = 0;
+	char cmd[SHORT_STR_LEN] = {0};
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simnum);
+	char iccid[simnum][OPTION_STR_LEN],operat[simnum][1];
+    for (i = 0; i < simnum-1; i++)
+    {
+        sprintf(cmd, "sim%d", i);
+        huayi_uci_get_str(PKG_M_SYSTEM, cmd, "iccid", iccid[i]);
+		huayi_uci_get_str(PKG_M_SYSTEM, cmd, "operator", operat[i]);
+		//CLIENT_SOCKET_LOG("%s:%s,%s",cmd,iccid[i],operat[i]);
+ 		if(strlen(iccid[i]) > 9)
+ 		{
+ 			huayi_uci_set_str(PKG_SIMINFO, cmd, "iccid", iccid[i]);
+			huayi_uci_set_str(PKG_SIMINFO, cmd, "operator", operat[i]);
+		}
+		else
+			huayi_uci_set_str(PKG_SIMINFO, cmd, "iccid", "");	
+    }
+	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &card_slot);
+	huayi_uci_set_int(PKG_SIMINFO, "system", "card_slot", card_slot);
+	huayi_uci_set_int(PKG_SIMINFO, "system", "status", 1);
+	huayi_uci_commit(PKG_SIMINFO);
+
+	Atcmd("AT+SPLBAND=1,0,482,2056,213,0", strlen("AT+SPLBAND=1,0,482,2056,213,0"), 0);
+	Atcmd("AT+CFUN=0", strlen("AT+CFUN=0"), 0);
+	Atcmd("AT+CFUN=1", strlen("AT+CFUN=1"), 0);
 
 	/*maybe need to fixed led here*/
 	system("rm -rf /overlay/*");	
 	sleep(3);
+	system("mkdir -p /overlay/etc/config");
+	system("cp /etc/config/siminfo /overlay/etc/config/");
 	system("/sbin/reboot");
 	return VT_TRUE;
 }

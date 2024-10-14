@@ -602,17 +602,13 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 		system("huayi-reset reset");
 	}
 #else	
-	/*huayi_next_url_time(format);
+	huayi_next_url_time(format);
 	huayi_set_4g_config(format);
 	huayi_set_wifi_config(format);
-#if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-	huayi_set_5gwifi_config(format);
-#endif
-	huayi_set_lan_config(format);
-	huayi_set_dhcp_config(format);
+	//huayi_set_lan_config(format);
+	//huayi_set_dhcp_config(format);
 	huayi_set_qos_config(format);
 	huayi_set_sche_reboot_config(format);
-	huayi_set_wan_config(format);
 	ret = huayi_isreboot_config(format);
 	if(1 == ret) {
 		//need reboot. wait other config save success.
@@ -622,7 +618,7 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 		system("huayi-reset reboot");
         system("reboot");
 		goto out;
-	}*/
+	}
 	
 	huayi_remote_upgrade(format);
 #endif

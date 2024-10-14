@@ -110,6 +110,7 @@ retry_getoperator:	  //¾¡×î´ó¿ÉÄÜÈ¡µ½operator info
              strncmp(lte_value, "46010", 5) == 0)
     {
         netoperator = 2;
+		huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
     }
     else if (strncmp(lte_value, "46003", 5) == 0 || strncmp(lte_value, "46005", 5) == 0 ||
              strncmp(lte_value, "46011", 5) == 0 ||
@@ -201,7 +202,7 @@ void set_siminfo()
         sleep(1);
     }
 
-    huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", &usegpio);
+	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "usegpio", &usegpio);
     atcmd_get_EC20_imei(lte_value);
 
     if (strlen(lte_value) < 5)
@@ -231,7 +232,7 @@ againt:
         }
 
 
-        if (strlen(iccid[i]) < 5 && card_slot != i)
+        if (strlen(iccid[i]) < 5)
         {
             SWITCH_SIM_LOG("\n\nsim%d start switch card", i);
             switch_sim(i, gpio);
@@ -240,19 +241,15 @@ againt:
         {
             SWITCH_SIM_LOG("Sim%d information already exists");
         }
-        else if(card_slot == i)
-        {
-            def_gpio = gpio;
-        }
     }
 
-    switch_sim(card_slot, def_gpio);
+    //switch_sim(card_slot, def_gpio);
 }
 
 
 void check_network()
 {
-    int totalsimnum = 0, simn = 0, usegpio = 0;
+    int totalsimnum = 0, simn = 0, usegpio = 0,gpio = 0,at_card = 0;
     char cmd[OPTION_STR_LEN] = {0};
     int  netoperator = 0;
     char tmp[OPTION_STR_LEN] = {0};
@@ -264,6 +261,7 @@ void check_network()
     int hbq = 0, this_bool = 0;
     int enable = 0;
 	int disconn = 0;
+	char value[TEMP_STR_LEN] = {0};
 
 
     isProductionMode();
@@ -286,6 +284,7 @@ void check_network()
     system(cmd);
     sleep(30);
 
+
 	huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
 	if(disconn == 1)
 		return ;//æ–­ç½‘åœæ­¢æ£€æµ‹
@@ -301,21 +300,30 @@ void check_network()
 
     //huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
 cretry1:
-    memset(check_ip, 0, OPTION_STR_LEN);
-    huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
-    if (networkCheck(check_ip))
+	while (isProcessRunning("switch_sim"))
+	{
+		CON_LOG("Process switch_sim is running. Waiting for 5 seconds...\n");
+		sleep(5);
+	}
+
+	if(atcmd_get_slm_mobile_type(value) == 1)
     {
-        save_useing_siminfo(simn);
-        CON_LOG("sim %d network ok \n", simn);
-        return;
-    }
-    else
-    {
-        count += 1;
-        sleep(6);
-        if (count <= 10)
-            goto cretry1;
-    }
+    	memset(check_ip, 0, OPTION_STR_LEN);
+	    huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
+	    if (networkCheck(check_ip))
+	    {
+	        save_useing_siminfo(simn);
+	        CON_LOG("sim %d network ok \n", simn);
+	        return;
+	    }
+	    else
+	    {
+	        count += 1;
+	        sleep(6);
+	        if (count <= 5)
+	            goto cretry1;
+	    }
+	}
     count = 0;
 
     CON_LOG("sim%d ping bu tong %s", simn, check_ip);
@@ -345,30 +353,41 @@ check_net:
         system(tmp);
         sleep(30);
 cretry2:
-        memset(tmp, 0, OPTION_STR_LEN);
-        huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "default_checkip", tmp);
-        if (networkCheck(tmp))
-        {
-            sleep(3);
-            save_useing_siminfo(i);
-            CON_LOG("sim %d network ok \n", i);
-            this_bool = 1;
-            return;
-        }
-        else
-        {
-            count += 1;
-            sleep(6);
-            if (count <= 10)
-                goto cretry2;
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
+		if(at_card != i)
+		{
+			CON_LOG("at_card change,reload network check\n");
+			count = 0;
+			simn = at_card;
+			goto cretry1;
+		}
+		if(atcmd_get_slm_mobile_type(value) == 1)
+    	{
+	        memset(tmp, 0, OPTION_STR_LEN);
+	        huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "default_checkip", tmp);
+	        if (networkCheck(tmp))
+	        {
+	            sleep(3);
+	            save_useing_siminfo(i);
+	            CON_LOG("sim %d network ok \n", i);
+	            this_bool = 1;
+	            return;
+	        }
+	        else
+	        {
+	            count += 1;
+	            sleep(6);
+	            if (count <= 5)
+	                goto cretry2;
 
-        }
+	        }
+		}
         count = 0;
         sleep(1);
     }
 	SWITCH_SIM_LOG("All cards network error -> exe reboot");
     sleep(15);
-    system("reboot");
+    //system("reboot");
 
     return;
 }
@@ -531,9 +550,36 @@ void Production_testing_mode()
 
 }
 
+void check_modem_edition()
+{
+	char edition[OPTION_STR_LEN] = { 0 };
+	char cmd[TEMP_STR_LEN] = {0};
+	int simn = 0;
+    char tmp[OPTION_STR_LEN];
+	
+	get_cmd_result("huayi_AT_cli AT+CGMR | grep SLM", edition, OPTION_STR_LEN);
+	if(strstr(edition, "SLM770U_SW_C01_U06") == NULL)
+	{
+		CON_LOG("modem edition :%s,fota\n",edition);
+		Atcmd("huayi_AT_cli at+cgact=1", strlen("huayi_AT_cli at+cgact=1"), 0);
+		snprintf(cmd, TEMP_STR_LEN, "AT+FOTAH=\"http://116.247.69.94:13004/static/SLM770U_SW_C01_U05-U06.pac\",4296400");
+		Atcmd(cmd, strlen(cmd), 0);
+		sleep(10);
+		char resultbuf[OPTION_STR_LEN] = {0};
+		get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
+		while(strstr(resultbuf, "2dee:") == NULL)
+        {
+			sleep(5);
+		}
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &simn);
+		snprintf(tmp, OPTION_STR_LEN, "switch_sim %d", simn);
+		system(tmp);
+	}
+}
+
 void check_network_two()
 {
-    int totalsimnum = 0, simn = 0, usegpio = 0;
+    int totalsimnum = 0, simn = 0, usegpio = 0,at_card = 0;
     char cmd[OPTION_STR_LEN] = {0};
     int  netoperator = 0;
     char tmp[OPTION_STR_LEN] = {0};
@@ -542,7 +588,7 @@ void check_network_two()
     int i_ready = 0, i_signal = 0;
     char lte_value[OPTION_STR_LEN] = {0};
     char iccid[OPTION_STR_LEN] = { 0 };
-    int hbq = 0, this_bool = 0;
+    int hbq = 0;
     int enable = 0;
 	int disconn = 0;
 
@@ -553,12 +599,18 @@ void check_network_two()
 			goto success ;//æ–­ç½‘åœæ­¢æ£€æµ‹
 
 		count = 0;
-	cretry1:
-	    memset(check_ip, 0, OPTION_STR_LEN);
+		memset(check_ip, 0, OPTION_STR_LEN);
 	    huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
+	cretry1:
+		while (isProcessRunning("switch_sim"))
+        {
+            CON_LOG("Process switch_sim is running. Waiting for 5 seconds...\n");
+            sleep(5);
+        }
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &simn);
 	    if (networkCheck(check_ip))
 	    {
-	        save_useing_siminfo(simn);
+	        //save_useing_siminfo(simn);
 	        CON_LOG("sim %d network ok \n", simn);
 	        goto success ;
 	    }
@@ -586,7 +638,6 @@ void check_network_two()
 				if (!enable)
 				{
 					CON_LOG("external_card_enable	  0");
-					//system("reboot");
 					break;
 				}
 			}
@@ -597,6 +648,13 @@ void check_network_two()
 	        system(tmp);
 	        sleep(30);
 	cretry2:
+			huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
+			if(at_card != i)
+			{
+				CON_LOG("at_card change,reload network check\n");
+				count = 0;
+				goto cretry1;
+			}
 	        memset(tmp, 0, OPTION_STR_LEN);
 	        huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "default_checkip", tmp);
 	        if (networkCheck(tmp))
@@ -604,7 +662,6 @@ void check_network_two()
 	            sleep(3);
 	            save_useing_siminfo(i);
 	            CON_LOG("sim %d network ok \n", i);
-	            this_bool = 1;
 	            goto success;
 	        }
 	        else
@@ -620,7 +677,7 @@ void check_network_two()
 	    }
 		SWITCH_SIM_LOG("All cards network error -> exe reboot");
 	    sleep(15);
-	    system("reboot");
+	    //system("reboot");
 
 	success:
 		sleep(60);
@@ -637,9 +694,10 @@ int main(int argc, char *argv[])
 	Production_testing_mode();
 
 	check_network();
+	//check_modem_edition();
 	init_cloud_client();
 
-	check_network_two();
+	//check_network_two();
 
     return 0;
 }

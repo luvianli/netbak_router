@@ -1674,8 +1674,8 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 
 	if (!strcmp(wan_type,WAN_TYPE_4G_MOBILE))
 	{
-		//huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
-		//cJSON_AddNumberToObject(result_root,"band",band);
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+		cJSON_AddNumberToObject(result_root,"band",band);
 		
 		huayi_uci_get_str(PKG_NETWORK,"wan4g","proto",proto);
 		cJSON_AddStringToObject(result_root,"proto",proto);
@@ -1893,7 +1893,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	if (!strcmp(wan_type,WAN_TYPE_4G_MOBILE))
 	{
 
-		/*if(!huayi_json_get_int(request_root,"band",&band))
+		if(!huayi_json_get_int(request_root,"band",&band))
 		{
 			return FCGI_RESP_CODE_DATA_MISS;
 				 
@@ -1902,7 +1902,7 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		if(my_band != band){
 				huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", band);
 				option = 1;
-		}*/
+		}
 		if(!huayi_json_get_str(request_root,"proto",proto,OPTION_STR_LEN))
 		{
 			;//return FCGI_RESP_CODE_DATA_MISS;
@@ -2321,8 +2321,8 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 #endif
 
 	system("huayi-reset network");
-	/*if(option)
-		system("huayi-reset band");*/
+	if(option)
+		system("huayi-reset band");
 
 
 	*lock_time = HUAYI_RELOAD_NETWORK_TIME;
