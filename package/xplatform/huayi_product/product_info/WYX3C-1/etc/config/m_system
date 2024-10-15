@@ -1,7 +1,7 @@
 config system system
 	option working_mode	1
 	option status	0
-	option simnum	4
+	option simnum	3
 	option imei ''
 	option switchres 0
 	option clientlog 1
@@ -34,7 +34,7 @@ config usesiminfo usesiminfo
 	option checksignalips '223.5.5.5;www.baidu.com;www.qq.com'
 	option default_checkip '223.5.5.5;www.baidu.com;www.qq.com'
 	option maxdelay ''
-	option card_slot 2
+	option card_slot 0
 	option lock 0
 	option checknetwork_sleep 60
 	option sim_status 0
