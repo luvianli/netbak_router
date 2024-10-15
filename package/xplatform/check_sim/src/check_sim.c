@@ -558,7 +558,7 @@ void check_modem_edition()
     char tmp[OPTION_STR_LEN];
 	
 	get_cmd_result("huayi_AT_cli AT+CGMR | grep SLM", edition, OPTION_STR_LEN);
-	if(strstr(edition, "SLM770U_SW_C01_U06") == NULL)
+	if(strstr(edition, "SLM770U_SW_C01_U05") != NULL)
 	{
 		CON_LOG("modem edition :%s,fota\n",edition);
 		Atcmd("huayi_AT_cli at+cgact=1", strlen("huayi_AT_cli at+cgact=1"), 0);
@@ -694,7 +694,7 @@ int main(int argc, char *argv[])
 	Production_testing_mode();
 
 	check_network();
-	//check_modem_edition();
+	check_modem_edition();
 	init_cloud_client();
 
 	//check_network_two();
