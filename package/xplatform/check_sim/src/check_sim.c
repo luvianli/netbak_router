@@ -287,7 +287,7 @@ void check_network()
 
 	huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
 	if(disconn == 1)
-		return ;//断网停止检测
+		return ;//断网停止检�?
 	
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 	ret = atcmd_get_iccid(iccid);
@@ -333,7 +333,7 @@ check_net:
     {
         if (i == simn)
             continue;
-        //外置卡
+        //外置�?
 #ifndef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
         if (i == totalsimnum - 1)
         {
@@ -561,10 +561,10 @@ void check_modem_edition()
 	if(strstr(edition, "SLM770U_SW_C01_U05") != NULL)
 	{
 		CON_LOG("modem edition :%s,fota\n",edition);
-		Atcmd("huayi_AT_cli at+cgact=1", strlen("huayi_AT_cli at+cgact=1"), 0);
+		Atcmd("at+cgact=1", strlen("at+cgact=1"), 0);
 		snprintf(cmd, TEMP_STR_LEN, "AT+FOTAH=\"http://116.247.69.94:13004/static/SLM770U_SW_C01_U05-U06.pac\",4296400");
 		Atcmd(cmd, strlen(cmd), 0);
-		sleep(10);
+		sleep(30);
 		char resultbuf[OPTION_STR_LEN] = {0};
 		get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
 		while(strstr(resultbuf, "2dee:") == NULL)
@@ -596,7 +596,7 @@ void check_network_two()
 	{
 		huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
 		if(disconn == 1)
-			goto success ;//断网停止检测
+			goto success ;//断网停止检�?
 
 		count = 0;
 		memset(check_ip, 0, OPTION_STR_LEN);
