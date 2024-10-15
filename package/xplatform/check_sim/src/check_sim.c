@@ -387,7 +387,7 @@ cretry2:
     }
 	SWITCH_SIM_LOG("All cards network error -> exe reboot");
     sleep(15);
-    //system("reboot");
+    system("reboot");
 
     return;
 }
@@ -677,7 +677,7 @@ void check_network_two()
 	    }
 		SWITCH_SIM_LOG("All cards network error -> exe reboot");
 	    sleep(15);
-	    //system("reboot");
+	    system("reboot");
 
 	success:
 		sleep(60);

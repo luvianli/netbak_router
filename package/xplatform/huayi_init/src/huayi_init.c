@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 {
 	int opmode = 0;
 	int reset = -1;
-	huayi_uci_get_int(PKG_SIMINFO, "system", "status", &reset);	
+	huayi_uci_get_int(PKG_SIMINFO, "system", "reset", &reset);	
 	if(reset == 0)
 		system("huayi-reset reset");
 	
