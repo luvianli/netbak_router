@@ -2495,15 +2495,15 @@ int cgi_get_card(cJSON *request_root, cJSON *response_root,int *lock_time)
 	}
 
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-	if(!strcmp(product_model, "ZC-GW01-2"))
+	if(!strcmp(product_model, "ZC-GW01-2") || !strcmp(product_model, "4G300-H002-HY07"))
 	{
 	count=0;
 again:
 	result_root=cJSON_CreateObject();
 	card_info_root=cJSON_CreateArray();
 
-    CustomCommunicationClient("echo `uci get m_system.usesiminfo.operator;uci get m_system.usesiminfo.card_slot;uci get m_system.usesiminfo.iccid;uci get m_system.usesiminfo.lock;uci get m_system.system.simnum`",usesiminfoBuf);
-     if(!(toParsing(usesiminfoBuf, 5, &usesiminfoOperator, &usesiminfoCard_slot, usesiminfoIccid, &usesiminfoLock, &usesiminfoSimnum))){
+    CustomCommunicationClient("echo `uci get m_system.usesiminfo.operator;uci get m_system.usesiminfo.card_slot;uci get m_system.usesiminfo.lock;uci get m_system.system.simnum`",usesiminfoBuf);
+     if(!(toParsing(usesiminfoBuf, 4, &usesiminfoOperator, &usesiminfoCard_slot, &usesiminfoLock, &usesiminfoSimnum))){
         CLIENT_SOCKET_LOG("usesiminfoBuf error");
         goto end;
      }
@@ -2518,12 +2518,12 @@ again:
 	cJSON_AddNumberToObject(result_root,"card",usesiminfoCard_slot);
 	cJSON_AddNumberToObject(result_root,"operator",usesiminfoOperator);
 	cJSON_AddNumberToObject(result_root,"lock",usesiminfoLock);
-	for(i=0;i<usesiminfoSimnum;i++)
+	for(i=0;i<3;i++)
 	{
         if (strlen(simIccid[i]) < 5 || !isStringValid(simIccid[i])) {
             CLIENT_SOCKET_LOG("sim%d iccid Invalid",i+1);
             continue;
-        } 
+        }
 		info_root=cJSON_CreateObject();
 		cJSON_AddNumberToObject(info_root,"card",simCard_slot[i]);
 		cJSON_AddNumberToObject(info_root,"operator",simOperator[i]);
@@ -2580,7 +2580,7 @@ int cgi_set_card(cJSON *request_root, cJSON *response_root,int *lock_time){
 	}
 
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-	if(!strcmp(product_model, "ZC-GW01-2"))
+	if(!strcmp(product_model, "ZC-GW01-2") || !strcmp(product_model, "4G300-H002-HY07"))
 	{
 	    if(!huayi_json_get_int(request_root,"lock",&lock))
 		{
@@ -2590,7 +2590,7 @@ int cgi_set_card(cJSON *request_root, cJSON *response_root,int *lock_time){
 	    huayi_uci_set_str(PKG_SYSTEM,"mysocket","send",cmd);
 	    huayi_uci_commit(PKG_SYSTEM);
 		*lock_time = HUAYI_SET_CARD;
-	    CustomCommunicationClient(cmd,NULL);
+	    //CustomCommunicationClient(cmd,NULL);
 		system("huayi-reset switch_sim");
 	}else
 	{    

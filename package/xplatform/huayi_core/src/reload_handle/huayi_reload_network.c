@@ -277,7 +277,7 @@ VTBool huayi_switch_card(void *arg,cJSON *input_root)
 	char cmd[LONG_BUFF_LEN]={0};
 
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-	if(!strcmp(product_model, "ZC-GW01-2"))
+	if(!strcmp(product_model, "ZC-GW01-2") || !strcmp(product_model, "4G300-H002-HY07"))
 	{
 	    huayi_uci_get_str(PKG_SYSTEM,"mysocket","send",cmd);
 	    
