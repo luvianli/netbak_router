@@ -96,6 +96,7 @@ VTBool huayi_sys_reset(void * arg,cJSON *input_root)
 	sleep(3);
 	system("mkdir -p /overlay/etc/config");
 	system("cp /etc/config/wireless /overlay/etc/config/");
+	system("cp /etc/config/dhcp /overlay/etc/config/");
 	system("/sbin/reboot");
 	return VT_TRUE;
 }
