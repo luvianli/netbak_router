@@ -20,6 +20,7 @@ int slm_init_set_modem_status(void)
 	char operator_str[OPTION_STR_LEN] = {0};
 	char cmd[CMD_STR_LEN] = {0};
 	int signal = 0,i_ready;
+	char pmodel[16]={0};
 
 	memset(lte_value,0,OPTION_STR_LEN);
 	atcmd_get_EC20_imei(lte_value);
@@ -73,9 +74,6 @@ int slm_init_set_modem_status(void)
 	system(cmd);
 
 	memset(lte_value,0,OPTION_STR_LEN);
-	//atcmd_get_slm_mobile_type(lte_value);
-	//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem bandLte %s",lte_value);
-	//system(cmd);
 
 	if (atcmd_get_slm_mobile_type(lte_value) == LTE_TRUE)
 	{
@@ -106,23 +104,33 @@ int slm_init_set_modem_status(void)
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem iccid %s",lte_value);
 	system(cmd);
 
-	/*memset(lte_value, 0, OPTION_STR_LEN);
-	atcmd_get_lac(lte_value);
-	if(strlen(lte_value) < 2)
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel); 
+	if(strncmp("EG800K",pmodel, 6) == 0)
 	{
-		strcpy(lte_value, "");
-	}
-	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem lac %s",lte_value);
-	system(cmd);
+		memset(lte_value,0,OPTION_STR_LEN);
+		atcmd_get_slm_mobile_type(lte_value);
+		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem bandLte %s",lte_value);
+		system(cmd);
 
-	memset(lte_value, 0, OPTION_STR_LEN);
-	atcmd_get_ci(lte_value);
-	if(strlen(lte_value) < 2)
-	{
-		strcpy(lte_value, "");
-	}*/
-	//snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem ci 111");
-	//system(cmd);
+		memset(lte_value, 0, OPTION_STR_LEN);
+		atcmd_get_lac(lte_value);
+		if(strlen(lte_value) < 2)
+		{
+			strcpy(lte_value, "");
+		}
+		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem lac %s",lte_value);
+		system(cmd);
+
+		memset(lte_value, 0, OPTION_STR_LEN);
+		atcmd_get_ci(lte_value);
+		if(strlen(lte_value) < 2)
+		{
+			strcpy(lte_value, "");
+		}
+		snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem ci %s",lte_value);
+		system(cmd);
+
+	}
 
 	atcmd_get_signal(&signal);
 	snprintf(cmd,CMD_STR_LEN,"huayi_cmd set modem signal %d",signal);
@@ -164,7 +172,7 @@ int slm_ECM_handler(struct SMSAgent *Agent)
 		sleep(1);
 	}
 
-	slm_RNDIS_connect();
+	//slm_RNDIS_connect();
 	
     while (VS_TRUE == gRunAgent )
     {

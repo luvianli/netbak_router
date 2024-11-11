@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
 	{
 		neoway_RNDIS_handler(&Agent);
 	}
-    else if(strncmp("SLM770U",pmodel, strlen("SLM770U")) == 0||strncmp("ML307R",pmodel, strlen("ML307R")) == 0)
+    else if(strncmp("ML307R",pmodel, strlen("ML307R")) == 0 || strncmp("EG800K",pmodel, 6) == 0)
     {
         slm_ECM_handler(&Agent);
     }

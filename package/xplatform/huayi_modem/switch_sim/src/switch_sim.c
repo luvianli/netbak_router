@@ -39,6 +39,41 @@ void set_wanIp(){
 
 }
 
+int EG800K_connect(void)
+{
+	int ret = 0;
+	char cmd[CMD_STR_LEN] = { 0 };
+	char mode[RESULT_STR_LEN]={0};
+	char user4g[RESULT_STR_LEN]={0},pass4g[RESULT_STR_LEN]={0};
+	char apn[RESULT_STR_LEN]={0},validation[RESULT_STR_LEN]={0};
+
+	huayi_uci_get_str(PKG_MODEM, "status", "mode", mode);
+
+	if(atoi(mode)==0)
+	{
+		//CTNET UNINET CMNET
+		//snprintf(cmd,sizeof(cmd),"at+qicsgp=1,1,\"CTNET\"");
+		snprintf(cmd,sizeof(cmd),"at+qicsgp=1,1");
+		ret = AtcmdSendDelay(cmd,sizeof(cmd),0);
+		//if(ret != LTE_TRUE)
+		//	return ret;
+	}
+	else
+	{
+		huayi_uci_get_str(PKG_MODEM, "status", "user4g", user4g);
+		huayi_uci_get_str(PKG_MODEM, "status", "pass4g", pass4g);
+		huayi_uci_get_str(PKG_MODEM, "status", "apn", apn);
+		huayi_uci_get_str(PKG_MODEM, "status", "validation", validation);
+		snprintf(cmd,sizeof(cmd),"at+qicsgp=1,1,\"%s\",\"%s\",\"%s\",%s",apn,user4g,pass4g,validation);
+		ret = AtcmdSendDelay(cmd,sizeof(cmd),0);
+		if(ret != 1)
+			return ret;
+	}
+	AtcmdSendDelay("at+cgact=1,1",strlen("at+cgact=1,1"),0);
+	ret = AtcmdSendDelay("at+qnetdevctl=3,1,1",strlen("at+qnetdevctl=3,1,1"),0);
+
+	return ret;
+}
 
 
 int SlmDial()
@@ -49,6 +84,7 @@ int SlmDial()
     char print_to[TEMP_STR_LEN] = {0};
 	char value[TEMP_STR_LEN] = {0};
 	int j,simnum,band;
+	char pmodel[16]={0};
 
     while (count < 60)
     {
@@ -57,7 +93,13 @@ int SlmDial()
 		huayi_uci_set_int(PKG_M_SYSTEM, "system", "at_card", sim);
 
         if (mode == 1)
-        {				
+        {		
+        	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);	
+			if(strncmp("EG800K",pmodel, 6) == 0)
+			{
+				EG800K_connect();
+			}
+			
             while (registered_count < 60 && atcmd_get_slm_mobile_type(value) == HUAYI_FALSE)
             {
             	registered_count += 2;
@@ -68,8 +110,10 @@ int SlmDial()
             if (registered_count < 70)
             {
                 SWITCH_SIM_LOG("=== SWITCH SIM %d (%s) Dialing successful===\n\n", sim, print_to);
-				//set_wanIp();
-				system("/etc/init.d/huayi_dial4g restart");
+				if(strncmp("EG800K",pmodel, 6) != 0)
+				{
+					system("/etc/init.d/huayi_dial4g restart");
+				}
                 return 1;
             }
             else
@@ -120,6 +164,7 @@ int main(int argc, char *argv[]) {
 
     if (sim >= 0 && sim < simnum) {
         system("devmem 0x10000060 32 0x4110441");	
+		SWITCH_SIM_LOG("=== SWITCH SIM %d ===\n\n", sim);
         switchSim();
 		sleep(2);
 		system("gpio l 2 0 4000 0 0 4000");

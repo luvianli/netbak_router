@@ -1,0 +1,55 @@
+--- 1/drivers/usb/serial/option.c	2023-10-11 11:14:48.905134900 +0800
++++ 2/drivers/usb/serial/option.c	2023-10-11 13:36:12.140544000 +0800
+@@ -87,6 +87,11 @@
+ #define HUAWEI_PRODUCT_K4605			0x14C6
+ #define HUAWEI_PRODUCT_E173S6			0x1C07
+ 
++/* add ML307R*/
++#define ML307R_VENDOR_ID 0x2ecc
++#define ML307R_PRODUCT_ID 0x3012
++/* add ML307R end*/
++
+ #define QUANTA_VENDOR_ID			0x0408
+ #define QUANTA_PRODUCT_Q101			0xEA02
+ #define QUANTA_PRODUCT_Q111			0xEA03
+@@ -673,7 +678,11 @@
+ 	{ USB_DEVICE(0x2C7C, 0x6120) }, /* Quectel UC200 */
+ 	{ USB_DEVICE(0x2C7C, 0x6000) }, /* Quectel EC200/UC200 */
+ 	{ USB_DEVICE(0x2C7C, 0x6005) }, /* Quectel EC200A */
+-#endif
++	{ USB_DEVICE(0x2C7C, 0x6002) }, /* Quectel EG800K */
++#endif	
++	/* add ML307R*/
++	{ USB_DEVICE_AND_INTERFACE_INFO(ML307R_VENDOR_ID, ML307R_PRODUCT_ID, 0xff, 0x00, 0x00) },
++	/* add ML307R end*/
+ 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_COLT) },
+ 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_RICOLA) },
+ 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_RICOLA_LIGHT) },
+@@ -1960,10 +1969,23 @@
+ 
+ 	//Added by Quectel
+ 	//Quectel modules¡¯s interface 4 can be used as USB network device
+-	if (serial->dev->descriptor.idVendor == cpu_to_le16(0x2C7C) && (serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4)) 
+-	{
+-		return -ENODEV;
+-	}
++	if (serial->dev->descriptor.idVendor == cpu_to_le16(0x2C7C)) {
++	 	__u16 idProduct = le16_to_cpu(serial->dev->descriptor.idProduct);
++		 struct usb_interface_descriptor *intf = &serial->interface->cur_altsetting->desc;
++
++		if (intf->bInterfaceClass != 0xFF || intf->bInterfaceSubClass == 0x42) {
++	 		//ECM, RNDIS, NCM, MBIM, ACM, UAC, ADB
++	 		return -ENODEV;
++	 	}
++
++	 	if ((idProduct&0xF000) == 0x0000) {
++	 		//MDM interface 4 is QMI
++	 		if (intf->bInterfaceNumber == 4 && intf->bNumEndpoints == 3
++	 			&& intf->bInterfaceSubClass == 0xFF &&intf->bInterfaceProtocol == 0xFF)
++ 			return -ENODEV;
++ 		}
++ 	}
++
+ #endif
+ 
+ 	/* Never bind to the CD-Rom emulation interface	*/
