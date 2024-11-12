@@ -20,7 +20,7 @@ config timeserver ntp
 config global 'global'
 	option huayi_cmd_debug '0'
 	option first_boot	'1'
-	option language 'cn'
+	option language 'en'
 	list support_language 'cn'
 	list support_language 'en'
 
