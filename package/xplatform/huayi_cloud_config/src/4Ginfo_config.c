@@ -11,9 +11,10 @@
 #include <signal.h>
 
 
-void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char *cellid, char *sn,int *simSwitch)
+void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char *cellid, char *sn,int *simSwitch,int *band)
 {
     int  signal = -121,sim = 0;
+	char result[TEMP_STR_LEN];
 
     huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "operator", mobile_type);
     huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "iccid", iccid);
@@ -40,6 +41,8 @@ void huayi_get_4g_info(char *mobile_type, int *sig, char *iccid, char *lac, char
     if(!(toParsing(usesiminfoBuf, 1,&sim_slot))){
         CLOUD_CLIENT_LOG("usesiminfoBuf error\n");
      }else *simSwitch = sim_slot;*/
+	get_cmd_result("echo $(huayi_AT_cli at+cced=0,1) | awk -F ',' '{print $6}'", result, sizeof(result));
+	*band = atoi(result);
 
     return;
 }
@@ -141,6 +144,26 @@ void huayi_set_4g_config(cJSON *response_root)
     return ;
 }
 
+void huayi_set_band_config(cJSON *response_root)
+{
+	int  band = 0,my_band = 0;
+
+	if (NULL == response_root)
+    {
+        return ;
+    }
+
+	if (huayi_json_get_int(response_root, "band", &band))
+    {
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &my_band);
+		if(my_band != band){
+			huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", band);
+			system("huayi-reset band");
+		}
+    }
+
+	return;
+}
 
 void huayi_get_mifi_open(char *mcc,char *mnc,char *iccid,char *lac,char *ci,char *devid,char *hardvers,int *db,char *sign)
 {

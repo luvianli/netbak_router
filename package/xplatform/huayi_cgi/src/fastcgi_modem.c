@@ -1380,6 +1380,8 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	unsigned long long rx_bytes = 0;
 	unsigned long long tx_bytes = 0;
 	int  wifi_2g = 0;
+	int  band = 0;
+	char result[TEMP_STR_LEN];
 
 	if((NULL == request_root)||(NULL == response_root) || (NULL == lock_time))
 	{
@@ -1450,6 +1452,9 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 			wan_up = 0;
 	}
 
+	get_cmd_result("echo $(huayi_AT_cli at+cced=0,1) | awk -F ',' '{print $6}'", result, sizeof(result));
+	band = atoi(result);
+
 	cJSON_AddNumberToObject(result_root,"wan_up",wan_up);
 
 	if(wan_up == 0)
@@ -1489,6 +1494,8 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	cJSON_AddNumberToObject(result_root,"tx_bytes",tx_bytes);
 
 	cJSON_AddNumberToObject(result_root,"wifi_2g",wifi_2g);
+
+	cJSON_AddNumberToObject(result_root,"band",band);
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 

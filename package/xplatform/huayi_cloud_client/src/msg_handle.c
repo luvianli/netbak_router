@@ -272,7 +272,7 @@ void msg_content(char *heartdata, unsigned int *heartsize)
 	char ip[IPV4_STR_LEN] = {0},netmask[IPV4_STR_LEN] = {0},nettype[RESULT_STR_LEN] = {0};
 	char startip[IPV4_STR_LEN] = {0},endip[IPV4_STR_LEN] = {0};
 	int lease_time = 0;
-	int rectime = 0,week = 0,hour = 0,minute = 0,rec_time = 0,type = 0;
+	int rectime = 0,week = 0,hour = 0,minute = 0,rec_time = 0,type = 0,band = 0;
 	char mode[RESULT_STR_LEN] = {0},proto[RESULT_STR_LEN] = {0},name[RESULT_STR_LEN] = {0},gateway[IPV4_STR_LEN] = {0};
 	char dns1[IPV4_STR_LEN] = {0},dns2[IPV4_STR_LEN] = {0},p_name[OPTION_STR_LEN] = {0},password[OPTION_STR_LEN] = {0},ac[OPTION_STR_LEN] = {0},service[OPTION_STR_LEN] = {0};
 	char dial_apn[OPTION_STR_LEN] = {0},dial_name[OPTION_STR_LEN] = {0},dial_pass[OPTION_STR_LEN] = {0},dial_auth[OPTION_STR_LEN] = {0};
@@ -282,12 +282,13 @@ void msg_content(char *heartdata, unsigned int *heartsize)
     huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
     if(strcmp(product_model, "WYX3C-1") == 0)
     {
-        huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn,&simSwitch);
+        huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn,&simSwitch,&band);
         cJSON_AddStringToObject(result_root,"sn", sn);
         cJSON_AddStringToObject(result_root,"iccid", iccid);
         cJSON_AddNumberToObject(result_root,"dbm", sig);
         cJSON_AddStringToObject(result_root,"opname", mobile_type);
         cJSON_AddNumberToObject(result_root,"simSwitch", simSwitch);
+        cJSON_AddNumberToObject(result_root,"band", band);		
         speeddown = 0;
     	speedup = 0 ;
     	huayi_get_qos_config(&speeddown, &speedup);//to do long
@@ -621,6 +622,7 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 	}
 	huayi_reset_config(format);
 	huayi_remote_upgrade(format);
+	huayi_set_band_config(format);
 #endif
 
 out:
