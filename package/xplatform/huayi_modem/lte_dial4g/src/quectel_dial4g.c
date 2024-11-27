@@ -107,7 +107,7 @@ int ECM_init_check_lte_at(void)
 	}
 	*/
 	/*for ╬ш╨одё©И*/
-	ret = AtcmdSendDelay("AT+QCFG='devmode,0'",strlen("AT+QCFG='devmode,0'"),0);
+	/*ret = AtcmdSendDelay("AT+QCFG='devmode,0'",strlen("AT+QCFG='devmode,0'"),0);
 	if(ret == LTE_FALSE)
 	{
 		system("huayi_AT_cli AT+QCFG='devmode,0'");
