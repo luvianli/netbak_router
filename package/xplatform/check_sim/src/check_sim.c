@@ -691,7 +691,7 @@ int main(int argc, char *argv[])
 	check_modem_edition();
 	init_cloud_client();
 
-	//check_network_two();
+	check_network_two();
 
     return 0;
 }
