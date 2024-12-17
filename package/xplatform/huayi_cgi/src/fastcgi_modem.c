@@ -1681,9 +1681,6 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 
 	if (!strcmp(wan_type,WAN_TYPE_4G_MOBILE))
 	{
-		huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
-		cJSON_AddNumberToObject(result_root,"band",band);
-		
 		huayi_uci_get_str(PKG_NETWORK,"wan4g","proto",proto);
 		cJSON_AddStringToObject(result_root,"proto",proto);
 
@@ -1859,6 +1856,9 @@ int cgi_get_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 	cJSON_AddStringToObject(result_root,"apn_usr",apnusername);
 	cJSON_AddStringToObject(result_root,"apn_pwd",apnpassword);
 
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &band);
+	cJSON_AddNumberToObject(result_root,"band",band);
+
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
 	return FCGI_RESP_CODE_SUCCESS;
@@ -1990,6 +1990,17 @@ int cgi_set_wan_or_wan4g_config(cJSON *request_root, cJSON *response_root,int *l
 		{
 			return FCGI_RESP_CODE_DATA_MISS;
 		}
+
+		if(huayi_json_get_int(request_root,"band",&band))
+		{
+			huayi_uci_get_int(PKG_M_SYSTEM, "system", "band", &my_band);
+			if(my_band != band)
+			{
+				huayi_uci_set_int(PKG_M_SYSTEM, "system", "band", band);
+				option = 1;
+			}		 
+		}
+
 		{
 			huayi_uci_get_str(PKG_CAPABILITY,"cap","wan_ifname",wan_ifname);
 

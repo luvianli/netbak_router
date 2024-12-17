@@ -803,6 +803,60 @@ fail:
 	return 0;
 }
 
+int first_internet_do_ping(const char *host, char *ifname) {
+    char cmd[CMD_STR_LEN];
+    char wan_gateway[IPV4_STR_LEN];
+    char resultbuf[SHORT_STR_LEN];
+    int i,count = 3,cpe_count = 0;
+    char strifname[OPTION_STR_LEN];
+    float delay =  0.0;
+
+    if (host == NULL || strlen(host) < 7) {
+        goto fail;
+    }
+
+	if (strcmp(ifname, "eth0.2") == 0) 
+	{
+		huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", wan_gateway);
+	}else
+	{
+		huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", wan_gateway);	
+		system("route del default dev eth0.2");
+	}	
+
+    memset(cmd, 0, sizeof(cmd));
+	sprintf(cmd, "route -n | grep %s | grep UG | grep %s | wc -l", ifname, wan_gateway);
+	get_cmd_result(cmd, resultbuf, sizeof(resultbuf));
+
+	if (atoi(resultbuf) == 0 && strncmp(wan_gateway, "0.0.0.0", strlen("0.0.0.0"))) {
+		memset(cmd, 0, sizeof(cmd));
+		sprintf(cmd, "route add default gw %s dev %s", wan_gateway, ifname);
+		system(cmd);
+	}
+	
+	for(i = 0;i < 3; i++)
+	{
+		if (ifname == NULL)
+		{
+			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s > /dev/null && touch %s", 1, host, PING_TMPFILE);
+		}
+		else
+		{
+			snprintf(cmd, sizeof(cmd), "ping -c 1 -W %d %s -I %s > /dev/null && touch %s", 1, host, ifname, PING_TMPFILE);
+		}
+		system(cmd);
+		usleep(500);
+		if ( access(PING_TMPFILE, F_OK) == 0)
+		{
+			unlink(PING_TMPFILE);
+			return 1;
+		}
+	}
+
+fail: 
+    return 0;
+}
+
 int simcard_internet_check(const char *host, char *ifname)
 {
 	char cmd[CMD_STR_LEN] = {0};
@@ -1504,7 +1558,7 @@ float pingCheck(const char* host) {
     char buffer[MAX_BUFFER_SIZE];
     FILE* fp;
 
-    sprintf(command, "ping -c 3 -W 1 %s 2>&1", host);
+    sprintf(command, "ping -c 3 -W 1 %s -I eth1 2>&1", host);
 
     fp = popen(command, "r");
     if (fp == NULL) {

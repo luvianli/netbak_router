@@ -1,0 +1,104 @@
+config system system
+	option working_mode	1
+	option status	0
+	option simnum	3
+	option imei ''
+	option switchres 0
+	option clientlog 1
+	option productmodel 'WYX3C-1'
+	option version '001'
+	#option urldomain 'https://zmp-test1.nbm2m.com/api/device/post/juHeApi/uploadData'
+	#option urldomain 'https://zmp-test.nbm2m.com/manage-api/device/post/juHeApi/uploadData'
+	option urldomain 'https://up.aiotzy.com/api/device/post/juHeApi/uploadData'
+	#option urldomain 'https://zmp-test.nbm2m.com/api/device/post/juHeApi/uploadData'
+	option interval 60000
+	option firmwareurl ''
+	option firmwaremd5 ''
+	option msg_code  0
+	option network_is_ok 0
+	option send_fd 0
+	option transport 'NULL'
+	option returnValue ''
+	option external_card_enable 0
+	option band 0
+	option at_card 0
+	option all_info 1
+	
+config usesiminfo usesiminfo
+	option operator ''
+	option usegpio 26
+	option iccid ''
+	option switchreq 0
+	option rebootact 0
+	option speedcmd ''
+	option checksignalips '223.5.5.5;www.baidu.com;www.qq.com'
+	option default_checkip '223.5.5.5;www.baidu.com;www.qq.com'
+	option maxdelay ''
+	option card_slot 0
+	option lock 0
+	option checknetwork_sleep 60
+	option sim_status 0
+	
+#gpio number和sim几对应关系
+config s26 s26
+	option simn 0
+	
+config s25 s25
+	option simn 1
+	
+config s24 s24
+	option simn 2
+	
+config s27 s27
+	option simn 3
+
+config sim0 sim0
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 26
+	option iccid_gpio ''
+	option card_slot 0
+	option state ''
+
+config sim1 sim1
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 25
+	option iccid_gpio ''
+	option card_slot 1
+	option state ''
+
+config sim2 sim2
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 24
+	option iccid_gpio ''
+	option card_slot 2
+	option state ''
+
+config sim3 sim3
+	option operator ''
+	option checksignalips 'www.baidu.com'
+	option networktype ''
+	option lac ''
+	option ci ''
+	option iccid ''
+	option gpio 27
+	option iccid_gpio ''
+	option card_slot 3
+	option state ''
+	
+
+

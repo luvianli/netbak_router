@@ -1,0 +1,16 @@
+config system system
+	option reset 0
+	option status 0
+	option card_slot 0
+	
+config sim0 sim0
+	option operator ''
+	option iccid ''
+
+config sim1 sim1
+	option operator ''
+	option iccid ''
+	
+config sim2 sim2
+	option operator ''
+	option iccid ''

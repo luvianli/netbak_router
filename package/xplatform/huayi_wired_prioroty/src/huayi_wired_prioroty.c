@@ -39,7 +39,7 @@ int main(int argc,char *argv[])
 	
 	while(1)
 	{
-		sleep(10);
+		sleep(20);
 		memset(wan_type,0,sizeof(wan_type));
 		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 
@@ -47,6 +47,7 @@ int main(int argc,char *argv[])
 		{
 			continue;
 		}
+
 		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
 		memset(wired_device,0,sizeof(wired_device));
 		memset(cpe_device,0,sizeof(cpe_device));
@@ -59,50 +60,49 @@ int main(int argc,char *argv[])
 		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
 		huayi_uci_get_int(PKG_STATUS_BLEND, "cpe", "link", &cpe_link);
 
-		if(wired_link == 1 && cpe_link == 1)//同时在线时，使用有线优先策略
+		if(wired_link == 1 && cpe_link == 1)
 		{
-			wired_status = internet_do_ping_detect(detectip, wired_device);
+			wired_status = first_internet_do_ping(detectip, wired_device);
 			if(wired_status == 0)
 			{
-				cpe_status = internet_do_ping_detect(detectip, cpe_device);
-				if(cpe_status == 0)//使用有线上网方式
-				{
-					sprintf(section,"wired");
-					now_int_mode = INTERNET_WIRED;
-					old_int_mode = INTERNET_UNDEFINE;
-				}else//使用4G上网方式
-				{
-					sprintf(section,"cpe");
-					now_int_mode = INTERNET_4G;
-				}
-			}else//使用有线上网方式
+				sprintf(section,"cpe");
+				now_int_mode = INTERNET_4G;
+			}else
 			{
 				sprintf(section,"wired");
 				now_int_mode = INTERNET_WIRED;
 			}
 
-		}else if(cpe_link == 1)//使用4G上网方式
+		}else if(cpe_link == 1)
 		{	
 			sprintf(section,"cpe");
 			now_int_mode = INTERNET_4G;
-		}else//使用有线上网方式
+		}else
 		{
 			sprintf(section,"wired");
 			now_int_mode = INTERNET_WIRED;
 		}
-		//printf("old_int_mode = %d\n",old_int_mode);
-		//printf("now_int_mode = %d\n",now_int_mode);
-		//if(old_int_mode != now_int_mode || )
+
+		if(old_int_mode != now_int_mode)
+		{
+			if(now_int_mode == INTERNET_4G)
+				CON_LOG("network mode change 4g\n");
+			else
+				CON_LOG("network mode change wired\n");
+		}
+
 		{
 			memset(cmd_str,0,sizeof(cmd_str));
 			memset(del_gateway,0,sizeof(del_gateway));
-			if(!strncmp(section,"wired",strlen("wired")))//有线上网方式，删除4G默认路由
+			if(!strncmp(section,"wired",strlen("wired")))
 			{
 				huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
 			}
-			else//4G上网方式，删除有线默认路由
+			else
 			{
 				huayi_uci_get_str(PKG_STATUS_BLEND, "wired", "gateway", del_gateway);
+				sprintf(cmd_str,"route del default dev %s",wired_device);
+				system(cmd_str);
 			}
 
 			memset(wan_ifname,0,sizeof(wan_ifname));
@@ -115,10 +115,10 @@ int main(int argc,char *argv[])
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "gateway", wan_gateway);
 			huayi_uci_get_str(PKG_STATUS_BLEND, section, "dns_server",temp_dns);
 			//printf("del_gateway = %s\n",del_gateway);
-			if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
+			//if(strncmp(del_gateway,"0.0.0.0",strlen("0.0.0.0")))
 			{
-				sprintf(cmd_str,"route del default gw %s",del_gateway);
-				system(cmd_str);
+				//sprintf(cmd_str,"route del default gw %s",del_gateway);
+				//system(cmd_str);
 				//printf("cmd_str = %s\n",cmd_str);
 
 				memset(cmd_str,0,sizeof(cmd_str));
@@ -134,7 +134,8 @@ int main(int argc,char *argv[])
 			}
 
 			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
-			if(strcmp(wan_ipv4,net_ipv4))
+
+			if(old_int_mode != now_int_mode)
 			{	
 				memset(cmd_str,0,sizeof(cmd_str));
 				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
@@ -167,6 +168,8 @@ int main(int argc,char *argv[])
 				if(now_int_mode == INTERNET_4G)
 				{
 					system("ifup wan4g");
+					if(wired_link == 1 && cpe_link == 1)
+						sleep(30);
 				}else if(now_int_mode == INTERNET_WIRED)
 				{
 					system("ifup wan");
@@ -174,6 +177,12 @@ int main(int argc,char *argv[])
 			}
 
 			old_int_mode = now_int_mode;
+
+			if(now_int_mode == INTERNET_4G)
+			{
+				if(wired_link == 1 && cpe_link == 1)
+					sleep(40);
+			}
 		}
 		
 	}

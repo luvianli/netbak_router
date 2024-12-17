@@ -17,6 +17,8 @@ void switch_sim(int i, int gpio);
 int isProductionMode();
 void save_siminfo(int i, int gpio);
 
+int wanstatus = 0;
+
 
 void save_siminfo(int i, int gpio)
 {
@@ -262,6 +264,8 @@ void check_network()
     int enable = 0;
 	int disconn = 0;
 	char value[TEMP_STR_LEN] = {0};
+	int wired_link = 0;
+	char wan_type[OPTION_STR_LEN] = {0};
 
 
     isProductionMode();
@@ -288,7 +292,12 @@ void check_network()
 	huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
 	if(disconn == 1)
 		return ;//断网停止检�?
-	
+
+	if(check_wan_type())
+	{
+		return ;
+	}
+		
 #ifdef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
 	ret = atcmd_get_iccid(iccid);
 	if(ret == 1 && strlen(iccid)>5)
@@ -300,6 +309,11 @@ void check_network()
 
     //huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
 cretry1:
+	if(check_wan_type())
+	{
+		return ;
+	}
+
 	while (isProcessRunning("switch_sim"))
 	{
 		CON_LOG("Process switch_sim is running. Waiting for 5 seconds...\n");
@@ -353,6 +367,10 @@ check_net:
         system(tmp);
         sleep(30);
 cretry2:
+		if(check_wan_type())
+		{
+			return ;
+		}
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
 		if(at_card != i)
 		{
@@ -387,7 +405,10 @@ cretry2:
     }
 	SWITCH_SIM_LOG("All cards network error -> exe reboot");
     sleep(15);
-    system("reboot");
+	huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
+	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
+	if(wired_link == 0 || strcmp(wan_type,"mobile") == 0)
+		system("reboot");
 
     return;
 }
@@ -571,6 +592,28 @@ void check_modem_edition()
 	}
 }
 
+int check_wan_type()
+{	
+	char wan_type[OPTION_STR_LEN] = {0};
+	huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
+	if(!strcmp(wan_type,"wired"))
+	{
+		if(wanstatus == 0)
+		{
+			CON_LOG("wan_type is wired,stop sim card check\n");
+			wanstatus = 1;
+		}
+		return 1;
+	}
+
+	if(wanstatus == 1)
+	{
+		CON_LOG("wan_type is %s,start sim card check\n",wan_type);
+		wanstatus = 0;
+	}
+	return 0;
+}
+
 void check_network_two()
 {
     int totalsimnum = 0, simn = 0, usegpio = 0,at_card = 0;
@@ -585,6 +628,8 @@ void check_network_two()
     int hbq = 0;
     int enable = 0;
 	int disconn = 0;
+	int wired_link = 0;
+	char wan_type[OPTION_STR_LEN] = {0};
 
 	while(1)
 	{
@@ -595,7 +640,12 @@ void check_network_two()
 		count = 0;
 		memset(check_ip, 0, OPTION_STR_LEN);
 	    huayi_uci_get_str(PKG_M_SYSTEM, "usesiminfo", "checksignalips", check_ip);
-	cretry1:
+
+cretry1:
+		if(check_wan_type())
+		{
+			goto success ;
+		}
 		while (isProcessRunning("switch_sim"))
         {
             CON_LOG("Process switch_sim is running. Waiting for 5 seconds...\n");
@@ -618,7 +668,8 @@ void check_network_two()
 	    count = 0;
 
 	    CON_LOG("sim%d ping bu tong %s", simn, check_ip);
-	check_net:
+
+check_net:
 	    huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &totalsimnum);
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &simn);
 	    for (i = 0; i < totalsimnum; i++)
@@ -641,7 +692,12 @@ void check_network_two()
 	        sprintf(tmp, "switch_sim %d", i);
 	        system(tmp);
 	        sleep(30);
-	cretry2:
+
+cretry2:
+			if(check_wan_type())
+			{
+				goto success ;
+			}
 			huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
 			if(at_card != i)
 			{
@@ -671,7 +727,10 @@ void check_network_two()
 	    }
 		SWITCH_SIM_LOG("All cards network error -> exe reboot");
 	    sleep(15);
-	    system("reboot");
+		huayi_uci_get_int(PKG_STATUS_BLEND, "wired", "link", &wired_link);
+		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
+		if(wired_link == 0 || strcmp(wan_type,"mobile") == 0)
+	    	system("reboot");
 
 	success:
 		sleep(60);
