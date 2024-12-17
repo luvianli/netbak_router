@@ -280,7 +280,7 @@ void msg_content(char *heartdata, unsigned int *heartsize)
         
 	result_root = cJSON_CreateObject();
     huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
-    if(strcmp(product_model, "WYX3C-1") == 0)
+    if(strcmp(product_model, "WYX3C-1") == 0||strcmp(product_model, "WYX3C-1W") == 0)
     {
         huayi_get_4g_info(mobile_type, &sig, iccid, lac, cellid,sn,&simSwitch,&band);
         cJSON_AddStringToObject(result_root,"sn", sn);

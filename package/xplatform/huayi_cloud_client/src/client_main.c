@@ -300,9 +300,8 @@ void* heart_handle()
 	huayi_uci_get_int(PKG_SYSTEM,"server","interval", &interval);
 	gTimeWait = interval;
 	while(1) {
-		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "registStatus", registStatus);
-		if (strcmp(registStatus ,"connected") != 0) {
-			CLOUD_CLIENT_LOG("%s, modem is not connected; registStatus is : %d\n",__FUNCTION__, registStatus);
+		if(internet_do_ping_detect(INTERNET_DOMAIN, NULL) != 1){
+			CLOUD_CLIENT_LOG("network error,sleep 20s\n");			
 			sleep(20);
 			continue;
 		}

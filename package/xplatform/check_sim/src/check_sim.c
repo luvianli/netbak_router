@@ -748,7 +748,7 @@ int main(int argc, char *argv[])
 
 	check_network();
 	check_modem_edition();
-	init_cloud_client();
+	//init_cloud_client();
 
 	check_network_two();
 
