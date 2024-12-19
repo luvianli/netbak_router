@@ -312,7 +312,7 @@ void get_pub_content(char *heartdata)
 	cJSON *result_root = NULL;
 	cJSON *arp_array = NULL,*arp_obj = NULL;
 	int simNum = 0,hidden = 0,connCnt = 0,remainPwr = 0,rssi = 0,at_card = -1,i = 0;
-	char imei[RESULT_STR_LEN]={0},iccid[RESULT_STR_LEN]={0},simiccid[RESULT_STR_LEN]={0};
+	char imei[RESULT_STR_LEN]={0},sn[OPTION_STR_LEN] = {0},iccid[RESULT_STR_LEN]={0},simiccid[RESULT_STR_LEN]={0};
 	char currentTime[OPTION_STR_LEN] = {0};
 	char ssid[RESULT_STR_LEN] = {0},password[RESULT_STR_LEN] = {0};
 	char version[SMALL_STR_LEN] = {0};
@@ -322,7 +322,11 @@ void get_pub_content(char *heartdata)
 	char cmd[SMALL_STR_LEN] = {0};
 	int disconn = 0;
 	char *output = NULL;
+	int  signal = -121,down = 0,up = 0,status = 0;
+	char mobile_type[SHORT_STR_LEN] = {0},band[TEMP_STR_LEN],gatewayip[RESULT_STR_LEN] = {0};
+	char lac[OPTION_STR_LEN] = {0}, cellid[OPTION_STR_LEN] = {0};
 
+#if 0
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "iccid", iccid);
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simNum);
@@ -341,8 +345,29 @@ void get_pub_content(char *heartdata)
 	huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &heartbeat);
 	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
 	huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);	
-	
+#else
+	get_dev_sn(sn);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "iccid", iccid);
+	atcmd_get_signal_for_cloud(&signal);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "operator", mobile_type);
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);
+	get_cmd_result("echo $(huayi_AT_cli at+cced=0,1) | awk -F ',' '{print $6}'", band, sizeof(band));	
+	huayi_uci_get_int(PKG_QOS,"qos","total_upspeed",&up);
+	huayi_uci_get_int(PKG_QOS,"qos","total_dwspeed",&down);
+	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","ssid",ssid);	
+	huayi_uci_get_str(PKG_WIRELESS,"radio0_0","key", password);
+	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","hidden",&hidden);
+	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&status);
+	get_activearp(1, NULL ,&connCnt);
+    huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "lac", lac);
+    huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "ci", cellid);
+	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","gateway",gatewayip);
+	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version", version);
+#endif
+
 	result_root = cJSON_CreateObject();
+
+#if 0	
 	cJSON_AddStringToObject(result_root,"imei", imei);
 	cJSON_AddStringToObject(result_root,"iccid", iccid);
 	cJSON_AddNumberToObject(result_root,"simNum", simNum);
@@ -376,6 +401,26 @@ void get_pub_content(char *heartdata)
 		cJSON_AddItemToArray(arp_array,arp_obj);
 	}
 	cJSON_AddItemToObject(result_root,"simList",arp_array);
+#else
+	cJSON_AddStringToObject(result_root,"sn", sn);
+	cJSON_AddStringToObject(result_root,"iccid", iccid);
+	cJSON_AddNumberToObject(result_root,"dbm", signal);
+	cJSON_AddStringToObject(result_root,"opname", mobile_type);
+	cJSON_AddNumberToObject(result_root,"simSwitch", at_card);
+	cJSON_AddStringToObject(result_root,"band", band);
+	cJSON_AddNumberToObject(result_root,"speed_downlink", down);
+	cJSON_AddNumberToObject(result_root,"speed_uplink", up);
+	cJSON_AddStringToObject(result_root,"ssid", ssid);
+	cJSON_AddStringToObject(result_root,"password", password);
+	cJSON_AddNumberToObject(result_root,"hidden", hidden);
+	cJSON_AddNumberToObject(result_root,"status", status);
+	cJSON_AddNumberToObject(result_root,"count",connCnt);
+	cJSON_AddStringToObject(result_root,"cell_id", cellid);
+	cJSON_AddStringToObject(result_root,"lac", lac);
+	cJSON_AddStringToObject(result_root,"ip", gatewayip);
+	cJSON_AddStringToObject(result_root,"version", version);
+#endif
+
 	output = cJSON_Print(result_root);
 	strcpy(heartdata, output);
 	free(output);
@@ -391,7 +436,7 @@ int main(int argc,char *argv[])
 	while(1)
 	{
 		memset(buff,0,sizeof(buff));
-		huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &heartbeat);
+		huayi_uci_get_int(PKG_SYSTEM,"mqtt","interval", &heartbeat);
 		get_pub_content(buff);
 		FILE *file = fopen("/tmp/log/mqtt_pub_cont", "w");
     	if (file == NULL) {
@@ -401,7 +446,7 @@ int main(int argc,char *argv[])
     	} 
     	fprintf(file, "%s", buff);
     	fclose(file);
-		usleep(heartbeat*1000000);
+		usleep(heartbeat * 1000);
 	}
 	return 0;
 }

@@ -68,3 +68,15 @@ config network network
 	option time '0'
 	option monthFlow 0
 	option disconn 0
+	
+config mqtt mqtt
+	option interval 180000 #3 min
+	option url 'https://up.aiotzy.com/api/device/post/uploadData/getReportConfig'
+	option host 'NULL'
+	option port 'NULL'
+	option clientId 'NULL'
+	option username 'NULL'
+	option password 'NULL'
+	option topicIn 'NULL'
+	option topicOut 'NULL'
+	option success '0'

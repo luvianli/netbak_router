@@ -28,7 +28,7 @@ void my_connect_callback(struct mosquitto *mosq, void *userdata, int result)
 	{     
 		/* Subscribe to broker information topics on successful connect. */ 
 		MQTT_LOG("connect success");
-		mosquitto_subscribe(mosq, NULL, topic1, 2);  
+		//mosquitto_subscribe(mosq, NULL, topic1, 2);  
 	}else{    
 		fprintf(stderr, "Connect failed\n");    
 	}
@@ -75,12 +75,17 @@ int content(char *heartdata)
 
 void get_topic()
 {
+#if 0
 	char version[SMALL_STR_LEN] = {0};
 	char imei[RESULT_STR_LEN]={0};
 	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version", version);
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
 	sprintf(topic1,"iotv2/zyc100/%s/%s",version,imei);
 	sprintf(topic2,"iotv2/zyc100/%s/push",version);
+#else
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","topicIn", topic1);
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","topicOut", topic2);
+#endif
 	MQTT_LOG("topic1:%s,2:%s",topic1,topic2);
 
 	return ;
@@ -93,8 +98,11 @@ int main(int argc,char *argv[])
 	struct mosquitto *mosq = NULL;
 	int heartbeat = 0;
 	char imei[RESULT_STR_LEN]={0};
-
-	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);	
+	char host[RESULT_STR_LEN] = {0};
+	int port = 0;
+	char clientId[RESULT_STR_LEN] = {0};
+	char username[RESULT_STR_LEN] = {0},password[RESULT_STR_LEN] = {0};
+	
 	get_topic();
 
 	ret = mosquitto_lib_init();
@@ -104,7 +112,9 @@ int main(int argc,char *argv[])
         return -1;
 	}
 
-	mosq = mosquitto_new(imei,true,NULL);
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","clientId", clientId);
+	mosq = mosquitto_new(clientId,true,NULL);
 	if(!mosq)
 	{
 		MQTT_LOG("create client failed..\n");
@@ -112,13 +122,25 @@ int main(int argc,char *argv[])
 		return -1;
 	}
 
+	MQTT_LOG("get mqtt config!\n");
+
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","host", host);
+	huayi_uci_get_int(PKG_SYSTEM,"mqtt","port", &port);
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","username", username);
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","password", password);
+
 	//mosquitto_log_callback_set(mosq, my_log_callback);  
 	mosquitto_connect_callback_set(mosq, my_connect_callback);  
-	mosquitto_message_callback_set(mosq, my_message_callback);   
+	//mosquitto_message_callback_set(mosq, my_message_callback);   
 	//mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 
-	mosquitto_username_pw_set(mosq, MQUSER, MQPWD);	
+#if 0
+	mosquitto_username_pw_set(mosq, MQUSER, MQPWD);
 	while(mosquitto_connect(mosq, HOST, PORT, KEEP_ALIVE))
+#else
+	mosquitto_username_pw_set(mosq, username, password);
+	while(mosquitto_connect(mosq, host, port, KEEP_ALIVE))
+#endif
 	{
 		MQTT_LOG("Pub connect server error!\n");
 		sleep(5);
@@ -126,7 +148,6 @@ int main(int argc,char *argv[])
 
 	MQTT_LOG("Pub start!\n");
 
-	//mosquitto_loop_start作用是开启一个线程，在线程里不停的调用 mosquitto_loop() 来处理网络信息
 	int loop = mosquitto_loop_start(mosq);
 
 	if(loop != MOSQ_ERR_SUCCESS)
@@ -146,7 +167,7 @@ int main(int argc,char *argv[])
             }
             MQTT_LOG("Reconnected successfully!\n");
         }
-		huayi_uci_get_int(PKG_SYSTEM,"server","heartbeat", &heartbeat);
+		huayi_uci_get_int(PKG_SYSTEM,"mqtt","interval", &heartbeat);
 		content(buff);
 		if(strlen(buff)>0)
 		{		
@@ -154,7 +175,7 @@ int main(int argc,char *argv[])
 			ret = mosquitto_publish(mosq,NULL,topic2,strlen(buff)+1,buff,0,0);
 			memset(buff,0,sizeof(buff));
 		}
-		sleep(heartbeat);
+		usleep(heartbeat * 1000);
 		CHECK_MQTT_LOG();
 	}
 	

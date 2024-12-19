@@ -21,6 +21,7 @@ void huayi_set_wifi(cJSON *response_root)
 	char ssid[TEMP_STR_LEN] = {0},oldssid[OPTION_STR_LEN] = {0};
 	char key[OPTION_STR_LEN] = {0}, oldkey[TEMP_STR_LEN] = {0};
 	int hid = -1,hidden = -1, oldhidden = -1;
+	int sta = -1,status = -1, oldstatus = -1;
 	int speedLimit = 1,oldspeedLimit = 0,qos_mode = 0,get;
 	int flag = 0;
 	unsigned long long monthFlow = 0;
@@ -30,6 +31,7 @@ void huayi_set_wifi(cJSON *response_root)
 		return ;
 	}
 
+#if 0
 	if(huayi_json_get_int(response_root,"get",&get))
 	{
 		if(get == 1)
@@ -110,9 +112,116 @@ void huayi_set_wifi(cJSON *response_root)
 		huayi_uci_set_long_long(PKG_SYSTEM, "network", "monthFlow", monthFlow);
 		huayi_uci_commit(PKG_SYSTEM);
 	}
+#else
+	if (huayi_json_get_str(response_root, "ssid", ssid,OPTION_STR_LEN))
+	{
+		huayi_uci_get_str(PKG_WIRELESS,"radio0_0","ssid", oldssid);
+		if((strlen(ssid) > 0 && strlen(ssid) <= 20) && 0 != strcmp(ssid, oldssid))
+		{	
+			MQTT_LOG("change ssid");
+			huayi_uci_set_str(PKG_WIRELESS,"radio0_0","ssid", ssid);
+			flag = 1;
+		}
+	}
+
+	if(huayi_json_get_str(response_root,"password",key,TEMP_STR_LEN)) 
+	{	
+		huayi_uci_get_str(PKG_WIRELESS,"radio0_0","key", oldkey);
+		if((strlen(key) >= 8 && strlen(key) <=25) && (0 != strcmp(key, oldkey))) {
+			MQTT_LOG("change key");
+			huayi_uci_set_str(PKG_WIRELESS,"radio0_0","key", key);
+			flag = 1;
+		}
+	}
+
+	if(huayi_json_get_int(response_root,"hidden",&hidden)) 
+	{	
+		huayi_uci_get_int(PKG_WIRELESS,"radio0_0","hidden",&oldhidden);
+		if((hidden == 0||hidden == 1) && (hidden != oldhidden)) {
+			MQTT_LOG("change hidden %d",hidden);
+			huayi_uci_set_int(PKG_WIRELESS,"radio0_0","hidden",hidden);
+			flag = 1;
+		}
+	}
+
+	if(huayi_json_get_int(response_root,"status",&status)) 
+	{	
+		huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&oldstatus);
+		if((status == 0||status == 1) && (status != oldstatus)) {
+			MQTT_LOG("change status %d",status);
+			huayi_uci_set_int(PKG_WIRELESS,"radio0_0","disabled",status);
+			flag = 1;
+		}
+	}
+
+	if(1 == flag ) {
+		huayi_uci_commit(PKG_WIRELESS);	
+		system("huayi-reset wireless");
+	}
+
+#endif
 
 	return;
 }
+
+void huayi_set_qos(cJSON *response_root)
+{
+	int dwspeed = -1, upspeed = -1, enable = 0, upflag = 0, dwflag = 0;
+	int olddwspeed = -1, oldupspeed = -1;
+	
+	if(NULL == response_root) 
+	{
+		return ;
+	}
+
+	huayi_uci_get_int(PKG_QOS,"qos","total_upspeed", &oldupspeed);
+	huayi_uci_get_int(PKG_QOS,"qos","total_downspeed", &olddwspeed);
+		
+	if(huayi_json_get_int(response_root,"speed_downlink", &dwspeed)) 
+	{
+		if ((-1 != dwspeed) && (olddwspeed != dwspeed)) 
+		{
+			MQTT_LOG("change speed_downlink %d",dwspeed);
+			huayi_uci_set_int(PKG_QOS,"qos","total_dwspeed",dwspeed);
+			upflag = 1;
+		}
+	}
+			
+	if(huayi_json_get_int(response_root,"speed_uplink", &upspeed)) 
+	{
+		if ((-1 != upspeed) && (oldupspeed != upspeed))
+		{
+			MQTT_LOG("change speed_uplink %d",upspeed);
+			huayi_uci_set_int(PKG_QOS,"qos","total_upspeed",upspeed);
+			dwflag = 1;
+		}
+	}
+		
+	if(((-1 == upflag) && (-1 == dwflag))||((0 == dwflag) && (0 == upflag))	)
+		return;
+		
+	huayi_uci_get_int(PKG_QOS,"qos","qos_mode",&enable);
+	if((0 == upspeed) && (0 == dwspeed)) 
+	{
+		//don't speed limit
+		if(1 == enable) 
+		{//on --.off
+				huayi_uci_set_int(PKG_QOS,"qos","qos_mode", 0);
+		}
+	} else 
+	{
+		if(0 == enable) 
+		{  //off ---. on
+			huayi_uci_set_int(PKG_QOS,"qos","qos_mode", 1);
+		}
+	}
+
+	huayi_uci_commit(PKG_QOS);	
+	system("huayi-reset iplimit");
+	
+	return;
+}
+
 
 void huayi_set_system(cJSON *response_root)
 {
@@ -128,6 +237,7 @@ void huayi_set_system(cJSON *response_root)
 		return;
 	}
 
+#if 0
 	if(huayi_json_get_int(response_root,"disconn",&disconn)) 
 	{
 		huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&olddisconn);		
@@ -172,18 +282,6 @@ void huayi_set_system(cJSON *response_root)
 		}
 	}
 
-	if(huayi_json_get_int(response_root,"reboot",&reboot)) 
-	{
-		if(reboot == 1)
-			system("reboot");
-	}
-
-	if(huayi_json_get_int(response_root,"reSet",&reSet)) 
-	{
-		if(reSet == 1)
-			system("huayi-reset reset");
-	}
-
 	if(huayi_json_get_int(response_root,"upgrade",&upgrade)) 
 	{
 		if(upgrade == 1)
@@ -205,6 +303,62 @@ void huayi_set_system(cJSON *response_root)
 				remove(IMAGE_PATH_STOR);
 			}
 
+		}
+	}
+#else
+	if(huayi_json_get_int(response_root,"simSwitch",&switchsim)) 
+	{
+		switchsim = switchsim -1;
+		char cmd[RESULT_STR_LEN] = {0};
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simNum);
+		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);		
+		if(switchsim >= 0 && switchsim < simNum && switchsim != at_card)
+		{
+			MQTT_LOG("switch sim %d", switchsim);
+			sprintf(cmd, "switch_sim %d &", switchsim);
+			system(cmd);
+			sleep(10);
+			save_useing_siminfo(switchsim);
+		}
+	}
+
+	if(huayi_json_get_int(response_root,"nextRptTime",&heartbeat)) 
+	{
+		huayi_uci_get_int(PKG_SYSTEM,"mqtt","interval", &oldheartbeat);
+		if(heartbeat >= 30 && heartbeat != oldheartbeat)
+		{
+			MQTT_LOG("change nextRptTime %d",heartbeat);
+			huayi_uci_get_int(PKG_SYSTEM,"mqtt","interval", &heartbeat);
+			huayi_uci_commit(PKG_SYSTEM);
+		}
+	}
+
+#endif
+	if(huayi_json_get_int(response_root,"reboot",&reboot)) 
+	{
+		if(reboot == 1)
+			system("reboot");
+	}
+
+	if(huayi_json_get_int(response_root,"reSet",&reSet)) 
+	{
+		if(reSet == 1)
+			system("huayi-reset reset");
+	}
+
+	if(huayi_json_get_str(response_root,"firmware_url", firmware_url, LIST_STR_LEN))
+	{
+		if(0 == strlen(firmware_url)) 
+		{
+			MQTT_LOG("firmware_url len is %d !\n", strlen(firmware_url));
+			return;
+		}
+		
+		MQTT_LOG("firmware_url is %s !",firmware_url);
+		
+		int ret = process_downloadimage(firmware_url);
+		if ( 0 != ret) {
+			remove(IMAGE_PATH_STOR);
 		}
 	}
 
@@ -355,8 +509,17 @@ int main(int argc,char *argv[])
 	}
 
 	huayi_set_wifi(json);
+	huayi_set_qos(json);
 	huayi_set_system(json);
-	free(data);
+	
+	{//infochange reload
+		system("killall huayi_mqtt_pub");
+		system("killall huayi_mqtt_content");			
+		sleep(2);
+		system("huayi_mqtt_content &");
+		sleep(5);
+		system("huayi_mqtt_pub &"); 
+	}
 	
 	return 0;
 }

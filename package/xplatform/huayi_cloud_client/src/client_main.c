@@ -31,9 +31,11 @@ void huayi_client_main_graceful_exit(int sig)
 static int heart_call_back(char *data, size_t size, size_t nmemb,
 		char *writerData)
 {
-	memcpy(heartContent, data, size*nmemb);
+	char Content[HEART_RES_DATALEN] = {0};
+	memset(Content,0,sizeof(Content));
+	memcpy(Content, data, size*nmemb);
+	strcat(heartContent,Content);
 	heartContentLen = size*nmemb;
-
 	return heartContentLen;
 }
 
@@ -287,6 +289,88 @@ out:
 	}
 	return (void*)0;
 }
+#elif CONFIG_PACKAGE_HUAYI_MQTT
+void* heart_handle()
+{
+	char url[LIST_STR_LEN] ={ 0 }; 
+	char heartData[HEART_REQ_DATALEN] = { 0 };
+	CURL *curl = NULL;
+	int ret= -1, interval = 0,success = 0;
+	int heartSize = 0;
+	char registStatus[LONG_BUFF_LEN]={0},sn[OPTION_STR_LEN] = {0};
+
+	huayi_uci_get_int(PKG_SYSTEM,"server","interval", &interval);
+	gTimeWait = interval;
+
+	while(1) {
+		if(internet_do_ping_detect(INTERNET_DOMAIN, NULL) != 1){
+			CLOUD_CLIENT_LOG("network error,sleep 20s\n");			
+			sleep(20);
+			continue;
+		}
+
+		memset(heartData, 0, sizeof(heartData));
+		memset(url, 0, sizeof(url));
+		get_url(url);
+
+		get_dev_sn(sn);
+		sprintf(heartData,"{\"sn\":\"%s\"}", sn);
+        heartSize = strlen(heartData);		
+		CLOUD_CLIENT_LOG("===  %s, %d, heartData = %s,heartSize = %d\n",__FUNCTION__, __LINE__, heartData,heartSize);
+
+		ret = init_curl(&curl, (char*)url, heartData, heartSize, heart_call_back);
+
+		if(ret == -1) {
+			CLOUD_CLIENT_LOG(" %s init curl fail\n",__FUNCTION__);
+			if(curl != NULL) {
+				curl_easy_cleanup(curl);
+				curl = NULL;
+			}	
+			sleep(3);
+			continue;
+		}
+
+		memset(heartContent,0,sizeof(heartContent));
+		ret=curl_easy_perform(curl);
+		if(ret == 0) { //parse html
+			if(strlen(heartContent) == 0) {	
+				CLOUD_CLIENT_LOG("content is null\n");
+				goto out;
+			}
+			CLOUD_CLIENT_LOG("===  %s, %d, heartContent = %s, heartSize = %d\n",__FUNCTION__, __LINE__, heartContent, heartContentLen);
+			msg_parse(heartContent, heartContentLen);
+		}
+		else {
+			CLOUD_CLIENT_LOG("heart connect fail:%d\n",ret);
+			if(curl != NULL) {
+				curl_easy_cleanup(curl);
+				curl = NULL;
+			}	
+			sleep(10);
+			continue;
+		}
+out:
+		curl_easy_cleanup(curl);
+		curl = NULL;
+
+		huayi_uci_get_int(PKG_SYSTEM,"mqtt","success", &success);
+		if(success == 1)
+		{
+			CLOUD_CLIENT_LOG("get mqtt success,start mqtt");
+			system("huayi_mqtt_content &");
+			sleep(10);
+			system("huayi_mqtt_pub &");
+			system("huayi_mqtt_sub &");
+			break;
+		}
+		
+		CLOUD_CLIENT_LOG("%s, %d, gTimeWait = %d !\n", __FUNCTION__, __LINE__, gTimeWait);
+		CHECK_CLOUD_CLIENT_LOG();
+		usleep(gTimeWait*1000); //us
+	}
+	return (void*)0;
+}
+
 #else
 void* heart_handle()
 {

@@ -28,7 +28,7 @@
 #define HEART_RES_DATALEN  20480
 
 #define WAN_TYPE_4G		"mobile"
-#define clientId "1101"
+//#define clientId "1101"
 
 /*curl call back func define */
 typedef int (callback_func)(char *data, size_t size, size_t nmemb, char *userData); 

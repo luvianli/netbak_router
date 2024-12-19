@@ -223,7 +223,7 @@ void huayi_get_mifi_ink(char *mcc,char *mnc,char *btn,char *sim,char *lac,char *
 		*mode = 3;//外插卡
 	}
 
-	sprintf(key,"%s%s%s",SKEY,clientId,devid);
+	sprintf(key,"%s1101%s",SKEY,devid);
 	get_sign(key,sign);
 	return ;
 }

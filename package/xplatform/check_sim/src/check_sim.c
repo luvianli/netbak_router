@@ -418,10 +418,10 @@ void init_cloud_client()
 {
     CON_LOG("Starting communication with cloud platform\n\n");
     system("hy_cloud_client &");
-	system("huayi_mqtt_content &");
-	sleep(10);
-	system("huayi_mqtt_pub &");
-	system("huayi-reset ntpd");
+	//system("huayi_mqtt_content &");
+	//sleep(10);
+	//system("huayi_mqtt_pub &");
+	//system("huayi-reset ntpd");
 
     return;
 }
@@ -742,13 +742,14 @@ cretry2:
 
 int main(int argc, char *argv[])
 {
+	init_cloud_client();
+
 	SLM_init();
 
 	Production_testing_mode();
 
 	check_network();
 	check_modem_edition();
-	//init_cloud_client();
 
 	check_network_two();
 

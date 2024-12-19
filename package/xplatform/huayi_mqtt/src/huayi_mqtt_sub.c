@@ -52,14 +52,18 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 
 void get_topic()
 {
+#if 0
 	char version[SMALL_STR_LEN] = {0};
 	char imei[RESULT_STR_LEN]={0};
 	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version", version);
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
 	sprintf(topic1,"iotv2/zyc100/%s/%s",version,imei);
 	sprintf(topic2,"iotv2/zyc100/%s/push",version);
+#else
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","topicIn", topic1);
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","topicOut", topic2);
+#endif
 	MQTT_LOG("topic1:%s,2:%s",topic1,topic2);
-
 	return ;
 }
 
@@ -68,6 +72,11 @@ int main(int argc,char *argv[])
 	int ret = 0;
 	char buff[MSG_MAX_SIZE] = {0};
 	struct mosquitto *mosq = NULL;
+	char host[RESULT_STR_LEN] = {0};
+	int port = 0;
+	char clientId[RESULT_STR_LEN] = {0};
+	char username[RESULT_STR_LEN] = {0},password[RESULT_STR_LEN] = {0};
+
 	get_topic();
 	
 	//初始化libmosquitto库
@@ -78,7 +87,8 @@ int main(int argc,char *argv[])
         return -1;
 	}
 
-	mosq = mosquitto_new("sub_test",true,NULL);
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","clientId", clientId);
+	mosq = mosquitto_new("clientId",true,NULL);
 	if(!mosq)
 	{
 		MQTT_LOG("create client failed..\n");
@@ -86,15 +96,23 @@ int main(int argc,char *argv[])
 		return -1;
 	}
 
-	// 设置回调函数       
-	// 参数：句柄、回调函数       
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","host", host);
+	huayi_uci_get_int(PKG_SYSTEM,"mqtt","port", &port);
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","username", username);
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","password", password);
+	
 	mosquitto_connect_callback_set(mosq, my_connect_callback);	
 	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);      
 	mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);    
 	mosquitto_message_callback_set(mosq, my_message_callback);
 
-	mosquitto_username_pw_set(mosq, MQUSER, MQPWD);		
-	while(mosquitto_connect_async(mosq, HOST, PORT, KEEP_ALIVE))
+#if 0
+	mosquitto_username_pw_set(mosq, MQUSER, MQPWD);
+	while(mosquitto_connect(mosq, HOST, PORT, KEEP_ALIVE))
+#else
+	mosquitto_username_pw_set(mosq, username, password);
+	while(mosquitto_connect(mosq, host, port, KEEP_ALIVE))
+#endif
 	{
 		MQTT_LOG("Sub connect server error!\n");
 		sleep(5);
