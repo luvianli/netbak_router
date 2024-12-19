@@ -308,7 +308,7 @@ void huayi_set_system(cJSON *response_root)
 #else
 	if(huayi_json_get_int(response_root,"simSwitch",&switchsim)) 
 	{
-		switchsim = switchsim -1;
+		//switchsim = switchsim -1;
 		char cmd[RESULT_STR_LEN] = {0};
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &simNum);
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &at_card);		
