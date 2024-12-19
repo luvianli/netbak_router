@@ -328,7 +328,7 @@ void huayi_set_system(cJSON *response_root)
 		if(heartbeat >= 30 && heartbeat != oldheartbeat)
 		{
 			MQTT_LOG("change nextRptTime %d",heartbeat);
-			huayi_uci_get_int(PKG_SYSTEM,"mqtt","interval", &heartbeat);
+			huayi_uci_set_int(PKG_SYSTEM,"mqtt","interval", heartbeat);
 			huayi_uci_commit(PKG_SYSTEM);
 		}
 	}
