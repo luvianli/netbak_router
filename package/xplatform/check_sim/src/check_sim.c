@@ -579,23 +579,13 @@ void check_modem_edition()
     char tmp[OPTION_STR_LEN];
 	
 	get_cmd_result("huayi_AT_cli AT+CGMR | grep SLM", edition, OPTION_STR_LEN);
-	if(strstr(edition, "SLM770U_SW_C01_U05") != NULL)
+	if(strstr(edition, "SLM770U_SW_C01_U08") == NULL)
 	{
-		CON_LOG("modem edition :%s,fota\n",edition);
+		CON_LOG("modem edition :%s,fota watie 70 s\n",edition);
 		Atcmd("at+cgact=1", strlen("at+cgact=1"), 0);
-		snprintf(cmd, TEMP_STR_LEN, "AT+FOTAH=\"http://116.247.69.94:22302/download/U05-U08.pack\",4901056");
+		snprintf(cmd, TEMP_STR_LEN, "AT+FOTAH=\"http://116.247.69.94:22302/download/U08d2_full.pac\",9771089");
 		Atcmd(cmd, strlen(cmd), 0);
-		sleep(30);
-		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &simn);
-		snprintf(tmp, OPTION_STR_LEN, "switch_sim %d", simn);
-		system(tmp);
-	}else if(strstr(edition, "SLM770U_SW_C01_U03") != NULL)
-	{
-		CON_LOG("modem edition :%s,fota\n",edition);
-		Atcmd("at+cgact=1", strlen("at+cgact=1"), 0);
-		snprintf(cmd, TEMP_STR_LEN, "AT+FOTAH=\"http://116.247.69.94:22302/download/U03-U08.pack\",4909120");
-		Atcmd(cmd, strlen(cmd), 0);
-		sleep(30);
+		sleep(70);
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &simn);
 		snprintf(tmp, OPTION_STR_LEN, "switch_sim %d", simn);
 		system(tmp);
