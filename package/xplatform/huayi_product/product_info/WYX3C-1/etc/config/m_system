@@ -19,7 +19,7 @@ config system system
 	option send_fd 0
 	option transport 'NULL'
 	option returnValue ''
-	option external_card_enable 1
+	option external_card_enable 0
 	option band 0
 	option at_card 0
 	option all_info 1

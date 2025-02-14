@@ -585,7 +585,7 @@ void check_modem_edition()
 		Atcmd("at+cgact=1", strlen("at+cgact=1"), 0);
 		snprintf(cmd, TEMP_STR_LEN, "AT+FOTAH=\"http://116.247.69.94:22302/download/U08d2_full.pac\",9771089");
 		Atcmd(cmd, strlen(cmd), 0);
-		sleep(70);
+		sleep(120);
 		huayi_uci_get_int(PKG_M_SYSTEM, "system", "at_card", &simn);
 		snprintf(tmp, OPTION_STR_LEN, "switch_sim %d", simn);
 		system(tmp);
