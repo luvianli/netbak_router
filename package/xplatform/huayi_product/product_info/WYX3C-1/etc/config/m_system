@@ -21,7 +21,7 @@ config system system
 	option returnValue ''
 	option external_card_enable 1
 	option band 0
-	option at_card 0
+	option at_card 2
 	option all_info 1
 	
 config usesiminfo usesiminfo
@@ -34,7 +34,7 @@ config usesiminfo usesiminfo
 	option checksignalips '223.5.5.5;www.baidu.com;www.qq.com'
 	option default_checkip '223.5.5.5;www.baidu.com;www.qq.com'
 	option maxdelay ''
-	option card_slot 0
+	option card_slot 2
 	option lock 0
 	option checknetwork_sleep 60
 	option sim_status 0
