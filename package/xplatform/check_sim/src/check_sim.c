@@ -112,7 +112,7 @@ retry_getoperator:	  //尽最大可能取到operator info
              strncmp(lte_value, "46010", 5) == 0)
     {
         netoperator = 2;
-		huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
+		//huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
     }
     else if (strncmp(lte_value, "46003", 5) == 0 || strncmp(lte_value, "46005", 5) == 0 ||
              strncmp(lte_value, "46011", 5) == 0 ||
