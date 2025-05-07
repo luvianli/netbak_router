@@ -46,7 +46,7 @@ void save_siminfo(int i, int gpio)
         count += 1;
     }
     count = 0;
-retry_getccid:    //尽最大可能取到ICCID
+retry_getccid:    //锟斤拷锟斤拷锟斤拷锟斤拷取锟斤拷ICCID
     memset(lte_value, 0, OPTION_STR_LEN);
     ret = atcmd_get_iccid(lte_value);
     if (strlen(lte_value) < 5 || (strstr(lte_value, "ERR") != NULL) || (0 == ret) || isAlphanumeric(lte_value) == 0)
@@ -74,7 +74,7 @@ retry_getccid:    //尽最大可能取到ICCID
         return;     //no iccid, that mean no simcard
     }
 
-/*retry_getlac:	  //尽最大可能取到LAC
+/*retry_getlac:	  //锟斤拷锟斤拷锟斤拷锟斤拷取锟斤拷LAC
     memset(lte_value, 0, OPTION_STR_LEN);
     atcmd_get_lac(lte_value);
     //printf("rex ====   %s, %d  ---lac = %s-\n", __FUNCTION__, __LINE__, lte_value);
@@ -88,7 +88,7 @@ retry_getccid:    //尽最大可能取到ICCID
     huayi_uci_set_str(PKG_M_SYSTEM, cmd, "lac", lte_value);
     count = 0;
 
-retry_getci:	  //尽最大可能取到ci
+retry_getci:	  //锟斤拷锟斤拷锟斤拷锟斤拷取锟斤拷ci
     memset(lte_value, 0, OPTION_STR_LEN);
     atcmd_get_ci(lte_value);
     //printf("rex ====   %s, %d  --ci =%s--\n", __FUNCTION__, __LINE__, lte_value);
@@ -102,7 +102,7 @@ retry_getci:	  //尽最大可能取到ci
     huayi_uci_set_str(PKG_M_SYSTEM, cmd, "ci", lte_value);
     count = 0;*/
 
-retry_getoperator:	  //尽最大可能取到operator info
+retry_getoperator:	  //锟斤拷锟斤拷锟斤拷锟斤拷取锟斤拷operator info
     memset(lte_value, 0, OPTION_STR_LEN);
     atcmd_get_imsi(lte_value);
     //printf("rex ====   %s, %d  ---operator = %s-\n", __FUNCTION__, __LINE__, lte_value);
@@ -518,12 +518,30 @@ void Production_testing_mode()
 
 }
 
+void check_apn()
+{
+    int  use_apn = 0;
+    huayi_uci_get_int(PKG_SYSTEM,"server","apnset",&use_apn);
+    if(use_apn != 1)
+    {
+        huayi_uci_set_str(PKG_MODEM,"status","apn","szzy3.grevpdn.fj");
+        huayi_uci_set_int(PKG_MODEM,"status","validation",0);
+        huayi_uci_set_int(PKG_MODEM,"status","mode",1);
+        huayi_uci_set_int(PKG_SYSTEM,"server","apnset",1);
+        huayi_uci_commit(PKG_SYSTEM);
+        huayi_uci_commit(PKG_MODEM);
+        system("huayi-reset network");
+    }
+}
+
 int main(int argc, char *argv[])
 {
 
     //SLM_init();
 
     Production_testing_mode();
+
+    check_apn();
 
     check_network();
     //init_cloud_client();

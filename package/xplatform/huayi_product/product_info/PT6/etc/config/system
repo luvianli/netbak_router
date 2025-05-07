@@ -64,3 +64,4 @@ config server server
 	option checkcode 0
 	option wificlose '0'
 	option time 0
+	option apnset 0
