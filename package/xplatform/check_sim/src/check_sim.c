@@ -43,7 +43,7 @@ void save_siminfo(int i, int gpio)
         count += 1;
     }
     count = 0;
-retry_getccid:    //¾¡×î´ó¿ÉÄÜÈ¡µ½ICCID
+retry_getccid:    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ICCID
     memset(lte_value, 0, OPTION_STR_LEN);
     ret = atcmd_get_iccid(lte_value);
     if (strlen(lte_value) < 5 || (strstr(lte_value, "ERR") != NULL) || (0 == ret) || isAlphanumeric(lte_value) == 0)
@@ -65,12 +65,12 @@ retry_getccid:    //¾¡×î´ó¿ÉÄÜÈ¡µ½ICCID
     huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", lte_value);
     sprintf(tmp, "%d_%s", gpio, lte_value);
     huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid_gpio", tmp);
-    huayi_uci_set_int(PKG_M_SYSTEM, cmd, "card_slot", i);
+    //huayi_uci_set_int(PKG_M_SYSTEM, cmd, "card_slot", i);
     if (strlen(lte_value)  < 10)
     {
         return;     //no iccid, that mean no simcard
     }
-retry_getlac:	  //¾¡×î´ó¿ÉÄÜÈ¡µ½LAC
+retry_getlac:	  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½LAC
     memset(lte_value, 0, OPTION_STR_LEN);
     atcmd_get_lac(lte_value);
     //printf("rex ====   %s, %d  ---lac = %s-\n", __FUNCTION__, __LINE__, lte_value);
@@ -84,7 +84,7 @@ retry_getlac:	  //¾¡×î´ó¿ÉÄÜÈ¡µ½LAC
     huayi_uci_set_str(PKG_M_SYSTEM, cmd, "lac", lte_value);
     count = 0;
 
-retry_getci:	  //¾¡×î´ó¿ÉÄÜÈ¡µ½ci
+retry_getci:	  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ci
     memset(lte_value, 0, OPTION_STR_LEN);
     atcmd_get_ci(lte_value);
     //printf("rex ====   %s, %d  --ci =%s--\n", __FUNCTION__, __LINE__, lte_value);
@@ -98,7 +98,7 @@ retry_getci:	  //¾¡×î´ó¿ÉÄÜÈ¡µ½ci
     huayi_uci_set_str(PKG_M_SYSTEM, cmd, "ci", lte_value);
     count = 0;
 
-retry_getoperator:	  //¾¡×î´ó¿ÉÄÜÈ¡µ½operator info
+retry_getoperator:	  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½operator info
     memset(lte_value, 0, OPTION_STR_LEN);
     atcmd_get_imsi(lte_value);
     //printf("rex ====   %s, %d  ---operator = %s-\n", __FUNCTION__, __LINE__, lte_value);
@@ -106,6 +106,7 @@ retry_getoperator:	  //¾¡×î´ó¿ÉÄÜÈ¡µ½operator info
             strncmp(lte_value, "46007", 5) == 0 || strncmp(lte_value, "46008", 5) == 0 || strncmp(lte_value, "46013", 5) == 0)
     {
         netoperator = 3;
+        huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", i);
     }
     else if (strncmp(lte_value, "46001", 5) == 0 || strncmp(lte_value, "46006", 5) == 0 ||
              strncmp(lte_value, "46009", 5) == 0 ||
@@ -291,7 +292,7 @@ void check_network()
 
 	huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
 	if(disconn == 1)
-		return ;//æ–­ç½‘åœæ­¢æ£€æµ?
+		return ;//æ–­ç½‘åœæ­¢æ£€ï¿½?
 
 	if(check_wan_type())
 	{
@@ -347,7 +348,7 @@ check_net:
     {
         if (i == simn)
             continue;
-        //å¤–ç½®å?
+        //å¤–ç½®ï¿½?
 #ifndef CONFIG_HUAYI_SUPPORT_MEIGE_AFTER_SALES
         if (i == totalsimnum - 1)
         {
@@ -388,6 +389,7 @@ cretry2:
 	            sleep(3);
 	            save_useing_siminfo(i);
 	            CON_LOG("sim %d network ok \n", i);
+                huayi_uci_set_int(PKG_M_SYSTEM, cmd, "card_slot", i);
 	            this_bool = 1;
 	            return;
 	        }
@@ -636,7 +638,7 @@ void check_network_two()
 	{
 		huayi_uci_get_int(PKG_SYSTEM,"network","disconn",&disconn);
 		if(disconn == 1)
-			goto success ;//æ–­ç½‘åœæ­¢æ£€æµ?
+			goto success ;//æ–­ç½‘åœæ­¢æ£€ï¿½?
 
 		count = 0;
 		memset(check_ip, 0, OPTION_STR_LEN);
@@ -713,6 +715,7 @@ cretry2:
 	            sleep(3);
 	            save_useing_siminfo(i);
 	            CON_LOG("sim %d network ok \n", i);
+                huayi_uci_set_int(PKG_M_SYSTEM, cmd, "card_slot", i);
 	            goto success;
 	        }
 	        else
@@ -750,7 +753,7 @@ int main(int argc, char *argv[])
 	Production_testing_mode();
 
 	check_network();
-	check_modem_edition();
+	//check_modem_edition();
 
 	check_network_two();
 
