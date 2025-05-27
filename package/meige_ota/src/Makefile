@@ -1,15 +1,15 @@
-﻿EXEC = meige_ota
+﻿CC := gcc
+CFLAGS := -Wall -O2
+LDFLAGS := -L$(STAGING_DIR)/usr/lib -lpthread -lm
+INCLUDES += -I$(STAGING_DIR)/usr/include
 
-MEIGE_OTA_SRCS = $(wildcard ./*.c)
+SRC := meig_wireless_update.c
+TARGET := meige_ota
 
-INCLUDES += -I$(STAGING_DIR)/usr/include/
-CFLAGS += -Wall -fno-strict-aliasing
-#LDFLAGS += -lpthread -lcjson
+all: $(TARGET)
 
-all: $(EXEC)
-
-$(EXEC):
-	$(CC) -o $@ $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(INCLUDES) $(MEIGE_OTA_SRCS)
+$(TARGET): $(SRC)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f *.o $(EXEC) *.d
+	rm -f $(TARGET) 
