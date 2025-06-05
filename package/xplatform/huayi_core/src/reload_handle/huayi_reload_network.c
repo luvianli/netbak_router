@@ -17,7 +17,7 @@ VTBool huayi_reload_network(void * arg,cJSON *input_root)
 #endif
 
 	system("huayi_cmd set network wan_up 0");
-	/*针对这个型号的产品特殊处理，硬件设计模块电路时，启动需要软件连通电路*/
+	/*锟斤拷锟斤拷锟斤拷锟酵号的诧拷品锟斤拷锟解处锟斤拷锟斤拷硬锟斤拷锟斤拷锟侥ｏ拷锟斤拷路时锟斤拷锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷锟斤拷通锟斤拷路*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(0 == strcmp(product_model, "4G1200-H002-HY06"))
 	{
@@ -175,7 +175,7 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 	}
 	else
 	{
-		/*针对这个型号的产品特殊处理，硬件设计模块电路时，启动需要软件连通电路*/
+		/*锟斤拷锟斤拷锟斤拷锟酵号的诧拷品锟斤拷锟解处锟斤拷锟斤拷硬锟斤拷锟斤拷锟侥ｏ拷锟斤拷路时锟斤拷锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷锟斤拷通锟斤拷路*/
 		huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 		if(!strcmp(product_model, "4G1200-H002-HY06"))
 		{
@@ -378,11 +378,24 @@ VTBool huayi_meige_clean_cardinfo(void *arg,cJSON *input_root){
 	char cmd[8] = {0};
 	for (i = 0; i < 4; i++)
 	{
-		sprintf(cmd, "sim%d", i);
+		sprintf(cmd, "sim%d", i);
+
+
 		huayi_uci_set_str(PKG_M_SYSTEM, cmd, "iccid", "");
 		huayi_uci_set_str(PKG_M_SYSTEM, cmd, "operator", 0);
 	}
 	huayi_uci_set_int(PKG_M_SYSTEM, "system", "all_info", 1);
 	huayi_uci_commit(PKG_M_SYSTEM);
+	return VT_TRUE;
+}
+
+VTBool huayi_ipsec_init(void *arg,cJSON *input_root)
+{
+	int enable = 0 ;
+	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&enable);
+	if(enable)
+		system("etc/init.d/xl2tpd_ipsec restart");
+	else
+		system("etc/init.d/xl2tpd_ipsec stop");
 	return VT_TRUE;
 }

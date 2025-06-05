@@ -60,6 +60,7 @@ VTBool huayi_reload_functions_init(struct VcoreAgent *Agent)
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_VPN_USER-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_vpn_user;
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_VPN_ROUTE-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_vpn_route;
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_SERVER_VPN_ROUTE-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_vpn_server_route;
+	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_OPENVPN-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_openvpn;
 #endif
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_FTPD-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_ftpd;
 	Agent->CoreReloadFunction[HUAYI_MSG_RELOAD_PRINTER-HUAYI_MSG_PAYLOAD_OFFSET] = huayi_reload_printer;

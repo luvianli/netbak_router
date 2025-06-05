@@ -73,17 +73,17 @@ int get_pptpd_server_config(cJSON *request_root, cJSON *response_root,int *lock_
 	result_root = cJSON_CreateObject();
 
 	huayi_add_switch_to_json(result_root,"pptpd_enable",pptpd_enable);
-	cJSON_AddStringToObject(result_root,"pptpd_startip",pptpd_startip);
-	cJSON_AddStringToObject(result_root,"pptpd_endip",pptpd_endip);
-	cJSON_AddStringToObject(result_root,"server_ip",server_ip);
+	cJSON_AddStringToObject(result_root,"pptpd_start_addr",pptpd_startip);
+	cJSON_AddStringToObject(result_root,"pptpd_end_addr",pptpd_endip);
+	cJSON_AddStringToObject(result_root,"server_addr",server_ip);
 	cJSON_AddNumberToObject(result_root,"mppe",mppe);
 	huayi_add_switch_to_json(result_root,"dns_enable",dns_enable);
 	cJSON_AddStringToObject(result_root,"primary_dns",primary_dns);
 	cJSON_AddStringToObject(result_root,"secondary_dns",secondary_dns);
 	cJSON_AddNumberToObject(result_root,"mtu",mtu);
 	cJSON_AddNumberToObject(result_root,"mru",mru);
-	cJSON_AddStringToObject(result_root,"xl2tpd_startip",xl2tpd_startip);
-	cJSON_AddStringToObject(result_root,"xl2tpd_endip",xl2tpd_endip);
+	cJSON_AddStringToObject(result_root,"xl2tpd_start_addr",xl2tpd_startip);
+	cJSON_AddStringToObject(result_root,"xl2tpd_end_addr",xl2tpd_endip);
 	cJSON_AddStringToObject(result_root,"proto",proto);
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
@@ -114,9 +114,9 @@ int set_pptpd_server_config(cJSON *request_root, cJSON *response_root,int *lock_
 	}
 
 	huayi_json_get_int(request_root,"pptpd_enable",&pptpd_enable);
-	huayi_json_get_str(request_root,"pptpd_startip",startip,IPV4_STR_LEN);
-	huayi_json_get_str(request_root,"pptpd_endip",endip,IPV4_STR_LEN);
-	huayi_json_get_str(request_root,"server_ip",server_ip,IPV4_STR_LEN);
+	huayi_json_get_str(request_root,"pptpd_start_addr",startip,IPV4_STR_LEN);
+	huayi_json_get_str(request_root,"pptpd_end_addr",endip,IPV4_STR_LEN);
+	huayi_json_get_str(request_root,"server_addr",server_ip,IPV4_STR_LEN);
 	huayi_json_get_int(request_root,"mppe",&mppe);
 	huayi_json_get_int(request_root,"dns_enable",&dns_enable);
 	huayi_json_get_str(request_root,"primary_dns",primary_dns,IPV4_STR_LEN);
@@ -192,9 +192,9 @@ int get_xl2tpd_server_config(cJSON *request_root, cJSON *response_root,int *lock
 
 	huayi_add_switch_to_json(result_root,"xl2tpd_enable",xl2tpd_enable);
 	huayi_add_switch_to_json(result_root,"xl2tp_enable",xl2tp_enable);
-	cJSON_AddStringToObject(result_root,"xl2tpd_startip",xl2tpd_startip);
-	cJSON_AddStringToObject(result_root,"xl2tpd_endip",xl2tpd_endip);
-	cJSON_AddStringToObject(result_root,"server_ip",server_ip);
+	cJSON_AddStringToObject(result_root,"xl2tpd_start_addr",xl2tpd_startip);
+	cJSON_AddStringToObject(result_root,"xl2tpd_end_addr",xl2tpd_endip);
+	cJSON_AddStringToObject(result_root,"server_addr",server_ip);
 	huayi_add_switch_to_json(result_root,"ipsec_enable",ipsec_enable);
 	cJSON_AddStringToObject(result_root,"ipsec_key",ipsec_key);
 	huayi_add_switch_to_json(result_root,"dns_enable",dns_enable);
@@ -203,8 +203,8 @@ int get_xl2tpd_server_config(cJSON *request_root, cJSON *response_root,int *lock
 	cJSON_AddNumberToObject(result_root,"mtu",mtu);
 	cJSON_AddNumberToObject(result_root,"mru",mru);
 	cJSON_AddStringToObject(result_root,"proto",proto);
-	cJSON_AddStringToObject(result_root,"pptpd_startip",pptpd_startip);
-	cJSON_AddStringToObject(result_root,"pptpd_endip",pptpd_endip);
+	cJSON_AddStringToObject(result_root,"pptpd_start_addr",pptpd_startip);
+	cJSON_AddStringToObject(result_root,"pptpd_end_addr",pptpd_endip);
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 	 
@@ -232,9 +232,9 @@ int set_xl2tpd_server_config(cJSON *request_root, cJSON *response_root,int *lock
 	}
 
 	huayi_json_get_int(request_root,"xl2tpd_enable",&xl2tpd_enable);
-	huayi_json_get_str(request_root,"xl2tpd_startip",xl2tpd_startip,IPV4_STR_LEN);
-	huayi_json_get_str(request_root,"xl2tpd_endip",xl2tpd_endip,IPV4_STR_LEN);
-	huayi_json_get_str(request_root,"server_ip",server_ip,IPV4_STR_LEN);
+	huayi_json_get_str(request_root,"xl2tpd_start_addr",xl2tpd_startip,IPV4_STR_LEN);
+	huayi_json_get_str(request_root,"xl2tpd_end_addr",xl2tpd_endip,IPV4_STR_LEN);
+	huayi_json_get_str(request_root,"server_addr",server_ip,IPV4_STR_LEN);
 	huayi_json_get_int(request_root,"ipsec_enable",&ipsec_enable);
 	huayi_json_get_str(request_root,"ipsec_key",ipsec_key,OPTION_STR_LEN);
 	huayi_json_get_int(request_root,"dns_enable",&dns_enable);
@@ -304,13 +304,13 @@ int get_pptp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	result_root = cJSON_CreateObject();
 
 	huayi_add_switch_to_json(result_root,"pptp_enable",pptp_enable);
-	cJSON_AddStringToObject(result_root,"username",username);
-	cJSON_AddStringToObject(result_root,"password",password);
-	cJSON_AddStringToObject(result_root,"server_ip",server_ip);
+	cJSON_AddStringToObject(result_root,"usr",username);
+	cJSON_AddStringToObject(result_root,"pwd",password);
+	cJSON_AddStringToObject(result_root,"server_addr",server_ip);
 	cJSON_AddNumberToObject(result_root,"mppe",mppe);
 	cJSON_AddNumberToObject(result_root,"route_type",route_type);
 	cJSON_AddNumberToObject(result_root,"pptp_status",pptp_status);
-	cJSON_AddStringToObject(result_root,"pptp_ip",pptp_ip);
+	cJSON_AddStringToObject(result_root,"pptp_addr",pptp_ip);
 
 	pptp_static_router_array = cJSON_CreateArray();
 	while(1)
@@ -327,14 +327,14 @@ int get_pptp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	
 			pptp_static_router_obj = cJSON_CreateObject();
 			cJSON_AddStringToObject(pptp_static_router_obj,"target",target);
-			cJSON_AddStringToObject(pptp_static_router_obj,"netmask",netmask);
+			cJSON_AddStringToObject(pptp_static_router_obj,"subnet_mask",netmask);
 			cJSON_AddItemToArray(pptp_static_router_array,pptp_static_router_obj);
 		}
 		
 		i++;
 	}
 	
-	cJSON_AddItemToObject(result_root,"pptp_static_router_list",pptp_static_router_array);
+	cJSON_AddItemToObject(result_root,"pptp_static_arr",pptp_static_router_array);
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
@@ -374,9 +374,9 @@ int set_pptp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	huayi_uci_get_int(PKG_PPL2TP,"pptp","enable",&old_enable);
 
 	huayi_json_get_int(request_root,"pptp_enable",&pptp_enable);
-	huayi_json_get_str(request_root,"server_ip",server_ip,LIST_STR_LEN );
-	huayi_json_get_str(request_root,"username",username,OPTION_STR_LEN);
-	huayi_json_get_str(request_root,"password",password,OPTION_STR_LEN);
+	huayi_json_get_str(request_root,"server_addr",server_ip,LIST_STR_LEN );
+	huayi_json_get_str(request_root,"usr",username,OPTION_STR_LEN);
+	huayi_json_get_str(request_root,"pwd",password,OPTION_STR_LEN);
 	huayi_json_get_int(request_root,"mppe",&mppe);
 	huayi_json_get_int(request_root,"route_type",&route_type);
 	
@@ -389,7 +389,7 @@ int set_pptp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	
 	if(route_type == 0 && pptp_enable == 1)
 	{
-		if(!(pptp_static_router_array= cJSON_GetObjectItem(request_root,"pptp_static_router_list")))
+		if(!(pptp_static_router_array= cJSON_GetObjectItem(request_root,"pptp_static_arr")))
 		{
 			return FCGI_RESP_CODE_DATA_MISS;
 		}
@@ -427,7 +427,7 @@ int set_pptp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 			snprintf(section,sizeof(section),"@route[%d]",k + max_id);
 			
 			huayi_uci_set_str(PKG_PPL2TP,section,"target",target);
-			huayi_uci_set_str(PKG_PPL2TP,section,"netmask",netmask);
+			huayi_uci_set_str(PKG_PPL2TP,section,"subnet_mask",netmask);
 			huayi_uci_set_str(PKG_PPL2TP,section,"interface","PPTP");
 		}
 	}
@@ -477,6 +477,8 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	char target[IPV4_STR_LEN] = {0};
 	char netmask[IPV4_STR_LEN] = {0};
 	char inter_face[OPTION_STR_LEN] = {0};
+	int ipsec_enable = 0;
+	char ipsec_key[OPTION_STR_LEN] = {0};
 
 	int i = 0;
 
@@ -490,23 +492,63 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","username",username);
 	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","password",password);
 	huayi_uci_get_int(PKG_PPL2TP,"xl2tp","route_type",&route_type);
-	huayi_uci_get_int(PKG_XL2TPD,"xl2tpd","enable",&xl2tpd_enable);	
+	//huayi_uci_get_int(PKG_XL2TPD,"xl2tpd","enable",&xl2tpd_enable);	
+	char dev [OPTION_STR_LEN],value [TEMP_STR_LEN],cmd [TEMP_STR_LEN];
+	int status;
+	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","dev",dev);
+	if(xl2tp_enable){
+		memset(cmd, 0, TEMP_STR_LEN);
+		memset(value, 0, sizeof(value));
+		sprintf(cmd, "ifconfig %s 2>/dev/null | awk '/inet / {split($2, a, \":\"); print a[2]}'",dev);
+		get_cmd_result(cmd, value, sizeof(value));
+		CON_LOG("%s",value);
+		if(!strlen(value))
+			status = 0;
+		else
+			status = 1;
+	}else{
+		status = 0;
+	}
+
+	xl2tpd_enable = status;
+
 	
-	huayi_uci_get_str(PKG_STATUS_SYSTEM,"sys","xl2tp_ip",xl2tp_ip);
-	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","xl2tp_link",&xl2tp_status);
+	//huayi_uci_get_int(PKG_PPL2TP,"xl2tp","enable",&xl2tpd_enable);	
+	//huayi_uci_get_int(PKG_PPL2TP,"xl2tp","ipsec_enable",&ipsec_enable);
+	//if(ipsec_enable)
+	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
 	
+	//huayi_uci_get_str(PKG_STATUS_SYSTEM,"sys","xl2tp_ip",xl2tp_ip);
+	//huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","xl2tp_link",&xl2tp_status);
+	//huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ip_address",xl2tp_ip);
+	//huayi_uci_get_int(PKG_STATUS_NETWORK,"wan","link",&xl2tp_status);
 	result_root = cJSON_CreateObject();
 
 	huayi_add_switch_to_json(result_root,"xl2tp_enable",xl2tp_enable);
 	huayi_add_switch_to_json(result_root,"xl2tpd_enable",xl2tpd_enable);
-	cJSON_AddStringToObject(result_root,"username",username);
-	cJSON_AddStringToObject(result_root,"password",password);
-	cJSON_AddStringToObject(result_root,"server_ip",server_ip);
+	//cJSON_AddStringToObject(result_root,"usr",username);
+	//cJSON_AddStringToObject(result_root,"pwd",password);
+	//cJSON_AddStringToObject(result_root,"server_addr",server_ip);
 	cJSON_AddNumberToObject(result_root,"route_type",route_type);
-	cJSON_AddNumberToObject(result_root,"xl2tp_status",xl2tp_status);
-	cJSON_AddStringToObject(result_root,"xl2tp_ip",xl2tp_ip);
+	cJSON_AddNumberToObject(result_root,"xl2tp_status",status);
+	cJSON_AddStringToObject(result_root,"xl2tp_ip",value);
+	//cJSON_AddNumberToObject(result_root,"ipsec_enable",ipsec_enable);
+	//cJSON_AddStringToObject(result_root,"ipsec_key",ipsec_key);
+	
 
 	xl2tp_static_router_array = cJSON_CreateArray();
+	xl2tp_static_router_obj = cJSON_CreateObject();
+
+	memset(cmd, 0, TEMP_STR_LEN);
+	sprintf(cmd, "route -n | awk '$8 == \"%s\" {print $3}'",dev);
+	get_cmd_result(cmd, netmask, sizeof(value));
+	cJSON_AddStringToObject(xl2tp_static_router_obj,"subnet_mask",netmask);
+	memset(cmd, 0, TEMP_STR_LEN);
+	sprintf(cmd, "route -n | awk '$8 == \"%s\" {print $2}'",dev);
+	get_cmd_result(cmd, target, sizeof(value));
+	cJSON_AddStringToObject(xl2tp_static_router_obj,"target",target);
+	cJSON_AddItemToArray(xl2tp_static_router_array,xl2tp_static_router_obj);
+/*
 	while(1)
 	{
 		snprintf(section,sizeof(section),"@route[%d]",i);
@@ -514,21 +556,21 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 		{
 			break;
 		}
-		if(strcmp(inter_face,"XL2TP") == 0)
+		if(strcmp(inter_face,"ppp0") == 0)
 		{
 			huayi_uci_get_str(PKG_PPL2TP,section,"target",target);
 			huayi_uci_get_str(PKG_PPL2TP,section,"netmask",netmask);
 	
 			xl2tp_static_router_obj = cJSON_CreateObject();
 			cJSON_AddStringToObject(xl2tp_static_router_obj,"target",target);
-			cJSON_AddStringToObject(xl2tp_static_router_obj,"netmask",netmask);
+			cJSON_AddStringToObject(xl2tp_static_router_obj,"subnet_mask",netmask);
 			cJSON_AddItemToArray(xl2tp_static_router_array,xl2tp_static_router_obj);
 		}
 		
 		i++;
 	}
-	
-	cJSON_AddItemToObject(result_root,"xl2tp_static_router_list",xl2tp_static_router_array);
+	*/
+	cJSON_AddItemToObject(result_root,"xl2tp_static_arr",xl2tp_static_router_array);
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
 	return FCGI_RESP_CODE_SUCCESS;
@@ -556,17 +598,28 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	char target[IPV4_STR_LEN] = {0};
 	char netmask[IPV4_STR_LEN] = {0};
 	char max_route[SMALL_STR_LEN] = {0};
+	//int ipsec_enable = 0;
+	char ipsec_key[OPTION_STR_LEN] = {0};
+	
 
 	if(NULL == request_root || NULL == response_root || NULL == lock_time)
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
 
-	if(!huayi_json_get_int(request_root,"xl2tp_enable",&enable) ||
-		!huayi_json_get_str(request_root,"server_ip",server_ip,LIST_STR_LEN ) ||
-		!huayi_json_get_str(request_root,"username",username,OPTION_STR_LEN) ||
-		!huayi_json_get_str(request_root,"password",password,OPTION_STR_LEN) ||
-		!huayi_json_get_int(request_root,"route_type",&route_type))
+	if(!huayi_json_get_int(request_root,"xl2tp_enable",&enable))
+	{
+		return FCGI_RESP_CODE_DATA_MISS;
+	}
+
+	if(enable == 1 &&
+		(!huayi_json_get_str(request_root,"server_addr",server_ip,LIST_STR_LEN ) ||
+		!huayi_json_get_str(request_root,"usr",username,OPTION_STR_LEN) ||
+		!huayi_json_get_str(request_root,"pwd",password,OPTION_STR_LEN) ||
+		!huayi_json_get_int(request_root,"route_type",&route_type) ||
+		//!huayi_json_get_int(request_root,"ipsec_enable",&ipsec_enable) ||
+		!huayi_json_get_str(request_root,"ipsec_key",ipsec_key,OPTION_STR_LEN)))
+		
 	{
 		return FCGI_RESP_CODE_DATA_MISS;
 	}
@@ -580,9 +633,14 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	huayi_uci_set_str(PKG_PPL2TP,"xl2tp","password",password);
 	huayi_uci_set_int(PKG_PPL2TP,"xl2tp","route_type",route_type);
 
+	
+	//huayi_uci_set_int(PKG_PPL2TP,"xl2tp","ipsec_enable",ipsec_enable);
+	//if(ipsec_enable)
+	huayi_uci_set_str(PKG_PPL2TP,"xl2tp","ipsec_key",ipsec_key);
+/*	
 	if(route_type == 0 && enable == 1)
 	{
-		if(!(xl2tp_static_router_array= cJSON_GetObjectItem(request_root,"xl2tp_static_router_list")))
+		if(!(xl2tp_static_router_array= cJSON_GetObjectItem(request_root,"xl2tp_static_arr")))
 		{
 			return FCGI_RESP_CODE_DATA_MISS;
 		}
@@ -592,7 +650,7 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 		max_id = atoi(max_route);
 		if(max_id == 0)
 		{
-			;/*no section*/
+			;
 		}else
 		{
 			for(i = max_id - 1 ;i >= 0 ;i--)
@@ -614,7 +672,7 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 		{
 			xl2tp_static_router_obj = cJSON_GetArrayItem(xl2tp_static_router_array,k);
 			huayi_json_get_str(xl2tp_static_router_obj,"target",target,IPV4_STR_LEN);
-			huayi_json_get_str(xl2tp_static_router_obj,"netmask",netmask,IPV4_STR_LEN);
+			huayi_json_get_str(xl2tp_static_router_obj,"subnet_mask",netmask,IPV4_STR_LEN);
 			
 			huayi_uci_add_section(PKG_PPL2TP,"route");
 			snprintf(section,sizeof(section),"@route[%d]",k + max_id);
@@ -624,13 +682,19 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 			huayi_uci_set_str(PKG_PPL2TP,section,"interface","XL2TP");
 		}
 	}
-
+*/
 	huayi_uci_commit(PKG_PPL2TP);
-	
+	system("huayi-reset xl2tpd_ipsec");
+	*lock_time = HUAYI_RELOAD_WIRELESS_TIME;
+
+
+	/*			
+
 	if((route_type == 0 && enable == 1 && old_enable == 1 && old_route_type == 0) ||
 		(route_type == 1 && old_route_type == 0 && enable == 1))
 	{
 		system("huayi-reset network");
+		system("huayi-reset ipsec_up");
 		*lock_time = HUAYI_RELOAD_NETWORK_TIME;
 	}
 	else
@@ -638,6 +702,7 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 		system("huayi-reset xl2tp");
 		*lock_time = 0;
 	}
+	*/
 	return FCGI_RESP_CODE_SUCCESS;
 }
 
@@ -690,8 +755,8 @@ int get_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 		huayi_uci_get_str(PKG_VPN_USER,section,"desc",desc);
 		
 		ppp_user_obj = cJSON_CreateObject();
-		cJSON_AddStringToObject(ppp_user_obj,"username",ppp_username);
-		cJSON_AddStringToObject(ppp_user_obj,"password",ppp_password);
+		cJSON_AddStringToObject(ppp_user_obj,"usr",ppp_username);
+		cJSON_AddStringToObject(ppp_user_obj,"pwd",ppp_password);
 		if(!strcmp(authenticate, "pptp-server"))
 		{
 			cJSON_AddStringToObject(ppp_user_obj,"authenticate","pptp");
@@ -706,8 +771,8 @@ int get_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 			cJSON_AddStringToObject(ppp_user_obj,"authenticate","all");
 		}
 	
-		cJSON_AddStringToObject(ppp_user_obj,"remoteip",remoteip);
-		cJSON_AddStringToObject(ppp_user_obj,"desc",desc);
+		cJSON_AddStringToObject(ppp_user_obj,"remote_addr",remoteip);
+		cJSON_AddStringToObject(ppp_user_obj,"com",desc);
 
 		router_array = cJSON_CreateArray();
 		j = 0;
@@ -728,11 +793,11 @@ int get_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 			huayi_uci_get_str(PKG_VPN_USER,section,"netmask",netmask);
 			router_obj = cJSON_CreateObject();
 			cJSON_AddStringToObject(router_obj,"target",target);
-			cJSON_AddStringToObject(router_obj,"netmask",netmask);
+			cJSON_AddStringToObject(router_obj,"subnet_mask",netmask);
 			cJSON_AddItemToArray(router_array,router_obj);
 			
 		}
-		cJSON_AddItemToObject(ppp_user_obj,"route",router_array);
+		cJSON_AddItemToObject(ppp_user_obj,"route_arr",router_array);
 		cJSON_AddItemToArray(ppp_user_array,ppp_user_obj);
 		i++;
 
@@ -744,22 +809,23 @@ int get_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 	huayi_uci_get_str(PKG_XL2TPD,"xl2tpd","startip",xl2tpd_startip);
 	huayi_uci_get_str(PKG_XL2TPD,"xl2tpd","endip",xl2tpd_endip);
 	
-	cJSON_AddItemToObject(result_root,"vpnUser_list",ppp_user_array);
+	cJSON_AddItemToObject(result_root,"vpnusr_arr",ppp_user_array);
 	if(!get_vpn_type_list(result_root))
 	{
 		cJSON_Delete(result_root);
 		return FCGI_RESP_CODE_SERVER_FAILURE;
 	}
 
-	cJSON_AddStringToObject(result_root,"pptpd_startip",pptpd_startip);
-	cJSON_AddStringToObject(result_root,"pptpd_endip",pptpd_endip);
-	cJSON_AddStringToObject(result_root,"xl2tpd_startip",xl2tpd_startip);
-	cJSON_AddStringToObject(result_root,"xl2tpd_endip",xl2tpd_endip);
+	cJSON_AddStringToObject(result_root,"pptpd_start_addr",pptpd_startip);
+	cJSON_AddStringToObject(result_root,"pptpd_end_addr",pptpd_endip);
+	cJSON_AddStringToObject(result_root,"xl2tpd_start_addr",xl2tpd_startip);
+	cJSON_AddStringToObject(result_root,"xl2tpd_end_addr",xl2tpd_endip);
 
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
 	return FCGI_RESP_CODE_SUCCESS;
 }
+
 
 
 /*
@@ -794,7 +860,7 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 		return FCGI_RESP_CODE_HYID_MISS;
 	}
 	
-	ppp_user_array = cJSON_GetObjectItem(request_root,"vpnUser_list");
+	ppp_user_array = cJSON_GetObjectItem(request_root,"vpnusr_arr");
 
 	size = cJSON_GetArraySize(ppp_user_array);
 	
@@ -834,11 +900,11 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 	for(k=0;k<size;k++)
 	{	
 		ppp_user_obj = cJSON_GetArrayItem(ppp_user_array,k);
-		huayi_json_get_str(ppp_user_obj,"username",ppp_username,OPTION_STR_LEN);
-		huayi_json_get_str(ppp_user_obj,"password",ppp_password,OPTION_STR_LEN);
+		huayi_json_get_str(ppp_user_obj,"usr",ppp_username,OPTION_STR_LEN);
+		huayi_json_get_str(ppp_user_obj,"pwd",ppp_password,OPTION_STR_LEN);
 		huayi_json_get_str(ppp_user_obj,"authenticate",authenticate,OPTION_STR_LEN);
-		huayi_json_get_str(ppp_user_obj,"remoteip",remoteip,OPTION_STR_LEN);
-		huayi_json_get_str(ppp_user_obj,"desc",desc,OPTION_STR_LEN);
+		huayi_json_get_str(ppp_user_obj,"remote_addr",remoteip,OPTION_STR_LEN);
+		huayi_json_get_str(ppp_user_obj,"com",desc,OPTION_STR_LEN);
 		
 		huayi_uci_add_section(PKG_VPN_USER,"login");
 		snprintf(section,sizeof(section),"@login[%d]",k);
@@ -865,7 +931,7 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 		
 		huayi_uci_set_int(PKG_VPN_USER,section,"id",k+1);
 		
-		route_array = cJSON_GetObjectItem(ppp_user_obj,"route");
+		route_array = cJSON_GetObjectItem(ppp_user_obj,"route_arr");
 		route_size	= cJSON_GetArraySize(route_array);
 
 		for(j=0;j<route_size;j++)
@@ -874,7 +940,7 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root, int *lock_tim
 			memset(target,0,IPV4_STR_LEN);
 			memset(netmask,0,IPV4_STR_LEN);
 			huayi_json_get_str(route_obj,"target",target,IPV4_STR_LEN);
-			huayi_json_get_str(route_obj,"netmask",netmask,IPV4_STR_LEN);
+			huayi_json_get_str(route_obj,"subnet_mask",netmask,IPV4_STR_LEN);
 			
 			huayi_uci_add_section(PKG_VPN_USER,"route");
 			snprintf(section,sizeof(section),"@route[%d]",j + route_num);
@@ -947,8 +1013,8 @@ int get_vpn_user_status(cJSON *request_root, cJSON *response_root, int *lock_tim
 			cJSON_AddStringToObject(user_obj,"account",username);
 			cJSON_AddStringToObject(user_obj,"account_type",str2upper(account_type));
 			cJSON_AddNumberToObject(user_obj,"pid",pid);
-			cJSON_AddStringToObject(user_obj,"ip",ip);
-			cJSON_AddStringToObject(user_obj,"device_ip",device_ip);
+			cJSON_AddStringToObject(user_obj,"ip_addr",ip);
+			cJSON_AddStringToObject(user_obj,"device_addr",device_ip);
 			time_tmp = (time_t)(time_of_day-(cur_uptime -uptime));	
 			p = localtime(&time_tmp);
 			join_time = time_tmp + p->tm_gmtoff - 28800;  
@@ -960,7 +1026,7 @@ int get_vpn_user_status(cJSON *request_root, cJSON *response_root, int *lock_tim
 		fp = NULL;
 	}
 
-	cJSON_AddItemToObject(result_root,"user_list",user_list);
+	cJSON_AddItemToObject(result_root,"usr_arr",user_list);
 	
 	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
 
@@ -989,6 +1055,128 @@ int do_kick_vpn_user(cJSON *request_root, cJSON *response_root, int *lock_time)
 
 	return FCGI_RESP_CODE_SUCCESS;
 	
+}
+
+
+
+int get_openvpn_config(cJSON *request_root, cJSON *response_root, int *lock_time){
+
+
+	if((NULL == request_root) || (NULL == response_root) || (NULL == lock_time))
+	{
+		return FCGI_RESP_CODE_HYID_MISS;
+	}
+	int enable,port,status = 0,option;
+	char host_name[CMD_STR_LEN],user_name[CMD_STR_LEN],pwd[CMD_STR_LEN],dev[CMD_STR_LEN];
+	cJSON * result_root = NULL;
+	char cmd[TEMP_STR_LEN] = {0};
+	char value[OPTION_STR_LEN] = { 0 };
+	huayi_uci_get_int(PKG_PPL2TP,"openvpn","option",&option);
+	huayi_uci_get_int(PKG_PPL2TP,"openvpn","enable",&enable);
+	result_root = cJSON_CreateObject();
+
+	if(!option)
+	{
+
+		
+		huayi_uci_get_int(PKG_PPL2TP,"openvpn","port",&port);
+		huayi_uci_get_str(PKG_PPL2TP,"openvpn","host_name",host_name);
+		huayi_uci_get_str(PKG_PPL2TP,"openvpn","username",user_name);
+		huayi_uci_get_str(PKG_PPL2TP,"openvpn","pwd",pwd);
+		CON_LOG ("%s %s %s %d %d %d %d",host_name,user_name,pwd,enable,port,option,status);
+
+
+
+		cJSON_AddStringToObject(result_root,"host_name",host_name);
+		cJSON_AddStringToObject(result_root,"usr",user_name);
+		cJSON_AddStringToObject(result_root,"pwd",pwd);
+		cJSON_AddNumberToObject(result_root,"port",port);
+	}
+	
+
+
+		huayi_uci_get_str(PKG_PPL2TP,"openvpn","dev",dev);
+		if(enable){
+		memset(cmd, 0, TEMP_STR_LEN);
+		memset(value, 0, sizeof(value));
+		sprintf(cmd, "ifconfig | grep %s | awk '{print $1}'",dev);
+		get_cmd_result(cmd, value, sizeof(value));
+		CON_LOG("%s",value);
+		if(strlen(value)<strlen(dev)){
+			status = 0;CON_LOG ("000");
+		}else{
+			status = 1;CON_LOG ("111");
+		}
+		 }else{
+				status = 2;
+				CON_LOG ("222");
+		 	}
+	cJSON_AddNumberToObject(result_root,"enable",enable);
+	cJSON_AddNumberToObject(result_root,"status",status);
+	cJSON_AddNumberToObject(result_root,"option",option);
+	CON_LOG ("%s %s %s %d %d %d %d",host_name,user_name,pwd,enable,port,option,status);
+
+	cJSON_AddItemToObject(response_root,WEB_RETURN_DATA_NAME,result_root);
+
+	return FCGI_RESP_CODE_SUCCESS;
+
+}
+
+
+
+
+int set_openvpn_config(cJSON *request_root, cJSON *response_root, int *lock_time){
+
+	if((NULL == request_root) || (NULL == response_root) || (NULL == lock_time))
+	{
+		return FCGI_RESP_CODE_HYID_MISS;
+	}
+
+	int enable, port,status,option;
+	char host_name[CMD_STR_LEN],user_name[CMD_STR_LEN],pwd[CMD_STR_LEN];
+
+	if(huayi_json_get_int(request_root,"enable",&enable)){
+		if(enable){
+		
+			if(!huayi_json_get_int(request_root,"option",&option)){
+				return FCGI_RESP_CODE_DATA_MISS;
+			}
+
+			if(!option){
+				if(!huayi_json_get_str(request_root,"host_name",host_name,CMD_STR_LEN)||
+				!huayi_json_get_str(request_root,"usr",user_name,CMD_STR_LEN)||
+				!huayi_json_get_str(request_root,"pwd",pwd,CMD_STR_LEN)||
+				!huayi_json_get_int(request_root,"port",&port)){
+						return FCGI_RESP_CODE_DATA_MISS;
+				}
+					huayi_uci_set_int(PKG_PPL2TP,"openvpn","port",port);
+					huayi_uci_set_str(PKG_PPL2TP,"openvpn","host_name",host_name);
+					huayi_uci_set_str(PKG_PPL2TP,"openvpn","username",user_name);
+					huayi_uci_set_str(PKG_PPL2TP,"openvpn","pwd",pwd);
+			
+			}
+
+			huayi_uci_set_int(PKG_PPL2TP,"openvpn","option",option);
+			/*huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
+			huayi_uci_delete_option(PKG_NETWORK,"wan4g","dns");
+			huayi_uci_add_list(PKG_NETWORK,"wan","dns","8.8.8.8");
+			huayi_uci_add_list(PKG_NETWORK,"wan","dns","8.8.4.4");
+			huayi_uci_add_list(PKG_NETWORK,"wan4g","dns","8.8.8.8");
+			huayi_uci_add_list(PKG_NETWORK,"wan4g","dns","8.8.4.4");*/
+		}else
+		{
+			//huayi_uci_delete_option(PKG_NETWORK,"wan","dns");
+			//huayi_uci_delete_option(PKG_NETWORK,"wan4g","dns");
+		}
+		//huayi_uci_commit(PKG_NETWORK);
+	}else
+		return FCGI_RESP_CODE_DATA_MISS;
+	huayi_uci_set_int(PKG_PPL2TP,"openvpn","enable",enable);
+	huayi_uci_commit(PKG_PPL2TP);
+	system("huayi-reset openvpn");
+	*lock_time = HUAYI_RELOAD_VPN_SERVER_TIME;
+	return FCGI_RESP_CODE_SUCCESS;
+
 }
 
 

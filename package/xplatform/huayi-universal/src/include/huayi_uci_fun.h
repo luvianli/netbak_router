@@ -111,7 +111,8 @@ typedef struct Operator {
 #define WLAN_ENCRTYPE_AES     		0x20
 #define WLAN_ENCRTYPE_WEP     		0x40
 
-
+#define SCRIPT_PATH 									"/path/to/"
+#define SCRIPT_FILE1  									"/etc/openvpn/openVPN.ovpn"
 #define SCRIPT_FILE  									"/tmp/my_script.sh"
 #define UPLOAD_BIN  									"/tmp/firmware.bin"
 #define UPGRADE_FILE  									"/tmp/firmware.img"

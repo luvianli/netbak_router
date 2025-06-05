@@ -114,7 +114,7 @@ typedef enum
 	HYID_CHANGE_ADMIN_PASSWORD,							/*= 8*/
 	HYID_GET_QUICK_SETTING_CONFIG,						/*= 9*/
 	HYID_SET_QUICK_SETTING_CONFIG,						/*= 10*/
-	/*11 -20 ±ä³É 21 -30*/
+	/*11 -20 ï¿½ï¿½ï¿½ 21 -30*/
 	HYID_SET_ETH_WAN_CONFIG,
 	HYID_GET_STATIC_ROUTER_CONFIG,					
 	HYID_SET_STATIC_ROUTER_CONFIG,							
@@ -135,7 +135,7 @@ typedef enum
 	HYID_GET_LAN_CONFIG,												
 	HYID_SET_LAN_CONFIG,
 	HYID_GET_WAN_CONFIG,								/*=30*/
-	/*31 - 50 ±ä³É51-70*/
+	/*31 - 50 ï¿½ï¿½ï¿½51-70*/
 	HYID_GET_DHCP_DETECT_RESULT,				
 	HYID_DO_DHCP_DETECT,			
 	HYID_STOP_DHCP_DETECT,								
@@ -180,7 +180,7 @@ typedef enum
 	
 	HYID_GET_WIFI_ADVANCE								= 83, 		                
 	HYID_SET_WIFI_ADVANCE,       
-	/*75µ½84±ä³É85µ½94*/
+	/*75ï¿½ï¿½84ï¿½ï¿½ï¿½85ï¿½ï¿½94*/
 	HYID_DO_WAN_PROTO_DETECT,							/*=85*/
 	HYID_SET_WIFI_SCAN,									
 	HYID_GET_WIFI_SCAN_STATUS,
@@ -230,7 +230,7 @@ typedef enum
 	HYID_GET_WIFI_WPS_STATUS,
 	HYID_SET_WIFI_WPS_PIN_CONFIG,
 	HYID_SET_WIFI_WPS_RANDOM_PIN,						/*=133*/
-	/*ÒÔÏÂcgid±ä»¯setµ½get getµ½set*/
+	/*ï¿½ï¿½ï¿½ï¿½cgidï¿½ä»¯setï¿½ï¿½get getï¿½ï¿½set*/
 	HYID_SET_SYSTEM_MODE_CONFIG			= 154,
 	HYID_GET_SYSTEM_MODE_CONFIG			= 155,
 	HYID_SET_WIRELESS_STATUS			= 156,
@@ -265,6 +265,8 @@ typedef enum
 	HYID_SET_HBP_CONFIG                 = 190,
 	HYID_GET_EXTERNAL_CARRD_CONFIG      = 191,
 	HYID_SET_EXTERNAL_CARRD_CONFIG      = 192,
+	HYID_GET_OPENVPN_CONFIG		= 193,
+	HYID_SET_OPENVPN_CONFIG		= 194,
 	MAX_HUAYI_HYID,
 }FCGI_HYID_ENUM;
 
@@ -287,6 +289,8 @@ typedef enum
 #define HUAYI_SET_CARD                                  60
 
 #define HUAYI_RELOAD_4G_MODE							75
+#define HUAYI_SET_XL2TPD_IPSEC							10
+#define HUAYI_SET_IPSERC                                5
 
 #define HUAYI_DEFAULT_DHCP_START						1
 #define HUAYI_DEFAULT_DHCP_LIMIT						254
@@ -562,6 +566,7 @@ int set_vpn_user_config(cJSON *request_root, cJSON *response_root,int *lock_time
 int get_vpn_user_status(cJSON *request_root, cJSON *response_root, int *lock_time);
 FCGI_BOOL get_vpn_type_list(cJSON *result_root);
 int do_kick_vpn_user(cJSON *request_root, cJSON *response_root, int *lock_time);
-
+int get_openvpn_config(cJSON *request_root, cJSON *response_root,int *lock_time);
+int set_openvpn_config(cJSON *request_root, cJSON *response_root, int *lock_time);
 #endif
 #endif
