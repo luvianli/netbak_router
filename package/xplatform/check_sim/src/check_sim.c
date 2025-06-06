@@ -7,6 +7,14 @@
  * 20220215 add by rex  Version 1.0
  * check sim card
  ******************************************************************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #include "huayi_atcmd.h"
 #include "huayi_uci_fun.h"
 #include <signal.h>
@@ -446,10 +454,6 @@ void init_cloud_client()
 	//sleep(10);
 	//system("huayi_mqtt_pub &");
 	//system("huayi-reset ntpd");
-
-    char serverip[OPTION_STR_LEN] = { 0 };
-    change_ip("device.10086group.com",serverip);
-    huayi_uci_set_str(PKG_SYSTEM,"server","serverip",serverip);
     return;
 }
 
@@ -781,7 +785,21 @@ int main(int argc, char *argv[])
         Production_testing_mode();
             
         system("switch_sim 3");
-        
+        huayi_uci_set_str(PKG_SYSTEM,"server","serverip","1");
+        while(1)
+        {
+            sleep(30);
+            char serverip[OPTION_STR_LEN] = { 0 };
+            huayi_uci_get_str(PKG_SYSTEM,"server","serverip",serverip);
+            if(strlen(serverip) > 6)
+            {
+                CON_LOG("server ip %s\n",serverip);
+                break;
+            }
+            change_ip("device.10086group.com",serverip);
+            huayi_uci_set_str(PKG_SYSTEM,"server","serverip",serverip);
+            CON_LOG("server ip %s\n",serverip);
+        }
 	}else
     {
         init_cloud_client();
