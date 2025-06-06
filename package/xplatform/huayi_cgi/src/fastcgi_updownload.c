@@ -388,6 +388,123 @@ FCGI_BOOL get_upload_nohead_content(char * filename,int *rest_code)
 	return FCGI_TRUE;
 }
 
+FCGI_BOOL get_upload_nohead_content_notfilesize(char * filename,int *rest_code)
+{
+	FILE *f=NULL;
+	int ilen=0,itry=0;
+	int first_read = 1;
+	int first_read_len = 0;
+	int data_len = 0;
+	char *text_head = NULL;
+	char tmp_text[4096]={0};
+
+	system("echo 3 > /proc/sys/vm/drop_caches");
+
+	data_len = strtol(getenv("CONTENT_LENGTH"), NULL, 10);
+
+	f = fopen(filename, "w+");
+
+	if(!f)
+	{
+		*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+		return FCGI_FALSE;
+	}
+	
+	while(1)
+	{
+		memset(tmp_text, 0, LONG_BUFF_LEN);
+		itry=fread(tmp_text, 1, LONG_BUFF_LEN, stdin);
+		if(itry <= 0)
+		{
+           	fclose(f);
+			*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+			return FCGI_FALSE;
+		}
+
+		while(first_read == 1 && itry < LONG_BUFF_LEN)
+		{
+			first_read_len = fread(tmp_text+itry, 1, LONG_BUFF_LEN-itry, stdin);
+			if (first_read_len <= 0)
+			{
+				fclose(f);
+				*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+				return FCGI_FALSE;
+			}
+			itry += first_read_len;
+		}
+
+		if (first_read == 1)
+		{			
+			if ((text_head = strstr(tmp_text,"\r\n\r\n")) == NULL)
+			{
+				fclose(f);
+				*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+				return FCGI_FALSE;
+			}
+			text_head += 4;
+			itry = itry - (text_head - tmp_text);
+
+			data_len = data_len - (text_head - tmp_text);
+
+			ilen = fwrite(text_head, 1,itry, f);
+			if(ilen!=itry)
+			{
+				fclose(f);
+				*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+				return FCGI_FALSE;
+			}
+
+			data_len = data_len - ilen;
+			
+			first_read = 0;
+			continue;
+		}
+
+		if (data_len <= (LONG_BUFF_LEN*2))
+		{
+			while(itry < data_len)
+			{
+				first_read_len = fread(tmp_text+itry, 1, data_len-itry, stdin);
+				if (first_read_len <= 0)
+				{
+					fclose(f);
+					*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+					return FCGI_FALSE;
+				}
+				itry += first_read_len;
+			}
+			
+			if ((text_head = memmem(tmp_text, itry, "\r\n", strlen("\r\n"))) != NULL)
+			{
+				
+				itry = (text_head - tmp_text) + strlen("\r\n");
+			}
+			ilen = fwrite(tmp_text, 1,itry, f);
+			if(ilen!=itry)
+			{
+				fclose(f);
+				*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+				return FCGI_FALSE;
+			}
+			break;
+		}
+		
+		ilen = fwrite(tmp_text, 1,itry, f);
+		if(ilen!=itry)
+		{
+			fclose(f);
+			*rest_code = FCGI_RESP_CODE_SERVER_FAILURE;
+			return FCGI_FALSE;
+		}
+
+		data_len = data_len - ilen;
+	}
+	
+	fclose(f);
+	
+	return FCGI_TRUE;
+}
+
 int cut_upload_file(char *filename,char *realfile)
 {
 	int file_begin, file_end;

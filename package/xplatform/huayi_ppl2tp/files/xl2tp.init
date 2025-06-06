@@ -8,10 +8,14 @@ BIN=/usr/sbin/xl2tp
 OPTIONS=/var/etc/options.xl2tp
 MAIN_CONFIG=/var/etc/xl2tp.conf
 
+
+
 setup_config() {
 	
 	enable=`uci -q get ppl2tp.xl2tp.enable`
-	
+    ipsec_enable=`uci -q get ppl2tp.xl2tp.ipsec_enable`
+    ipsec_key=`uci -q get ppl2tp.xl2tp.ipsec_key`
+
 	[ "$enable" -eq 0 ] && return 1
 	
 	username=`uci -q get ppl2tp.xl2tp.username`
@@ -41,6 +45,13 @@ setup_config() {
 	echo "name = ${username}" >> $MAIN_CONFIG
 	echo "lns = ${server_ip}" >> $MAIN_CONFIG
 	echo "pppoptfile = ${OPTIONS}" >> $MAIN_CONFIG
+	
+    # ly add
+    if [ "$ipsec_enable" -eq 1 ]; then
+       # echo "ipsec enable" >> $OPTIONS
+        echo "ipsec key ${ipsec_key}" >> $OPTIONS
+    fi
+	#
 	return 0
 }
 
@@ -54,8 +65,6 @@ start() {
 stop() { 
 	echo 'd xl2tp' > /var/run/xl2tpd/l2tp-control
 	service_stop $BIN
-	rm -rf $MAIN_CONFIG
-	rm -rf $OPTIONS
-	rm -rf /var/log/xl2tp.log
+
 }
 

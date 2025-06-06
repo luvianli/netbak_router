@@ -34,12 +34,66 @@ int main(int argc,char *argv[])
 	int cpe_link = 0;
 	int old_int_mode = INTERNET_UNDEFINE;
 	int now_int_mode = INTERNET_UNDEFINE;
-	int  i = 0;
-	char detectip[OPTION_STR_LEN] = {0};
+	int  i = 0,enable = 1;
+	char detectip[OPTION_STR_LEN] = {0},dev[CMD_STR_LEN];
 	
 	while(1)
 	{
-		sleep(20);
+		huayi_uci_get_int(PKG_PPL2TP,"openvpn","enable",&enable);
+		if(enable)//vpn打开
+		{
+			huayi_uci_get_str(PKG_PPL2TP,"openvpn","dev",dev);
+			sprintf(cmd_str, "ifconfig | grep %s | wc -l",dev);
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+			huayi_uci_get_str(PKG_SYSTEM, "mqtt", "host", detectip);
+			if(atoi(resultbuf) > 0)//vpn连接成功
+			{
+				huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ifname", wan_ifname);
+				huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "gateway", wan_gateway);
+				memset(cmd_str,0,sizeof(cmd_str));
+				memset(resultbuf,0,sizeof(resultbuf));
+				sprintf(cmd_str, "route -n | grep %s | awk '{print $8}'", detectip);
+        		get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+				if(strcmp(wan_ifname,resultbuf))
+				{
+					if(strlen(resultbuf)>0)
+					{
+						memset(cmd_str,0,sizeof(cmd_str));
+						sprintf(cmd_str,"route del %s",detectip);
+						system(cmd_str);
+					}
+					memset(cmd_str,0,sizeof(cmd_str));
+					sprintf(cmd_str,"route add %s gw %s dev %s",detectip,wan_gateway,wan_ifname);
+					system(cmd_str);					
+				}
+			}else
+			{
+				memset(cmd_str,0,sizeof(cmd_str));
+				memset(resultbuf,0,sizeof(resultbuf));
+				sprintf(cmd_str, "route -n | grep %s | wc -l", detectip);
+				get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+				if(atoi(resultbuf) > 0)
+				{
+					memset(cmd_str,0,sizeof(cmd_str));
+					sprintf(cmd_str,"route del %s",detectip);
+					system(cmd_str);
+				}
+			}
+		}else
+		{
+			memset(cmd_str,0,sizeof(cmd_str));
+			memset(resultbuf,0,sizeof(resultbuf));
+			sprintf(cmd_str, "route -n | grep %s | wc -l", detectip);
+			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
+			if(atoi(resultbuf) > 0)
+			{
+				memset(cmd_str,0,sizeof(cmd_str));
+				sprintf(cmd_str,"route del %s",detectip);
+				system(cmd_str);
+			}
+		}
+
+		sleep(30);
 		memset(wan_type,0,sizeof(wan_type));
 		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 
