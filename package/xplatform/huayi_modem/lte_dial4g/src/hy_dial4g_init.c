@@ -167,10 +167,6 @@ int main(int argc, char *argv[])
 				if(count == 3) {
                     CON_LOG("/etc/init.d/huayi_dial4gcontrol restart");
 					system("/etc/init.d/huayi_dial4gcontrol restart");
-                    if(!strcmp(product_model, "WYX3C-1W"))
-					{
-						system("switch_sim 0 &");
-					} 
 					break;
 				} else {
 					sleep(1);

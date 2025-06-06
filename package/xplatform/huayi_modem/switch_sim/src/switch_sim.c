@@ -223,6 +223,7 @@ int switchSim() {
 #endif
 
         case EXTERNAL_CARD_LOW_LOW:
+            SWITCH_SIM_LOG("Switching External card; 0 Setting LOW=2.7V & 2 Setting LOW=2.7V");
             printf("Switching External card; 0 Setting LOW=2.7V & 2 Setting LOW=2.7V\n");
             system("gpio l 0 4000 0 0 0 4000");
             system("gpio l 2 4000 0 0 0 4000");

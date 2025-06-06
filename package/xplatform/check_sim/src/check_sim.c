@@ -746,16 +746,30 @@ cretry2:
 
 int main(int argc, char *argv[])
 {
-	init_cloud_client();
+    char product_model[OPTION_STR_LEN] = {0};
+    if(!strcmp(product_model, "WYX3C-1W"))
+	{
+        init_cloud_client();
+        
+        SLM_init();
 
-	SLM_init();
+        Production_testing_mode();
+            
+        system("switch_sim 3");
+        
+	}else
+    {
+        init_cloud_client();
 
-	Production_testing_mode();
+        SLM_init();
 
-	check_network();
-	//check_modem_edition();
+        Production_testing_mode();
 
-	check_network_two();
+        check_network();
+        //check_modem_edition();
+
+        check_network_two();
+    }
 
     return 0;
 }
