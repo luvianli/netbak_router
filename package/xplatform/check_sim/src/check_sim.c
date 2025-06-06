@@ -776,6 +776,7 @@ cretry2:
 int main(int argc, char *argv[])
 {
     char product_model[OPTION_STR_LEN] = {0};
+    huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
     if(!strcmp(product_model, "WYX3C-1W"))
 	{
         init_cloud_client();
