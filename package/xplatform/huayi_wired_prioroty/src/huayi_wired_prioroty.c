@@ -46,7 +46,7 @@ int main(int argc,char *argv[])
 			sprintf(cmd_str, "ifconfig | grep %s | wc -l",dev);
 			get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
 			huayi_uci_get_str(PKG_SYSTEM, "mqtt", "host", detectip);
-			if(atoi(resultbuf) > 0)//vpn连接成功
+			if(atoi(resultbuf) > 0 && strlen(detectip) > 0)//vpn连接成功
 			{
 				huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ifname", wan_ifname);
 				huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "gateway", wan_gateway);
