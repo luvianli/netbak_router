@@ -415,6 +415,28 @@ cretry2:
     return;
 }
 
+int change_ip(char *url,char *ip)
+{
+    struct hostent *he;
+    struct in_addr **addr_list;
+    int i;
+	
+    if ((he = gethostbyname(url)) == NULL) {
+        // 获取host信息失败
+        herror("gethostbyname");
+		CLOUD_CLIENT_LOG("%s%d,changeip error\n",__FUNCTION__,__LINE__);
+        return -1;
+    }
+
+	// 将hostent结构体中的地址转换为IP地址
+	addr_list = (struct in_addr **)he->h_addr_list;
+    for(i = 0; addr_list[i] != NULL; i++) {
+        // 返回第一个找到的IP地址
+        strcpy(ip,inet_ntoa(*addr_list[i]));
+    }
+
+	return 0;
+}
 
 void init_cloud_client()
 {
@@ -425,6 +447,9 @@ void init_cloud_client()
 	//system("huayi_mqtt_pub &");
 	//system("huayi-reset ntpd");
 
+    char serverip[OPTION_STR_LEN] = { 0 };
+    change_ip("device.10086group.com",serverip);
+    huayi_uci_set_str(PKG_SYSTEM,"server","serverip",serverip);
     return;
 }
 
