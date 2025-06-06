@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <unistd.h>
 #include <huayi_uci_fun.h>
 
@@ -189,7 +189,7 @@ int main(int argc,char *argv[])
 
 			huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
 
-			if(old_int_mode != now_int_mode)
+			//if(old_int_mode != now_int_mode)
 			{	
 				memset(cmd_str,0,sizeof(cmd_str));
 				snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);
