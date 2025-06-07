@@ -59,7 +59,7 @@ int init_curl_txt(CURL **curl, char *url, char *post_fields, int post_size ,call
 	}
 
 	if(strlen(post_fields) != 0) {
-		// ÉèÖÃhttp·¢ËÍµÄÄÚÈÝÀàÐÍÎªJSON  
+		// ï¿½ï¿½ï¿½ï¿½httpï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªJSON  
 		struct curl_slist *plist = NULL;
         plist = curl_slist_append(plist, "Content-Type:application/x-www-form-urlencoded;charset=UTF-8");  
         curl_easy_setopt(*curl, CURLOPT_HTTPHEADER, plist);
@@ -103,7 +103,7 @@ int init_curl(CURL **curl, char *url, char *post_fields, int post_size ,callback
 	}
 
 	if(strlen(post_fields) != 0) {
-		// ÉèÖÃhttp·¢ËÍµÄÄÚÈÝÀàÐÍÎªJSON  
+		// ï¿½ï¿½ï¿½ï¿½httpï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªJSON  
 		struct curl_slist *plist = NULL;
         plist = curl_slist_append(plist, "Content-Type:application/json;charset=UTF-8");  
         curl_easy_setopt(*curl, CURLOPT_HTTPHEADER, plist);
@@ -141,16 +141,16 @@ int init_curl_https(CURL **curl, char *url, char *post_fields, int post_size, ca
         return -1;
     }
 
-    // ÆôÓÃSSLÑéÖ¤
+    // ï¿½ï¿½ï¿½ï¿½SSLï¿½ï¿½Ö¤
     curl_easy_setopt(*curl, CURLOPT_SSL_VERIFYPEER, 1L);
     curl_easy_setopt(*curl, CURLOPT_SSL_VERIFYHOST, 2L);
 
-    // ÉèÖÃSSLÖ¤ÊéÂ·¾¶
+    // ï¿½ï¿½ï¿½ï¿½SSLÖ¤ï¿½ï¿½Â·ï¿½ï¿½
     //curl_easy_setopt(*curl, CURLOPT_CAINFO, "/etc/in/your/certificate.pem");
     curl_easy_setopt(*curl, CURLOPT_CAINFO, "");
 
     if (strlen(post_fields) != 0) {
-        // ÉèÖÃhttp·¢ËÍµÄÄÚÈÝÀàÐÍÎªJSON  
+        // ï¿½ï¿½ï¿½ï¿½httpï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªJSON  
         struct curl_slist *plist = NULL;
         plist = curl_slist_append(plist, "Content-Type:application/json;charset=UTF-8");
         curl_easy_setopt(*curl, CURLOPT_HTTPHEADER, plist);
@@ -300,12 +300,12 @@ void* heart_handle()
 	huayi_uci_get_int(PKG_SYSTEM,"server","interval", &interval);
 	gTimeWait = interval;
 	while(1) {
-		if(!internet_do_ping_detect(INTERNET_DOMAIN, NULL)){
+		/*if(!internet_do_ping_detect(INTERNET_DOMAIN, NULL)){
 			huayi_uci_set_int(PKG_SYSTEM,"server","success", 1);
 			CLOUD_CLIENT_LOG("network error,sleep 20s\n");			
 			sleep(20);
 			continue;
-		}
+		}*/
 
 		huayi_uci_set_int(PKG_SYSTEM,"server","success", 0);
 
@@ -519,7 +519,7 @@ int main(int argc, char *argv[])
 
 	pthread_create(&heartTid, NULL, heart_handle, NULL);
 	
-	err = pthread_join(heartTid,&tret);//×èÈûµÈ´ýÏß³ÌidÎªtid1µÄÏß³Ì£¬Ö±µ½¸ÃÏß³ÌÍË³ö  
+	err = pthread_join(heartTid,&tret);//ï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½ï¿½ß³ï¿½idÎªtid1ï¿½ï¿½ï¿½ß³Ì£ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ß³ï¿½ï¿½Ë³ï¿½  
     if(err!=0)  
     {   
         printf("can not join with clound client:%s\n",strerror(err));
