@@ -541,11 +541,16 @@ int main(int argc, char *argv[])
 
     Production_testing_mode();
 
-    check_apn();
+    //check_apn();
 
-    check_network();
+    //check_network();
     //init_cloud_client();
 
+    int simn = 0;
+    char cmd[OPTION_STR_LEN] = {0};
+ 	huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &simn);
+    sprintf(cmd, "switch_sim %d", simn);
+    system(cmd);   
     return 0;
 }
 
