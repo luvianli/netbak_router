@@ -482,13 +482,15 @@ void huayi_core_delay_start_special_led(struct VcoreAgent *Agent)
 void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 {
 	int network_status = 0;
+	char detectip[OPTION_STR_LEN] = {0};
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	int i_ready = 0; 
 #endif
 	char product_model[OPTION_STR_LEN] = {0};
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
+	huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip",detectip);
 
-	if (internet_do_ping_detect(INTERNET_DOMAIN, NULL) == 1)
+	if (internet_do_ping_detect(detectip, NULL) == 1)
 	{
 		network_status = 1;	
 
@@ -557,20 +559,25 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 		int i_signal;
 		atcmd_get_signal(&i_signal);
 		if(i_signal > 67)
-		{
+		{
+
 			do_signal_led_high();
 		}else if(i_signal > 34)
-		{
+		{
+
 			do_signal_led_middle();
 		}else if(i_signal > 0)
-		{
+		{
+
 			do_signal_led_low();
 		}else
-		{
+		{
+
 			do_signal_led_off();
 		}//rssi=csq*2-113,i_signal=csq*100/31
 	}else
-	{
+	{
+
 		do_signal_led_off();
 	}	
 #endif
