@@ -125,7 +125,7 @@ typedef struct Operator {
 #if defined(CONFIG_PACKAGE_HUAYI_REP4G_PRIORITY)
 #define WISP4G_TMPFILE                                  "/tmp/.wisp_success"
 #endif
-#define INTERNET_DOMAIN									"device.10086group.com"
+#define INTERNET_DOMAIN									"www.qq.com"
 #define INTERNET_ABROAD_DOMAIN							"8.8.8.8"
 
 #define HUAYI_NET_PROTO_DISABLE   						"disable"

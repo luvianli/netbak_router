@@ -376,7 +376,7 @@ success:
 #endif
 void check_network()
 {
-    int totalsimnum = 0, simn = 0, usegpio = 0,at_card = 0;
+    int totalsimnum = 0, simn = 0, usegpio = 0,at_card = 0,card_slot = 0;
     char cmd[OPTION_STR_LEN] = {0};
     int  netoperator = 0;
     char tmp[OPTION_STR_LEN] = {0};
@@ -386,7 +386,7 @@ void check_network()
 	int status = 1;
     char lte_value[OPTION_STR_LEN] = {0};
     char iccid[OPTION_STR_LEN] = { 0 };
-    int enable = 0;
+    int enable = 0,successtimes = 0,check_times = 0;
 
     isProductionMode();
 
@@ -409,7 +409,7 @@ cretry1:
             CON_LOG("Process switch_sim is running. Waiting for 5 seconds...\n");
             sleep(5);
         }
-		//status = atcmd_get_slm_mobile_type(cmd);
+		status = atcmd_get_slm_mobile_type(cmd);
 		if(status == 1)
 		{	
 		    if (networkCheck(check_ip))
@@ -425,34 +425,56 @@ cretry1:
 				{
 					CON_LOG("at_card change,reload network check\n");
 					count = 0;
+                    successtimes = 0;
 					continue ;
 				}
-                CON_LOG("sim%d ping bu tong %d times,sleep 60s", simn, count);
-		        sleep(60);
-		        if (count <= 9)
+                CON_LOG("sim%d ping bu tong %d times", simn, count);
+		        sleep(6);
+		        if (count <= 5)
 		            goto cretry1;
 		    }
 		    count = 0;
-
 		    CON_LOG("sim%d ping bu tong %s", simn, check_ip);
 		}else CON_LOG("sim%d cops is error", simn);
-check_net:
+
 	    huayi_uci_get_int(PKG_M_SYSTEM, "system", "simnum", &totalsimnum);
 	    for (i = 0; i < totalsimnum; i++)
 	    {
 	        if (i == simn)
 	            continue;
-
+            successtimes = 0;
 	        CON_LOG("network error ,switch sim%d", i);
-	        //isProductionMode();
 	        memset(tmp, 0, OPTION_STR_LEN);
 	        sprintf(tmp, "switch_sim %d", i);
 	        system(tmp);
-	        sleep(20);
+            sleep(20);
+            save_useing_siminfo(i);
+            goto end;
 	    }
 	
 success:
-		sleep(60);
+        huayi_uci_get_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", &card_slot);
+        if (card_slot != simn)
+        {
+            successtimes += 1;
+            huayi_uci_get_int(PKG_M_SYSTEM, "system", "check_times", &check_times);
+            if(successtimes >= check_times)
+            {
+                CON_LOG("sim %d network ok %d times,switch sim %d", simn, successtimes, card_slot);
+                sprintf(tmp, "switch_sim %d", card_slot);
+                system(tmp);
+                sleep(20);
+                save_useing_siminfo(card_slot);
+                successtimes = 0;
+            }else
+                sleep(60);
+        }else
+        {
+            successtimes = 0;
+            sleep(60);
+        }
+end:
+        sleep(1);
 	}
     return;
 }

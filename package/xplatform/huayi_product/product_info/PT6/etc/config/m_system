@@ -22,6 +22,7 @@ config system system
 	option external_card_enable 0
 	option band -1
 	option at_card 0
+	option check_times 30
 	
 config usesiminfo usesiminfo
 	option operator ''
@@ -30,8 +31,8 @@ config usesiminfo usesiminfo
 	option switchreq 0
 	option rebootact 0
 	option speedcmd ''
-	option checksignalips 'device.10086group.com;device.gizwitsapi.com;223.5.5.5'
-	option default_checkip 'device.10086group.com;device.gizwitsapi.com;223.5.5.5'
+	option checksignalips '223.5.5.5;www.baidu.com;www.qq.com'
+	option default_checkip '223.5.5.5;www.baidu.com;www.qq.com'
 	option maxdelay ''
 	option card_slot 0
 	option lock 0
