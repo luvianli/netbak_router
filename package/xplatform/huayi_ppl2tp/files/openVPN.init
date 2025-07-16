@@ -1,30 +1,28 @@
 #!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
 
 START=99
 
-openvpn_client_init() {
 
-    
-    # 从配置文件中获取 OpenVPN 相关参数
-    server_hostname=$(uci -q get ppl2tp.openvpn.host_name)
-    port=$(uci -q get ppl2tp.openvpn.port)
-    username=$(uci -q get ppl2tp.openvpn.username)
-    password=$(uci -q get ppl2tp.openvpn.pwd)
-    option=$(uci -q get ppl2tp.openvpn.option)
-    enable=$(uci -q get ppl2tp.openvpn.enable)
-    
-    if [ "$option" -eq "0" ]; then
-        if [ "$enable" -eq "1" ]; then
-            mkdir -p /path/to/
-            echo "$username" > /path/to/credentials.txt
-            echo "$password" >> /path/to/credentials.txt
-            
+openvpn_client_init(){
+	server_hostname=$(uci -q get ppl2tp.openvpn.host_name)
+	port=$(uci -q get ppl2tp.openvpn.port)
+	username=$(uci -q get ppl2tp.openvpn.username)
+	password=$(uci -q get ppl2tp.openvpn.password)
+	option=$(uci -q get ppl2tp.openvpn.option)
+	enable=$(uci -q get ppl2tp.openvpn.enable)
 
-            cat <<EOF > /etc/openvpn/openVPN.ovpn
+	if [ "$option" -eq "0" ]; then
+		if [ "$enable" -eq "1" ]; then
+			mkdir -p /path/to/
+			echo "$username" > /path/to/credentials
+			echo "$password" >> /path/to/credentials
+
+			cat <<EOF > /etc/openvpn/openvpn.conf
 client
 dev tun
 proto udp
-remote "$server_hostname" "$port"
+remote $server_hostname $port
 resolv-retry infinite
 nobind
 persist-key
@@ -32,36 +30,32 @@ persist-tun
 cipher AES-256-CBC
 comp-lzo
 verb 3
-auth-user-pass /path/to/credentials.txt
+auth-user-pass /path/to/credentials
 EOF
-
-
-            uci set ppl2tp.openvpn.dev=tun
+			uci set ppl2tp.openvpn.dev=tun
 			echo nameserver 8.8.8.8 > /tmp/resolv.conf.auto
 			echo nameserver 8.8.4.4 >> /tmp/resolv.conf.auto
-        else
-            echo "OpenVPN is not enabled in the configuration."
-        fi
-		
-    else
-        DEV=$(awk '/^dev/ {print $2}' /etc/openvpn/openVPN.ovpn)
-        uci set ppl2tp.openvpn.dev="$DEV"
+		else
+			echo "OpenVPN is disabled in the configuration."
+		fi
+	else
+		DEV=$(awk '/^dev/ {print $2}' /etc/openvpn/openVPN.ovpn)
+		uci set ppl2tp.openvpn.dev=$DEV
 		echo nameserver 8.8.8.8 > /tmp/resolv.conf.auto
 		echo nameserver 8.8.4.4 >> /tmp/resolv.conf.auto
-    fi
-    
-    #uci commit
-    chmod 600 /etc/openvpn/openVPN.ovpn
-}
-start() {
-    echo "Starting custom OpenVPN client..."
-	killall openvpn #might not be necessary here
-    openvpn_client_init
-    openvpn --config /etc/openvpn/openVPN.ovpn --daemon
+	fi
+
+	chmod 600 /etc/openvpn/openVPN.ovpn
 }
 
-stop() {
-    echo "Stopping custom OpenVPN client..."
-    #rm -f /etc/openvpn/openVPN.ovpn
-    killall openvpn
+start() {
+    echo "Starting OpenVPN service..."
+	killall openvpn
+	openvpn_client_init
+	openvpn --config /etc/openvpn/openVPN.ovpn --daemon
+}
+
+stop(){
+	echo "Stopping OpenVPN service..."
+	killall openvpn
 }
