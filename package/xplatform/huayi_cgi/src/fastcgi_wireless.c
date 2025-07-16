@@ -579,7 +579,7 @@ int set_wifi_easyconf(cJSON *request_root, cJSON *response_root,int *lock_time)
 	huayi_uci_set_str(PKG_WIRELESS,section,"authmode", authmode_2g);
 	huayi_uci_set_str(PKG_WIRELESS,section,"key", wifikey_2g);
 	huayi_uci_set_int(PKG_WIRELESS,section,"hidden", hidden_2g);
-	if(1 == bndstrg_enable) {   /*2g¡¢5g config same*/
+	if(1 == bndstrg_enable) {   /*2gï¿½ï¿½5g config same*/
 		memset(section, 0, sizeof(section));
 		/*section 2 is 5g main ssid*/
 		snprintf(section,sizeof(section),"@wifi-iface[%d]", 2); 
@@ -1549,6 +1549,8 @@ int set_wifi_scan_start(cJSON *request_root, cJSON *response_root,int *lock_time
 		return FCGI_RESP_CODE_DATA_MISS;	
 	}	
 
+	system("huayi_cmd set system scan_state 1");
+	
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	sprintf(huayi_cmd,"huayi-reset scan parameter %d",WIFI_ALL_SCAN);
 #else
@@ -1557,7 +1559,7 @@ int set_wifi_scan_start(cJSON *request_root, cJSON *response_root,int *lock_time
 
 	system(huayi_cmd);
 
-	system("huayi_cmd set system scan_state 1");
+	//system("huayi_cmd set system scan_state 1");
 	
 	
 	return FCGI_RESP_CODE_SUCCESS;
@@ -2105,7 +2107,8 @@ int get_wireless_status(cJSON *request_root, cJSON *response_root,int *lock_time
 	char guest_passphrase[TEMP_STR_LEN] = {0} ,guest_encry[TEMP_STR_LEN] = {0};
 
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-	int ssid_5g_enable = 0;
+
+	int ssid_5g_enable = 0;
 	char ssid_5g[TEMP_STR_LEN] = {0}, encry_5g[TEMP_STR_LEN] = {0};
 	char passphrase_5g[TEMP_STR_LEN] = {0};
 	int hide_5g = 0;
@@ -2361,7 +2364,8 @@ int set_wireless_status(cJSON *request_root, cJSON *response_root,int *lock_time
 	char guest_passphrase[TEMP_STR_LEN] = {0};
 
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
-	int ssid_5g_enable = 0;
+
+	int ssid_5g_enable = 0;
 	char ssid_5g[TEMP_STR_LEN] = {0};
 	int encry_5g = 0;
 	char passphrase_5g[TEMP_STR_LEN] = {0};

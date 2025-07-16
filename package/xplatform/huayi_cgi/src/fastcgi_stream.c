@@ -119,6 +119,16 @@ int main (int argc, char *argv[])
 				
 				goto upload_file;
 			}
+			if(!strcmp(rest_data,"streamid=9"))/*upgrade not keep setting*/
+			{
+                rest_code = do_openVPN_upgrade(&lock_time);
+				goto upload_file;
+			}
+			if(strstr(rest_data,"streamid=10&name="))/*upgrade not keep setting*/
+			{
+				rest_code = do_openVPN_configure_upgrade(rest_data+strlen("streamid=10&name="),&lock_time);
+				goto upload_file;
+			}
 		}
 		
 download_file:

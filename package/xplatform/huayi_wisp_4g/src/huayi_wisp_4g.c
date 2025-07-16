@@ -159,7 +159,7 @@ int IcmpnetworkConnect(const char* interface, const char* ipAddress) {
     packet.header.checksum = htons(~(ICMP_ECHO << 8));
 
     int seq = 0;
-    int count = 4;  // ·¢ËÍ ICMP ÇëÇóµÄ´ÎÊý
+    int count = 4;  // ï¿½ï¿½ï¿½ï¿½ ICMP ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½
     int successCount = 0;
 
     for (i = 0; i < count; i++) {
@@ -265,9 +265,8 @@ int wisp4g_internet_do_ping(const char *host, char *ifname, char *del_gateway)
 			sprintf(cmd,"route add default gw %s dev %s",wan_gateway,ifname);
 			system(cmd);
 		}
-	}else{
-		goto fail;
 	}
+
     if(networkCheck(ifname,host) == 0){
         return 1;
     }else{
@@ -306,7 +305,7 @@ int main(int argc,char *argv[])
 	delaycount = 1;
 	while(1)
 	{
-		sleep(10);
+		sleep(20);
 		memset(wan_type,0,sizeof(wan_type));
 		huayi_uci_get_str(PKG_SYSTEM,"mode","wan_type",wan_type);
 
@@ -332,7 +331,7 @@ int main(int argc,char *argv[])
 		if(wired_link == 0 && cpe_link == 0)
 			continue;
 
-    	atcmd_get_cpin(&simReady);
+    	/*atcmd_get_cpin(&simReady);
     	if(simReady == 1)
     	{
 			memset(cmd_str,0,sizeof(cmd_str));
@@ -352,14 +351,20 @@ int main(int argc,char *argv[])
                 system("huayi_cmd set blend cpe_link 0");
                 system("ifup wan");
             }
-        }
+        }*/
 		
 		if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0
 			&& strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
 			continue;
+
+		if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
+			wired_link = 0;
+		if(strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)	
+			cpe_link = 0;
+		
 		memset(wisp_ipv4, 0, sizeof(wisp_ipv4));
 		memset(wan4g_ipv4, 0, sizeof(wan4g_ipv4));
-		if(wired_link == 1 && cpe_link == 1)//Í¬Ê±ÔÚÏßÊ±£¬Ê¹ÓÃwispÓÅÏÈ²ßÂÔ
+		if(wired_link == 1 && cpe_link == 1)//Í¬Ê±ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ê¹ï¿½ï¿½wispï¿½ï¿½ï¿½È²ï¿½ï¿½ï¿½
 		{
 			memset(del_gateway, 0, sizeof(del_gateway));
 			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
@@ -370,12 +375,12 @@ int main(int argc,char *argv[])
 				memset(del_gateway, 0, sizeof(del_gateway));
 				huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
 				cpe_status = wisp4g_internet_do_ping(detectip, cpe_device, del_gateway);
-				if(cpe_status == 0)//Ê¹ÓÃwispÉÏÍø·½Ê½
+				if(cpe_status == 0)//Ê¹ï¿½ï¿½wispï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
 				{
                     system("ifup wan");
 					sprintf(section,"wisp");
                     
-				}else//Ê¹ÓÃ4GÉÏÍø·½Ê½
+				}else//Ê¹ï¿½ï¿½4Gï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
 				{
 					sprintf(section,"cpe");
 				}
@@ -385,24 +390,24 @@ int main(int argc,char *argv[])
 				get_maxdelay(detectip, wired_device);
 				if(delaycount >= 5)
 				{
-					//Ê¹ÓÃ4GÉÏÍø·½Ê½
+					//Ê¹ï¿½ï¿½4Gï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
 					sprintf(section,"cpe");
 				}
-				else  //Ê¹ÓÃwispÉÏÍø·½Ê½
+				else  //Ê¹ï¿½ï¿½wispï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
 				{
 					sprintf(section,"wisp");
 				}
 				delaycount = 1;
 			}
 		}
-		else if(cpe_link == 1)//Ê¹ÓÃ4GÉÏÍø·½Ê½
+		else if(cpe_link == 1)//Ê¹ï¿½ï¿½4Gï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
 		{	
 			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "ipv4", wan4g_ipv4);
 			if(strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
 				continue;
 			sprintf(section,"cpe");
 		}
-		else//Ê¹ÓÃwispÉÏÍø·½Ê½
+		else//Ê¹ï¿½ï¿½wispï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
 		{
 			huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "ipv4", wisp_ipv4);
 			if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
@@ -412,11 +417,11 @@ int main(int argc,char *argv[])
 
 		memset(cmd_str,0,sizeof(cmd_str));
 		memset(del_gateway,0,sizeof(del_gateway));
-		if(!strncmp(section,"wisp",strlen("wisp")))//Ê¹ÓÃwispÉÏÍø·½Ê½£¬É¾³ý4GÄ¬ÈÏÂ·ÓÉ
+		if(!strncmp(section,"wisp",strlen("wisp")))//Ê¹ï¿½ï¿½wispï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½É¾ï¿½ï¿½4GÄ¬ï¿½ï¿½Â·ï¿½ï¿½
 		{
 			huayi_uci_get_str(PKG_STATUS_BLEND, "cpe", "gateway", del_gateway);
 		}
-		else//4GÉÏÍø·½Ê½£¬É¾³ýÓÐÏßÄ¬ÈÏÂ·ÓÉ
+		else//4Gï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½É¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½Â·ï¿½ï¿½
 		{
 			huayi_uci_get_str(PKG_STATUS_BLEND, "wisp", "gateway", del_gateway);
 		}
@@ -439,7 +444,7 @@ int main(int argc,char *argv[])
 		}
 		else
 		{
-			/*ÅÐ¶Ïµ±Ç°Ê¹ÓÃµÄÄ¬ÈÏÂ·ÓÉÊÇ·ñÎª0.0.0.0£¬Èç¹ûÎª0.0.0.0£¬ÔòÉ¾³ý*/
+			/*ï¿½Ð¶Ïµï¿½Ç°Ê¹ï¿½Ãµï¿½Ä¬ï¿½ï¿½Â·ï¿½ï¿½ï¿½Ç·ï¿½Îª0.0.0.0ï¿½ï¿½ï¿½ï¿½ï¿½Îª0.0.0.0ï¿½ï¿½ï¿½ï¿½É¾ï¿½ï¿½*/
 			memset(cmd_str,0,sizeof(cmd_str));
 			memset(resultbuf, 0, sizeof(resultbuf));
 			strcpy(cmd_str,"route | grep \"default\" | awk {'print $2'}");
@@ -466,7 +471,7 @@ int main(int argc,char *argv[])
 
 		huayi_uci_get_str(PKG_STATUS_NETWORK, "wan", "ip_address", net_ipv4);
 		//printf("net_ipv4 = %s, wan_ipv4 = %s\n",net_ipv4, wan_ipv4);
-		//if(strcmp(wan_ipv4,net_ipv4))  //¸üÐÂprocÏÂµÄÍøÂç×´Ì¬ÐÅÏ¢
+		//if(strcmp(wan_ipv4,net_ipv4))  //ï¿½ï¿½ï¿½ï¿½procï¿½Âµï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½Ï¢
 		{	
 			memset(cmd_str,0,sizeof(cmd_str));
 			snprintf(cmd_str,CMD_STR_LEN,"huayi_cmd set network wan_device %s",wan_ifname);

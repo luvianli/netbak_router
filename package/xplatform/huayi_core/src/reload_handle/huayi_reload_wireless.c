@@ -189,7 +189,8 @@ VTBool huayi_wps_pin(void * arg,cJSON *input_root)
 			}
 #endif
 			
-			usleep(5000);
+			usleep(5000
+);
 
 			if (radio2g_disable == 0)
 			{
@@ -343,7 +344,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 	struct VcoreAgent *Agent =(struct VcoreAgent*)arg;
 	int scan_status = 0;
 	char scan_status_str[SMALL_STR_LEN] = {0};
-	int para = 0;
+	int para = 1;
 	
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)
 	int wlan_5g_disabled = 0;
@@ -355,6 +356,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 	huayi_json_get_int(input_root, "parameter", &para);
 
 	get_cmd_result("huayi_cmd get system scan_state",scan_status_str,SMALL_STR_LEN);
+	WISP_NETWORK_LOG("huayi_cmd get system scan_state %s", scan_status_str);
 	scan_status = atoi(scan_status_str);
 	if(scan_status == 1)
 	{	
@@ -364,6 +366,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 	if((para & WIFI_24G_SCAN) == WIFI_24G_SCAN)
 	{
 		system("iwpriv apcli0 set SiteSurvey=");
+		WISP_NETWORK_LOG("iwpriv apcli0 set SiteSurvey=");
 		sleep(5);
 	}
 	
@@ -421,6 +424,7 @@ VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root)
 
 	if(scan_status == 1)
 	{
+		WISP_NETWORK_LOG("huayi_cmd set system scan_state 2");	
 		system("huayi_cmd set system scan_state 2");
 	}else if(scan_status == 3)
 	{

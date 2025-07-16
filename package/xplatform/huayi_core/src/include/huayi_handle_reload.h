@@ -73,7 +73,7 @@ VTBool huayi_reload_vpn_user(void * arg,cJSON *input_root);
 VTBool huayi_reload_vpn_route(void * arg,cJSON *input_root);
 VTBool huayi_reload_vpn_server_route(void * arg,cJSON *input_root);
 
-
+VTBool huayi_reload_openvpn(void * arg,cJSON *input_root);
 #endif
 
 #endif
