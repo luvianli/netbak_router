@@ -331,7 +331,7 @@ int main(int argc,char *argv[])
 		if(wired_link == 0 && cpe_link == 0)
 			continue;
 
-    	/*atcmd_get_cpin(&simReady);
+    	atcmd_get_cpin(&simReady);
     	if(simReady == 1)
     	{
 			memset(cmd_str,0,sizeof(cmd_str));
@@ -351,7 +351,7 @@ int main(int argc,char *argv[])
                 system("huayi_cmd set blend cpe_link 0");
                 system("ifup wan");
             }
-        }*/
+        }
 		
 		if(strncmp(wisp_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0
 			&& strncmp(wan4g_ipv4, "0.0.0.0", strlen("0.0.0.0")) == 0)
