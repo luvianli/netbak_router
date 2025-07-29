@@ -17,7 +17,6 @@ validate_pptp_section() {
 		'mppe:uinteger' \
 		'debug:uinteger' \
 		'route_type:uinteger'
-		
 }
 
 setup_config() {
@@ -26,15 +25,18 @@ setup_config() {
 		return 1
 	}
 	
-	[ "$enable" -eq 0 ] && return 1
+	[ "$enable" -eq 0 ] && {
+		ifdown vpn
+		return 1
+	}
 	
 	mkdir -p /var/etc
 	cp /etc/ppp/options.pptp $OPTION_CONFIG
 	
-	echo "user $username" >> $OPTION_CONFIG
-	echo "password $password" >> $OPTION_CONFIG
-	echo "pptp_server $server_ip" >> $OPTION_CONFIG
-	
+	#echo "user $username" >> $OPTION_CONFIG
+	#echo "password $password" >> $OPTION_CONFIG
+	#echo "pptp_server $server_ip" >> $OPTION_CONFIG
+
 	[ "$mppe" -eq 0 ] && echo "mppe required,no40,no56,stateless" >>  $OPTION_CONFIG
 	[ "$mppe" -eq 1 ] && echo "mppe stateless" >>  $OPTION_CONFIG
 	[ "$mppe" -eq 2 ] && echo "nomppe" >>  $OPTION_CONFIG
@@ -48,20 +50,21 @@ setup_config() {
 		echo "nodefaultroute" >> $OPTION_CONFIG
 	fi
 	
+	ifup vpn
+	
 	return 0
 }
 
 start_service() {
-	config_load ppl2tp
+    config_load ppl2tp
 	setup_config ppl2tp || return
 	procd_open_instance
 	procd_set_param command $BIN file $OPTION_CONFIG
 	procd_close_instance
 }
 
-stop_service() {	
-	service_stop $BIN	
-	rm -rf $OPTION_CONFIG 
-	rm -rf $LOGFILE
+stop_service(){
+	service_stop $BIN
+	rm -f $OPTION_CONFIG
+	rm -f $LOGFILE
 }
-

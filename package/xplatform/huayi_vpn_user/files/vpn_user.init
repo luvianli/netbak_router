@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2006-2011 OpenWrt.org
 
 START=58
 USE_PROCD=1
@@ -25,11 +25,9 @@ setup_login() {
 	[ -n "${password}" ] || return 0
 	[ -n "$authenticate" ] || return 0
 	[ -n "$remoteip" ] || remoteip=*
-	
+
 	echo "${username} ${authenticate} ${password} ${remoteip}" >> $CHAP_SECRETS
 }
-
-
 
 start_service() {
 	mkdir -p /var/etc

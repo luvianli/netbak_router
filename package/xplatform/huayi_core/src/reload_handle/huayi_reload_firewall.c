@@ -35,6 +35,7 @@
 #define PPP_FILTER_FINPUT_CHAIN					"huayi_ppp_input_filter"
 #define PPP_FILTER_FORWARD_CHAIN				"huayi_ppp_forward_filter"
 #define PPP_FILTER_OUTPUT_CHAIN					"huayi_ppp_output_filter"
+#define PPP_INPUT_FILTER_CHAIN					"huayi_ppp_input_filter"
 
 #define PROTO_TCP						1
 #define PROTO_UDP						2
@@ -70,6 +71,7 @@ static void huayi_firewall_clear()
 	XCMD(strCmdBuf, "iptables -w -t filter -F %s ", PPP_FILTER_FINPUT_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -t filter -F %s ", PPP_FILTER_FORWARD_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -t filter -F %s ", PPP_FILTER_OUTPUT_CHAIN);
+	XCMD(strCmdBuf, "iptables -w -t filter -F %s ", PPP_INPUT_FILTER_CHAIN);
 #endif
 
 	
@@ -114,6 +116,7 @@ static void huayi_firewall_clear()
 	XCMD(strCmdBuf, "iptables -w -t filter -X %s", PPP_FILTER_FINPUT_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -t filter -X %s", PPP_FILTER_FORWARD_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -t filter -X %s", PPP_FILTER_OUTPUT_CHAIN);
+	XCMD(strCmdBuf, "iptables -w -t filter -X %s", PPP_INPUT_FILTER_CHAIN);
 	
 	//remote management
 	XCMD(strCmdBuf, "iptables -w -t nat -X %s ", REMOTE_MANAGEMENT_CHAIN);
@@ -193,13 +196,16 @@ VTBool huayi_spifirewall(void * arg, cJSON *input_root)
 	char strCmdBuf[CMD_STR_LEN]  = { 0 };
 	
 	XCMD(strCmdBuf, "iptables -w -A %s -m state --state INVALID -j DROP", SPI_FILTER_INPUT_CHAIN);
+	XCMD(strCmdBuf, "iptables -w -A %s -i apcli0 -p tcp --dport 22 -m state --state NEW -j ACCEPT", SPI_FILTER_INPUT_CHAIN);
+	XCMD(strCmdBuf, "iptables -w -A %s -i apcli0 -p tcp --dport 80 -m state --state NEW -j ACCEPT", SPI_FILTER_INPUT_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -A %s -i br-lan -m state --state NEW -j ACCEPT", SPI_FILTER_INPUT_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -A %s -i lo -m state --state NEW -j ACCEPT", SPI_FILTER_INPUT_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -A %s -m state --state ESTABLISHED,RELATED -j ACCEPT", SPI_FILTER_INPUT_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -A %s -j DROP", SPI_FILTER_INPUT_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -A %s -m state --state INVALID -j DROP", SPI_FILTER_FORWARD_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -A %s -i br-lan -m state --state NEW -j ACCEPT", SPI_FILTER_FORWARD_CHAIN);
-
+	XCMD(strCmdBuf, "iptables -w -A %s -i apcli0 -p tcp --dport 22 -m state --state NEW -j ACCEPT", SPI_FILTER_FORWARD_CHAIN);
+	XCMD(strCmdBuf, "iptables -w -A %s -i apcli0 -p tcp --dport 80 -m state --state NEW -j ACCEPT", SPI_FILTER_FORWARD_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -A %s -m state --state ESTABLISHED,RELATED -j ACCEPT", SPI_FILTER_FORWARD_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -A %s -j DROP", SPI_FILTER_FORWARD_CHAIN);
 
@@ -255,6 +261,8 @@ VTBool huayi_firewall_init()
 	XCMD(strCmdBuf, "iptables -w -t filter -A %s -j %s ", HUAYI_FILTER_FORWARD_CHAIN, PPP_FILTER_FORWARD_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -t filter -N %s ", PPP_FILTER_OUTPUT_CHAIN);
 	XCMD(strCmdBuf, "iptables -w -t filter -A %s -j %s ", HUAYI_FILTER_OUTPUT_CHAIN, PPP_FILTER_OUTPUT_CHAIN);
+	XCMD(strCmdBuf, "iptables -w -t filter -N %s ", PPP_INPUT_FILTER_CHAIN);
+	XCMD(strCmdBuf, "iptables -w -t filter -A %s -j %s ", HUAYI_FILTER_INPUT_CHAIN, PPP_INPUT_FILTER_CHAIN);
 #endif
 
 	//remote management
@@ -881,6 +889,21 @@ VTBool huayi_wan_up(void * arg, cJSON *input_root)
 }
 
 #if defined(CONFIG_HUAYI_SUPPORT_VPN)
+VTBool huayi_ppp_input_filter(void)
+{
+	VTBool ret = VT_TRUE;
+	char cmd[CMD_STR_LEN] = {0};
+	
+	/* Clear the chain first */
+	XCMD(cmd, "iptables -w -t filter -F %s", PPP_INPUT_FILTER_CHAIN);
+	
+	/* Add rules for PPTP (TCP port 1723) and GRE (protocol 47) */
+	XCMD(cmd, "iptables -w -t filter -A %s -p tcp --dport 1723 -j ACCEPT", PPP_INPUT_FILTER_CHAIN);
+	XCMD(cmd, "iptables -w -t filter -A %s -p 47 -j ACCEPT", PPP_INPUT_FILTER_CHAIN);
+	
+	return ret;
+}
+
 VTBool huayi_ppp_handler(PPP_HANDLE_TYPE type)
 {
 	VTBool ret = VT_TRUE;
@@ -969,6 +992,7 @@ VTBool huayi_firewall_all(void * arg,cJSON *input_root)
 	ret |= huayi_lanwan_conflictionip();
 #if defined(CONFIG_HUAYI_SUPPORT_VPN) 
 	ret |= huayi_ppp_handler(PPP_HANDLE_ALL);
+	ret |= huayi_ppp_input_filter();
 #endif
 	ret |= huayi_reload_wanping(arg, input_root);
 	ret |= huayi_reload_remote_manage(arg, input_root);

@@ -65,7 +65,8 @@ FCGI_BOOL huayi_add_switch_to_json(cJSON *root,char *name,int switch_value)
 	}else if(switch_value == 1)
 	{
 		cJSON_AddTrueToObject(root,name);
-	}else
+	}
+else
 	{
 		return FCGI_FALSE;
 	}
@@ -817,12 +818,12 @@ FCGI_BOOL get_vpn_type_list(cJSON *result_root)
 	for(id = 0; id < ARRAY_SIZE(vpntype_list); id++)
 	{
 		authenticate_obj= cJSON_CreateObject();
-		cJSON_AddNumberToObject(authenticate_obj,"id",id+1);
+		cJSON_AddNumberToObject(authenticate_obj,"index",id+1);
 		cJSON_AddStringToObject(authenticate_obj,"authenticate",vpntype_list[id]);
 		cJSON_AddItemToArray(authenticate_array,authenticate_obj);
 	}
 
-	cJSON_AddItemToObject(result_root,"vpn_type_list",authenticate_array);
+	cJSON_AddItemToObject(result_root,"vpn_type_arr",authenticate_array);
 
 	return FCGI_TRUE;
 }
@@ -967,7 +968,7 @@ int ipv6_reduce(char *str)
         }
         str[i]=str[j];
     }
-    str[i]='\0';//²¹ÉÏ½áÎ²
+    str[i]='\0';//ï¿½ï¿½ï¿½Ï½ï¿½Î²
     
 	s = strstr(str,":0:0");
 	if(s){

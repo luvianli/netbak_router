@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=98
+#START=98
 
 BIN=/usr/sbin/xl2tpd
 XL2TPD_CONFIG=/etc/xl2tpd/xl2tpd.conf
@@ -8,50 +8,50 @@ PPP_CLIENT=/etc/ppp/options.l2tpd.client
 
 
 create_file() {
-    local file_path=$1
-    if [ ! -e "$file_path" ]; then
-        touch "$file_path"
-    else
-        mv -f "$file_path" "$file_path.old"
-        touch "$file_path"
-    fi
+	local file_path=$1
+	if [ ! -e "$file_path" ]; then
+		touch "$file_path"
+	else
+		mv -f "$file_path" "$file_path.old"
+		touch "$file_path"
+	fi
 }
 
 
 add_iptables_rules() {
-    iptables -I INPUT -p udp --dport 500 -j ACCEPT
-    iptables -I INPUT -p udp --dport 4500 -j ACCEPT
-    iptables -I INPUT -p udp --dport 1701 -j ACCEPT
-    iptables -I INPUT -p 115 -j ACCEPT
-    iptables -I INPUT -p esp -j ACCEPT
+	iptables -I INPUT -p udp --dport 500 -j ACCEPT
+	iptables -I INPUT -p udp --dport 4500 -j ACCEPT
+	iptables -I INPUT -p udp --dport 1701 -j ACCEPT
+	iptables -I INPUT -p 115 -j ACCEPT
+	iptables -I INPUT -p esp -j ACCEPT
 }
 
 start_init() {
-    server_ip=$(uci -q get ppl2tp.xl2tp.server_ip)
+	server_ip=$(uci -q get ppl2tp.xl2tp.server_ip)
 
-    if echo "$server_ip" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
-        VPN_SERVER_IP=$server_ip
-        echo "Server IP: $VPN_SERVER_IP"
-    else
-        VPN_SERVER_IP=$(nslookup "$server_ip" | awk '/Name:/{getline; print $3}')
-        echo "DNS Server IP: $VPN_SERVER_IP"
-    fi
+	if echo "$server_ip" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+		VPN_SERVER_IP=$server_ip
+		echo "Server IP: $VPN_SERVER_IP"
+	else
+		VPN_SERVER_IP=$(nslookup "$server_ip" | awk '/Name:/{getline; print $3}')
+		echo "DNS Server IP: $VPN_SERVER_IP"
+	fi
 
-    VPN_IPSEC_PSK=$(uci -q get ppl2tp.xl2tp.ipsec_key)
-    VPN_USER=$(uci -q get ppl2tp.xl2tp.username)
-    VPN_PASSWORD=$(uci -q get ppl2tp.xl2tp.password)
+	VPN_IPSEC_PSK=$(uci -q get ppl2tp.xl2tp.ipsec_key)
+	VPN_USER=$(uci -q get ppl2tp.xl2tp.username)
+	VPN_PASSWORD=$(uci -q get ppl2tp.xl2tp.password)
 
-    cat > /etc/ipsec.conf <<EOF
+	cat > /etc/ipsec.conf <<EOF
 # ipsec.conf - strongSwan IPsec configuration file
 
 config setup
   # strictcrlpolicy=yes
   # uniqueids = no
- 
+
 # Add connections here.
- 
+
 # Sample VPN connections
- 
+
 conn %default
   ikelifetime=60m
   keylife=20m
@@ -59,9 +59,9 @@ conn %default
   keyingtries=1
   keyexchange=ikev1
   authby=secret
-  ike=aes128-sha1-modp1024,3des-sha1-modp1024!
-  esp=aes128-sha1-modp1024,3des-sha1-modp1024!
- 
+  ike=aes256-sha1-modp1024,3des-sha1-modp1024!
+  esp=aes256-sha1-modp1024,3des-sha1-modp1024!
+
 conn myvpn
   keyexchange=ikev1
   left=%defaultroute
@@ -69,44 +69,44 @@ conn myvpn
   authby=secret
   type=transport
   leftprotoport=17/1701
-  rightprotoport=17/1701
   right=$VPN_SERVER_IP
+  rightprotoport=17/1701
 EOF
 
 cat > /etc/ipsec.secrets <<EOF
 : PSK "$VPN_IPSEC_PSK"
 EOF
 
-    chmod 600 /etc/ipsec.secrets
+	chmod 600 /etc/ipsec.secrets
 
-    create_file "/etc/strongswan/ipsec.conf"
-    create_file "/etc/strongswan/ipsec.secrets"
-    ln -sf /etc/ipsec.conf /etc/strongswan/ipsec.conf
-    ln -sf /etc/ipsec.secrets /etc/strongswan/ipsec.secrets
+	create_file "/etc/strongswan/ipsec.conf"
+	create_file "/etc/strongswan/ipsec.secrets"
+	ln -sf /etc/ipsec.conf /etc/strongswan/ipsec.conf
+	ln -sf /etc/ipsec.secrets /etc/strongswan/ipsec.secrets
 
-    cat > /etc/xl2tpd/xl2tpd.conf <<EOF
+	cat > /etc/xl2tpd/xl2tpd.conf <<EOF
 [lac myvpn]
-lns = $VPN_SERVER_IP
-ppp debug = yes
-pppoptfile = /etc/ppp/options.l2tpd.client
-length bit = yes
+  lns = $VPN_SERVER_IP
+  ppp debug = yes
+  pppoptfile = /etc/ppp/options.l2tpd.client
+  length bit = yes	
 EOF
 
 cat > /etc/ppp/options.l2tpd.client <<EOF
-ipcp-accept-local
-ipcp-accept-remote
-refuse-eap
-require-chap
-noccp
-noauth
-mtu 1280
-mru 1280
-noipdefault
-defaultroute
-usepeerdns
-connect-delay 10000
-name "$VPN_USER"
-password "$VPN_PASSWORD"
+  ipcp-accept-local
+  ipcp-accept-remote
+  refuse-eap
+  require-chap
+  noccp
+  noauth
+  mtu 1280
+  mru 1280
+  noipdefault
+  defaultroute
+  usepeerdns
+  connect-delay 10000
+  name "$VPN_USER"
+  password "$VPN_PASSWORD"
 EOF
 
 chmod 600 /etc/ppp/options.l2tpd.client
@@ -115,29 +115,29 @@ add_iptables_rules
 }
 
 start() {
-    start_init
-    mkdir -p /var/run/xl2tpd
-    touch /var/run/xl2tpd/l2tp-control
-    ipsec start
-    /usr/sbin/xl2tpd -c /etc/xl2tpd/xl2tpd.conf
-    sleep 5
-    ipsec up myvpn && echo "c myvpn" > /var/run/xl2tpd/l2tp-control 
+	start_init
+	mkdir -p /var/run/xl2tpd
+	touch /var/run/xl2tpd/l2tp-control
+	ipsec start
+	/usr/sbin/xl2tpd -c /etc/xl2tpd/xl2tpd.conf
+	sleep 5
+	ipsec up myvpn && echo "c myvpn" > /var/run/xl2tpd/l2tp-control
 }
 
 stop() {
-    ipsec stop
-    echo 'd myvpn' > /var/run/xl2tpd/l2tp-control
-    killall xl2tpd
-    ipsec down myvpn
-    sed -i '/conn myvpn/d' /etc/ipsec.conf
-    sed -i '/%any/d' /etc/ipsec.secrets
+	ipsec stop
+	echo 'd myvpn' > /var/run/xl2tpd/l2tp-control
+	killall xl2tpd
+	ipsec down myvpn
+	sed -i '/conn myvpn/d' /etc/ipsec.conf
+	sed -i '/%any/d' /etc/ipsec.secrets
 }
 
 restart() {
-    stop
-    start
+	stop
+	start
 }
 
 reload() {
-    restart
+	restart
 }

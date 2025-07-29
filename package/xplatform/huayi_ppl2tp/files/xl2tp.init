@@ -7,14 +7,13 @@ BIN=/usr/sbin/xl2tp
 
 OPTIONS=/var/etc/options.xl2tp
 MAIN_CONFIG=/var/etc/xl2tp.conf
-
-
+PID_F="/var/run/xl2tp.pid"
 
 setup_config() {
 	
 	enable=`uci -q get ppl2tp.xl2tp.enable`
-    ipsec_enable=`uci -q get ppl2tp.xl2tp.ipsec_enable`
-    ipsec_key=`uci -q get ppl2tp.xl2tp.ipsec_key`
+	ipsec_enable=`uci -q get ppl2tp.xl2tp.ipsec_enable`
+	ipsec_key=`uci -q get ppl2tp.xl2tp.ipsec_key`
 
 	[ "$enable" -eq 0 ] && return 1
 	
@@ -27,7 +26,6 @@ setup_config() {
 	
 	mkdir -p /var/etc
 	cp /etc/ppp/options.xl2tp $OPTIONS
-	
 	
 	echo "user ${username}" >> $OPTIONS
 	echo "password ${password}" >> $OPTIONS
@@ -46,25 +44,22 @@ setup_config() {
 	echo "lns = ${server_ip}" >> $MAIN_CONFIG
 	echo "pppoptfile = ${OPTIONS}" >> $MAIN_CONFIG
 	
-    # ly add
-    if [ "$ipsec_enable" -eq 1 ]; then
-       # echo "ipsec enable" >> $OPTIONS
-        echo "ipsec key ${ipsec_key}" >> $OPTIONS
-    fi
+	# ly add
+	if [ "$ipsec_enable" -eq 1 ]; then
+		echo "ipsec key ${ipsec_key}" >> $OPTIONS
+	fi
 	#
 	return 0
 }
 
 start() {
 	setup_config
-	service_start $BIN -c $MAIN_CONFIG
+	service_start $BIN -D -c $MAIN_CONFIG -p "$PID_F"
 	sleep 2
-	echo 'c xl2tp' > /var/run/xl2tpd/l2tp-control 
+	echo 'c xl2tpd' > /var/run/xl2tpd/l2tp-control
 }
 
-stop() { 
-	echo 'd xl2tp' > /var/run/xl2tpd/l2tp-control
+stop() {
+	echo 'd xl2tpd' > /var/run/xl2tpd/l2tp-control
 	service_stop $BIN
-
 }
-

@@ -7,8 +7,6 @@ route_type=`uci -q get ppl2tp.xl2tp.route_type`
 	route add -net `echo $5 | cut -d . -f 1,2,3`.0 netmask 255.255.255.0 gw $4 dev $1
 }
 
-huayi-reset vpn_route
-
 iptables -w -A huayi_ppp_input_filter -i $1 -j ACCEPT
 iptables -w -A huayi_ppp_forward_filter -i $1 -j ACCEPT
 

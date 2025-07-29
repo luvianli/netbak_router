@@ -284,7 +284,8 @@ int get_pptp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	char target[IPV4_STR_LEN] = {0};
 	char netmask[IPV4_STR_LEN] = {0};
 	char inter_face[OPTION_STR_LEN] = {0};
-
+	char cmd[TEMP_STR_LEN] = {0};
+	char value[OPTION_STR_LEN] = { 0 };
 	int i = 0;
 
 	if(NULL == request_root || NULL == response_root || NULL == lock_time)
@@ -298,8 +299,8 @@ int get_pptp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	huayi_uci_get_str(PKG_PPL2TP,"pptp","password",password);
 	huayi_uci_get_int(PKG_PPL2TP,"pptp","mppe",&mppe);
 	huayi_uci_get_int(PKG_PPL2TP,"pptp","route_type",&route_type);
-	huayi_uci_get_str(PKG_STATUS_SYSTEM,"sys","pptp_ip",pptp_ip);
-	huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","pptp_link",&pptp_status);
+	//huayi_uci_get_str(PKG_STATUS_SYSTEM,"sys","pptp_ip",pptp_ip);
+	//huayi_uci_get_int(PKG_STATUS_SYSTEM,"sys","pptp_link",&pptp_status);
 
 	result_root = cJSON_CreateObject();
 
@@ -309,6 +310,19 @@ int get_pptp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	cJSON_AddStringToObject(result_root,"server_addr",server_ip);
 	cJSON_AddNumberToObject(result_root,"mppe",mppe);
 	cJSON_AddNumberToObject(result_root,"route_type",route_type);
+
+	if(pptp_enable)
+	{
+		sprintf(cmd, "ifconfig | grep pptp | awk '{print $1}'");
+		get_cmd_result(cmd, value, sizeof(value));
+		if(strlen(value)<4){
+			pptp_status = 0;
+		}else{
+			pptp_status = 1;
+			sprintf(cmd, "ip -4 -o addr show pptp-vpn | awk '{print $4}' | cut -d'/' -f1");
+			get_cmd_result(cmd, pptp_ip, sizeof(pptp_ip));
+		}
+	}
 	cJSON_AddNumberToObject(result_root,"pptp_status",pptp_status);
 	cJSON_AddStringToObject(result_root,"pptp_addr",pptp_ip);
 
@@ -386,7 +400,19 @@ int set_pptp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	huayi_uci_set_str(PKG_PPL2TP,"pptp","password",password);
 	huayi_uci_set_int(PKG_PPL2TP,"pptp","mppe",mppe);
 	huayi_uci_set_int(PKG_PPL2TP,"pptp","route_type",route_type);
-	
+
+	if(pptp_enable == 1)
+	{
+		huayi_uci_add_name_section(PKG_NETWORK, "interface", "vpn");
+		huayi_uci_set_str(PKG_NETWORK, "vpn", "proto", "pptp");
+		huayi_uci_set_str(PKG_NETWORK, "vpn", "server", server_ip);
+		huayi_uci_set_str(PKG_NETWORK, "vpn", "username", username);
+		huayi_uci_set_str(PKG_NETWORK, "vpn", "password", password);
+	}else
+	{
+		huayi_uci_del_section(PKG_NETWORK, "vpn");
+	}
+
 	if(route_type == 0 && pptp_enable == 1)
 	{
 		if(!(pptp_static_router_array= cJSON_GetObjectItem(request_root,"pptp_static_arr")))
@@ -479,7 +505,6 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	char inter_face[OPTION_STR_LEN] = {0};
 	int ipsec_enable = 0;
 	char ipsec_key[OPTION_STR_LEN] = {0};
-
 	int i = 0;
 
 	if(NULL == request_root || NULL == response_root || NULL == lock_time)
@@ -495,19 +520,18 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	//huayi_uci_get_int(PKG_XL2TPD,"xl2tpd","enable",&xl2tpd_enable);	
 	char dev [OPTION_STR_LEN],value [TEMP_STR_LEN],cmd [TEMP_STR_LEN];
 	int status;
-	huayi_uci_get_str(PKG_PPL2TP,"xl2tp","dev",dev);
-	if(xl2tp_enable){
-		memset(cmd, 0, TEMP_STR_LEN);
-		memset(value, 0, sizeof(value));
-		sprintf(cmd, "ifconfig %s 2>/dev/null | awk '/inet / {split($2, a, \":\"); print a[2]}'",dev);
+
+	if(xl2tp_enable)
+	{
+		sprintf(cmd, "ifconfig | grep xl2tp | awk '{print $1}'");
 		get_cmd_result(cmd, value, sizeof(value));
-		CON_LOG("%s",value);
-		if(!strlen(value))
+		if(strlen(value)<4){
 			status = 0;
-		else
+		}else{
 			status = 1;
-	}else{
-		status = 0;
+			sprintf(cmd, "ip -4 -o addr show xl2tp-vpn | awk '{print $4}' | cut -d'/' -f1");
+			get_cmd_result(cmd, value, sizeof(value));
+		}
 	}
 
 	xl2tpd_enable = status;
@@ -526,14 +550,14 @@ int get_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 
 	huayi_add_switch_to_json(result_root,"xl2tp_enable",xl2tp_enable);
 	huayi_add_switch_to_json(result_root,"xl2tpd_enable",xl2tpd_enable);
-	//cJSON_AddStringToObject(result_root,"usr",username);
-	//cJSON_AddStringToObject(result_root,"pwd",password);
-	//cJSON_AddStringToObject(result_root,"server_addr",server_ip);
+	cJSON_AddStringToObject(result_root,"usr",username);
+	cJSON_AddStringToObject(result_root,"pwd",password);
+	cJSON_AddStringToObject(result_root,"server_addr",server_ip);
 	cJSON_AddNumberToObject(result_root,"route_type",route_type);
 	cJSON_AddNumberToObject(result_root,"xl2tp_status",status);
 	cJSON_AddStringToObject(result_root,"xl2tp_ip",value);
 	//cJSON_AddNumberToObject(result_root,"ipsec_enable",ipsec_enable);
-	//cJSON_AddStringToObject(result_root,"ipsec_key",ipsec_key);
+	cJSON_AddStringToObject(result_root,"ipsec_key",ipsec_key);
 	
 
 	xl2tp_static_router_array = cJSON_CreateArray();
@@ -684,7 +708,7 @@ int set_l2tp_client_config(cJSON *request_root, cJSON *response_root,int *lock_t
 	}
 */
 	huayi_uci_commit(PKG_PPL2TP);
-	system("huayi-reset xl2tpd_ipsec");
+	system("huayi-reset xl2tp");
 	*lock_time = HUAYI_RELOAD_WIRELESS_TIME;
 
 

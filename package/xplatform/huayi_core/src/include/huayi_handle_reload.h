@@ -93,4 +93,5 @@ VTBool huayi_wps_pin(void * arg,cJSON *input_root);
 VTBool huayi_reload_wireless_scan(void * arg,cJSON *input_root);
 VTBool huayi_reload_wifi_sche(void * arg,cJSON *input_root);
 
+VTBool huayi_ipsec_init(void * arg,cJSON *input_root);
 #endif

@@ -1409,7 +1409,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 	result_root = cJSON_CreateObject();
 
 	cJSON_AddStringToObject(result_root,"wan_mode",wan_type);
-
+#if 0
 	if (!strcmp(wan_type,WAN_TYPE_4G_MOBILE))
 	{
 		if (sim_state != MODEM_SIN_READY)
@@ -1448,6 +1448,7 @@ int cgi_get_overview_info(cJSON *request_root, cJSON *response_root,int *lock_ti
 		if (wan_link == 0)
 			wan_up = 0;
 	}
+#endif
 
 	cJSON_AddNumberToObject(result_root,"wan_up",wan_up);
 
@@ -2393,7 +2394,7 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 	cJSON_AddStringToObject(result_root,"imei",lte_value);
 	cJSON_AddStringToObject(result_root,"device_sn",lte_value);
 
-//ÉÏÍø·½Ê½
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
 	memset(lte_value,0,sizeof(lte_value));
 	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","ifname", lte_value);
 	if(!strcmp(lte_value, "apcli0"))
@@ -2416,7 +2417,7 @@ int cgi_get_dev_message(cJSON *request_root,cJSON *response_root,int *lock_time)
 	huayi_uci_get_int(PKG_STATUS_MODEM,"modem","sim_ready",&i_ready);
 	if(rep_24g_status == 1 || i_ready == 1)
 	{
-		//ÉÏÍøÊÇ·ñ³É¹¦
+		//ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½É¹ï¿½
 		//strcpy(checksignalips,"114.114.114.114");
 		memset(lte_value,0,sizeof(lte_value));
 		huayi_uci_get_str(PKG_SYSTEM,"mode","detect_ip", checksignalips);
