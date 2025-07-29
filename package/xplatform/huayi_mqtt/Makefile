@@ -19,7 +19,7 @@ define Package/$(PKG_NAME)
   SECTION:=Xplatform
   CATEGORY:=Xplatform
   TITLE:= HUAYI MQTT CLIENT
-  DEPENDS:=+libmosquitto +kmod-huayi-universal +kmod-huayi-control +libuci +huayi_uci +libcjson +libm +huayi_core
+  DEPENDS:=+libmosquitto +kmod-huayi-universal +kmod-huayi-control +libuci +huayi_uci +libcjson +libm +huayi_core +huayi_libstrutils
 endef
 
 
@@ -32,6 +32,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/huayi_mqtt_pub $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/huayi_mqtt_sub $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/huayi_mqtt_content $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/huayi_mqtt_setsub $(1)/usr/sbin/
 endef
 	
 $(eval $(call BuildPackage,$(PKG_NAME)))

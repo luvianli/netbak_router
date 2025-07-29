@@ -18,7 +18,11 @@ void get_url(char *url)
 	char urldomain[OPTION_STR_LEN] = { 0 };
 	//char port[SHORT_STR_LEN] = { 0 };
 
+#ifdef CONFIG_PACKAGE_HUAYI_MQTT
+	huayi_uci_get_str(PKG_SYSTEM,"mqtt","url", urldomain);
+#else
 	huayi_uci_get_str(PKG_SYSTEM,"server","urldomain", urldomain);
+#endif
 	//huayi_uci_get_str(PKG_SYSTEM,"server","port",port);
 	//printf("%s, %d, urldomain = %s !\n", __FUNCTION__, __LINE__, urldomain);
 	if(strlen(urldomain) == 0){
@@ -271,6 +275,63 @@ fail:
 	"code":500
 }
 */
+
+void huayi_set_mqtt_config(cJSON *response_root)
+{
+	char host[RESULT_STR_LEN] = {0},port[SHORT_STR_LEN] = {0};
+	char clientId[RESULT_STR_LEN] = {0};
+	char username[RESULT_STR_LEN] = {0},password[RESULT_STR_LEN] = {0};
+	char topicIn[RESULT_STR_LEN] = {0},topicOut[RESULT_STR_LEN] = {0};
+	int success = 1;
+
+	if (huayi_json_get_str(response_root,"host",host,RESULT_STR_LEN))
+	{
+		huayi_uci_set_str(PKG_SYSTEM,"mqtt","host", host);
+	}else
+		success = 0;
+
+	if (huayi_json_get_str(response_root,"post",port,RESULT_STR_LEN))
+	{
+		huayi_uci_set_str(PKG_SYSTEM,"mqtt","port", port);
+	}else
+		success = 0;
+
+	if (huayi_json_get_str(response_root,"clientId",clientId,RESULT_STR_LEN))
+	{
+		huayi_uci_set_str(PKG_SYSTEM,"mqtt","clientId", clientId);
+	}else
+		success = 0;
+
+	if (huayi_json_get_str(response_root,"username",username,RESULT_STR_LEN))
+	{
+		huayi_uci_set_str(PKG_SYSTEM,"mqtt","username", username);
+	}else
+		success = 0;
+
+	if (huayi_json_get_str(response_root,"password",password,RESULT_STR_LEN))
+	{
+		huayi_uci_set_str(PKG_SYSTEM,"mqtt","password", password);
+	}else
+		success = 0;		
+
+	if (huayi_json_get_str(response_root,"topicIn",topicIn,RESULT_STR_LEN))
+	{
+		huayi_uci_set_str(PKG_SYSTEM,"mqtt","topicIn", topicIn);
+	}else
+		success = 0;
+
+	if (huayi_json_get_str(response_root,"topicOut",topicOut,RESULT_STR_LEN))
+	{
+		huayi_uci_set_str(PKG_SYSTEM,"mqtt","topicOut", topicOut);
+	}else
+		success = 0;
+
+	huayi_uci_set_int(PKG_SYSTEM,"mqtt","success", success);		
+	huayi_uci_commit(PKG_SYSTEM); 
+
+	return;
+}
+
 void msg_parse(char *heartdata, unsigned int heartsize)
 {
 	int ret = -1; 	
@@ -295,6 +356,10 @@ void msg_parse(char *heartdata, unsigned int heartsize)
 		return;
 	}
 
+#ifdef CONFIG_PACKAGE_HUAYI_MQTT
+	CLOUD_CLIENT_LOG("do huayi_set_mqtt_config\n");
+	huayi_set_mqtt_config(format);
+#endif
 	huayi_next_url_time(format);
 	//huayi_set_4g_config(format);
 	huayi_set_wifi_config(format);

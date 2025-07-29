@@ -51,6 +51,18 @@ config upgrade upgrade
 	
 config server server
 	option interval 60000
-	option urldomain 'https://up.aiotzy.com/api/device/post/uploadData/industryRouting'
+	option urldomain 'http://device.10086group.com/admin/ylapi/uploadData'
 	option clientlog   '1'	
 
+config mqtt mqtt
+	option interval 180000 #3 min
+	option pingcheck 'www.baidu.com'
+	option url 'https://up.aiotzy.com/api/device/post/uploadData/getReportConfig'
+	option host 'NULL'
+	option port 'NULL'
+	option clientId 'NULL'
+	option username 'NULL'
+	option password 'NULL'
+	option topicIn 'NULL'
+	option topicOut 'NULL'
+	option success '0'
