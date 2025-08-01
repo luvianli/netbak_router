@@ -33,7 +33,7 @@ setup_config() {
 	
 	mkdir -p /var/etc
 	cp /etc/ipsec.conf $CONFIG
-	echo ": PSK \"${ipsec_key}\" " > $KEY	
+	echo "%any %any : PSK \"${ipsec_key}\" " > $KEY	
 }
 
 start_service() {

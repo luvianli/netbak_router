@@ -10,7 +10,7 @@ PROG=/usr/sbin/hy_cloud_client
 start_service() {
     procd_open_instance
 	procd_set_param command "$PROG" 
-	procd_set_param respawn 0
+	#procd_set_param respawn 0
 	procd_close_instance
 }
 

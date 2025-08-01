@@ -1311,7 +1311,7 @@ LTE_BOOL atcmd_get_usbnet(int *value)
 	char *ptr = NULL;
 	char *pKey = NULL;
 	
-	if ( Atcmd("at+qcfg=\"usbnet\"?", strlen("at+qcfg=\"usbnet\"?"), 0) == LTE_FALSE )
+	if ( Atcmd("at+qcfg=\"usbnet\"", strlen("at+qcfg=\"usbnet\""), 0) == LTE_FALSE )
 	{
 		return LTE_FALSE;
 	}
