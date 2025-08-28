@@ -8,5 +8,5 @@ config about about_soft
 	option company_website	'www.hy.com'
 	option company_contacts	'hy@hy.com'
 	option company_address	'shenzhen'
-	option domain_name		'step.YunXM.net'
+	option domain_name		'setup.wifi.net'
 	option company_copyright	'Copyright © 2023 HY All rights reserved.'

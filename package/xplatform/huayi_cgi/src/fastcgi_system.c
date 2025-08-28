@@ -861,7 +861,7 @@ int get_upgrade_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	size_tip = flash_size/1000000;
 	snprintf(tmp_str,SMALL_STR_LEN,"%dM",size_tip);
 	
-	cJSON_AddStringToObject(result_root,"pro_model","MP716");
+	cJSON_AddStringToObject(result_root,"pro_model",product_model);
 	cJSON_AddStringToObject(result_root,"release_time",buildtime);
 	cJSON_AddStringToObject(result_root,"fw_version",fw_version);
 	cJSON_AddStringToObject(result_root,"module_version",module_version);
@@ -1775,9 +1775,9 @@ int get_system_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	}
 
 
-	cJSON_AddStringToObject(result_root,"product_name","MP716");
+	cJSON_AddStringToObject(result_root,"product_name",product_name);
 
-	cJSON_AddStringToObject(result_root,"product_model","MP716");
+	cJSON_AddStringToObject(result_root,"product_model",product_model);
 
 	cJSON_AddStringToObject(result_root,"software_version",software_version);
 
@@ -2141,7 +2141,7 @@ int get_all_system_info(cJSON *request_root, cJSON *response_root,int *lock_time
 	
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_name",product_name);
 
-	cJSON_AddStringToObject(result_root,"pro_name","MP716");
+	cJSON_AddStringToObject(result_root,"pro_name",product_name);
 
 	huayi_uci_get_str(PKG_ABOUT,"about_software","webui_version",webui_version);
 	cJSON_AddStringToObject(result_root,"webui_version",webui_version);
@@ -3843,7 +3843,7 @@ int get_sta_list(cJSON *stalist_array)
 	get_wifi_sta(stalist_array, arp_w_mac, "radio1_0");
 #endif
 
-//·Ã¿ÍÄ£Ê½ÏÂÖÕ¶ËÁÐ±í
+//ï¿½Ã¿ï¿½Ä£Ê½ï¿½ï¿½ï¿½Õ¶ï¿½ï¿½Ð±ï¿½
 	//get_wifi_sta(stalist_array, arp_w_mac, "radio0_1");
 #if defined(CONFIG_HUAYI_WIRELESS_SUPPORT_5G)	
 	//get_wifi_sta(stalist_array, arp_w_mac, "radio1_1");

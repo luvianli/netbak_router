@@ -7,7 +7,7 @@ local def_ssid=$(echo $(uci -q get wireless.radio0_0.def_ssid))
 echo $base_addr >> /tmp/dat2uci.log
 echo $def_ssid_prefix >> /tmp/dat2uci.log
 
-suf_ssid_2G=`echo $base_addr | awk -F ":" '{print $5""$6 }'`
+suf_ssid_2G=`echo $base_addr | awk -F ":" '{print $4""$5""$6 }'`
 
 echo $suf_ssid_2G >> /tmp/dat2uci.log
 
