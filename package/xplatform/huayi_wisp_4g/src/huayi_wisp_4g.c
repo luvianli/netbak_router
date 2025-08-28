@@ -276,6 +276,36 @@ fail:
 	return 0;
 }
 
+int quectel_connect(void)
+{
+	char cmd[256] = { 0 };
+	char mode[RESULT_STR_LEN]={0};
+	char user4g[RESULT_STR_LEN]={0},pass4g[RESULT_STR_LEN]={0};
+	char apn[RESULT_STR_LEN]={0},validation[RESULT_STR_LEN]={0};
+	char dialnum[RESULT_STR_LEN]={0},pincode[RESULT_STR_LEN]={0};
+	
+	huayi_uci_get_str(PKG_MODEM, "status", "mode", mode);
+	if(atoi(mode)==0)
+	{
+		system("quectel-CM &");
+	}
+	else if(atoi(mode)==1)	
+	{
+		huayi_uci_get_str(PKG_MODEM, "status", "user4g", user4g);
+		huayi_uci_get_str(PKG_MODEM, "status", "pass4g", pass4g);
+		huayi_uci_get_str(PKG_MODEM, "status", "apn", apn);
+		huayi_uci_get_str(PKG_MODEM, "status", "dialNum", dialnum);
+		huayi_uci_get_str(PKG_MODEM, "status", "pinCode", pincode);
+		huayi_uci_get_str(PKG_MODEM, "status", "validation", validation);
+		if ( strlen(pincode) > 0 )
+			snprintf(cmd,sizeof(cmd),"quectel-CM -s %s %s %s %s -p %s &",apn,user4g,pass4g,validation,pincode);
+		else
+			snprintf(cmd,sizeof(cmd),"quectel-CM -s %s %s %s %s &",apn,user4g,pass4g,validation);
+		system(cmd);
+	}
+	
+	return 1;
+}
 
 int main(int argc,char *argv[])
 {
@@ -343,7 +373,7 @@ int main(int argc,char *argv[])
 				get_cmd_result(cmd_str, resultbuf, sizeof(resultbuf));
 				if(!strstr(resultbuf, "inet"))
 				{
-					system("quectel-CM &");
+					quectel_connect();
 					if(cpe_link == 0){
 						system("huayi_cmd set blend cpe_link 1");
 					}
