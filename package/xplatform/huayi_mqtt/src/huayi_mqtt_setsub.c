@@ -228,7 +228,7 @@ void huayi_set_system(cJSON *response_root)
 	int reboot = -1,reSet = -1;
 	int switchsim = -1,simNum = 0,at_card = 0;
 	int heartbeat = 30,oldheartbeat = 0;
-	int upgrade = 0;
+	int upgrade = 0,out_slot_status = 0;
 	int olddisconn = 0,disconn = 0;
 	char firmware_url[LIST_STR_LEN] = {0};
 
@@ -333,6 +333,13 @@ void huayi_set_system(cJSON *response_root)
 		}
 	}
 
+	if(huayi_json_get_int(response_root,"out_slot_status",&out_slot_status)) 
+	{
+		huayi_uci_set_int(PKG_M_SYSTEM, "system", "external_card_enable", out_slot_status);
+		huayi_uci_commit(PKG_M_SYSTEM);
+		MQTT_LOG("set out_slot_status %d", out_slot_status);
+	}
+	
 #endif
 	if(huayi_json_get_int(response_root,"reboot",&reboot)) 
 	{

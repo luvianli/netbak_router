@@ -325,6 +325,7 @@ void get_pub_content(char *heartdata)
 	int  signal = -121,down = 0,up = 0,status = 0;
 	char mobile_type[SHORT_STR_LEN] = {0},band[TEMP_STR_LEN],gatewayip[RESULT_STR_LEN] = {0};
 	char lac[OPTION_STR_LEN] = {0}, cellid[OPTION_STR_LEN] = {0};
+	int out_slot_status = 0;
 
 #if 0
 	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "imei", imei);
@@ -363,6 +364,7 @@ void get_pub_content(char *heartdata)
     huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "ci", cellid);
 	huayi_uci_get_str(PKG_STATUS_NETWORK,"wan","gateway",gatewayip);
 	huayi_uci_get_str(PKG_ABOUT,"about_software","fw_version", version);
+	huayi_uci_get_int(PKG_M_SYSTEM, "system", "external_card_enable", &out_slot_status);
 #endif
 
 	result_root = cJSON_CreateObject();
@@ -419,6 +421,7 @@ void get_pub_content(char *heartdata)
 	cJSON_AddStringToObject(result_root,"lac", lac);
 	cJSON_AddStringToObject(result_root,"ip", gatewayip);
 	cJSON_AddStringToObject(result_root,"version", version);
+	cJSON_AddStringToObject(result_root,"out_slot_status", out_slot_status);
 #endif
 
 	output = cJSON_Print(result_root);
