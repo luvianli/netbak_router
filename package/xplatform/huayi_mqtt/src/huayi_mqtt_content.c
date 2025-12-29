@@ -421,7 +421,7 @@ void get_pub_content(char *heartdata)
 	cJSON_AddStringToObject(result_root,"lac", lac);
 	cJSON_AddStringToObject(result_root,"ip", gatewayip);
 	cJSON_AddStringToObject(result_root,"version", version);
-	cJSON_AddStringToObject(result_root,"out_slot_status", out_slot_status);
+	cJSON_AddNumberToObject(result_root,"out_slot_status", out_slot_status);
 #endif
 
 	output = cJSON_Print(result_root);

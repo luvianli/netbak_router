@@ -70,7 +70,7 @@ config network network
 	option disconn 0
 
 config mqtt mqtt
-	option interval 180000 #3 min
+	option interval 600000 #10 min
 	option url 'https://up.aiotzy.com/api/device/post/uploadData/v2/getReportConfig'
 	option host 'NULL'
 	option port 'NULL'
