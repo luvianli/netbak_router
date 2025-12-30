@@ -10,6 +10,8 @@ MAIL_LIST="gerry.li@hym2m.com rex@hym2m.com jerry.zhang@hym2m.com vicky.cheng@hy
 
 PRODUCT_MODEL=$1
 
+BASE_VERSION=
+
 SOFT_VERSION=
 
 DATE=`date +%Y-%m-%d`
@@ -40,13 +42,15 @@ huayi_release_update() {
 
 #get software version by tag
 huayi_release_version_control() {	
-	SOFT_VERSION=`git for-each-ref --sort=taggerdate --format '%(refname)' refs/tags | grep $PRODUCT_MODEL- | awk 'END {print}' | awk -F "-" '{print $NF}'`
-	[ -z "$SOFT_VERSION" ] && {
+	BASE_VERSION=`git for-each-ref --sort=taggerdate --format '%(refname)' refs/tags | grep $PRODUCT_MODEL- | awk 'END {print}' | awk -F "-" '{print $NF}'`
+	[ -z "$BASE_VERSION" ] && {
 		echo "no software version found !!!"
 		echo "Plesae check $PRODUCT_MODEL software version !!!"
 		echo "run git tag for detail information!!"
 		exit 1
 	}
+	CURRENT_DATE=$(date +%Y%m%d)
+	SOFT_VERSION="WYX3-C100-${CURRENT_DATE}-MQTT-${BASE_VERSION}"
 	echo "==> SOFT_VERSION:$SOFT_VERSION"
 	echo $SOFT_VERSION > $basepath/../package/base-files/files/etc/openwrt_version
 	LOG_FILE="${PRODUCT_MODEL}_${SOFT_VERSION}_${DATE}.log"
