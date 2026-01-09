@@ -320,6 +320,8 @@ void huayi_set_system(cJSON *response_root)
 			sprintf(cmd, "switch_sim %d &", switchsim);
 			system(cmd);
 			sleep(10);
+			huayi_uci_set_int(PKG_M_SYSTEM, "usesiminfo", "card_slot", switchsim);
+			huayi_uci_commit(PKG_M_SYSTEM);
 			save_useing_siminfo(switchsim);
 		}
 	}

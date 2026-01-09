@@ -315,7 +315,7 @@ void get_pub_content(char *heartdata)
 	char imei[RESULT_STR_LEN]={0},sn[OPTION_STR_LEN] = {0},iccid[RESULT_STR_LEN]={0},simiccid[RESULT_STR_LEN]={0};
 	char currentTime[OPTION_STR_LEN] = {0};
 	char ssid[RESULT_STR_LEN] = {0},password[RESULT_STR_LEN] = {0};
-	char version[SMALL_STR_LEN] = {0};
+	char version[RESULT_STR_LEN] = {0};
 	int speedLimit = 0,heartbeat = 0;
 	unsigned long long dayFlow = 0,monthFlow = 0;
 	unsigned long long rx=0,tx=0;
@@ -368,7 +368,6 @@ void get_pub_content(char *heartdata)
 #endif
 
 	result_root = cJSON_CreateObject();
-
 #if 0	
 	cJSON_AddStringToObject(result_root,"imei", imei);
 	cJSON_AddStringToObject(result_root,"iccid", iccid);
