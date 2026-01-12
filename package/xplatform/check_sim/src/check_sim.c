@@ -398,6 +398,7 @@ cretry2:
 	            save_useing_siminfo(i);
 	            CON_LOG("sim %d network ok \n", i);
                 huayi_uci_set_int(PKG_M_SYSTEM, cmd, "card_slot", i);
+                huayi_uci_commit(PKG_M_SYSTEM);
 	            this_bool = 1;
 	            return;
 	        }
@@ -745,6 +746,7 @@ cretry2:
 	            save_useing_siminfo(i);
 	            CON_LOG("sim %d network ok \n", i);
                 huayi_uci_set_int(PKG_M_SYSTEM, cmd, "card_slot", i);
+                huayi_uci_commit(PKG_M_SYSTEM);
 	            goto success;
 	        }
 	        else
