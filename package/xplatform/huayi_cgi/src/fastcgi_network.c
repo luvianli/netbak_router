@@ -527,6 +527,11 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	if(!strcmp(ifname, "apcli0"))
 	{
 		cJSON_AddStringToObject(wan_obj,"net_type", "WISP");
+		char apssid[IPV4_STR_LEN] = {0},appass[IPV4_STR_LEN] = {0};
+		huayi_uci_get_str(PKG_WIRELESS,"radio0_cli0","apcli_ssid", apssid);
+		huayi_uci_get_str(PKG_WIRELESS,"radio0_cli0","apcli_wpapsk", appass);
+		cJSON_AddStringToObject(wan_obj,"apcli_ssid", apssid);
+		cJSON_AddStringToObject(wan_obj,"apcli_passwd", appass);
 	}
 	else if(!strcmp(ifname, "eth1") || !strcmp(ifname, "wwan0"))
 	{
@@ -538,7 +543,10 @@ int get_network_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	}
 	else
 	{
-		cJSON_AddStringToObject(wan_obj,"net_type", "4G");
+		if(wan_up == 0)
+			cJSON_AddStringToObject(wan_obj,"net_type", "UNLINK");
+		else
+			cJSON_AddStringToObject(wan_obj,"net_type", "4G");
 	}
 	cJSON_AddItemToObject(result_root,"wan_infos",wan_obj);
 

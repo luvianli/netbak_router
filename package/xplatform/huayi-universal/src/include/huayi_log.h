@@ -144,7 +144,8 @@
 								fclose(fp);\
 							} \
 							struct stat buf;\
-							int size=stat("/tmp/log/con_log", &buf);\
+							stat("/tmp/log/con_log", &buf);\
+							int size=buf.st_size;\
 							if(size > 20000)\
 							{\
 								system("rm -fr /tmp/log/con_log");\
@@ -166,12 +167,34 @@
                                     } \
                                 } \
                                 struct stat buf; \
-                                int size = stat("/tmp/log/wisp_network_log", &buf); \
+                                stat("/tmp/log/wisp_network_log", &buf); \
+								int size=buf.st_size;\
                                 if (size > 20000) { \
                                     system("rm -fr /tmp/log/wisp_network_log"); \
                                 } \
                             } while (0)
 
+#define CHECK_WISP_LOG_SIN 1
+#define CHECK_WISP_LOG(format, args...) \
+						do{ \
+							if(CHECK_WISP_LOG_SIN) \
+							{\
+								FILE *fp = fopen("/tmp/log/check_wisp_log", "a"); \
+								if(fp)\
+								{\
+									fprintf(fp, "%s@%s,%d] " format "\n", \
+									__FILE__, __func__,__LINE__, ##args ); \
+								}\
+								fclose(fp);\
+							} \
+							struct stat buf;\
+							stat("/tmp/log/check_wisp_log", &buf);\
+							int size=buf.st_size;\
+							if(size > 20000)\
+							{\
+								system("rm -fr /tmp/log/check_wisp_log");\
+							}\
+						}while(0)
 
 
 

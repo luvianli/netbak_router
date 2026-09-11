@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006-2011 OpenWrt.org
+
+START=99
+PROG=/usr/bin/check_wisp
+
+
+start() {
+	/usr/bin/check_wisp &
+}
+
+stop(){
+	killall -9 check_wisp
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}

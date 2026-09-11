@@ -330,6 +330,14 @@ VTBool huayi_reload_wireless(void * arg,cJSON *input_root)
 #endif
 	system("wifi reload");
 	sleep(10);
+	int disabled_1 = 0;
+	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled_1",&disabled_1);
+	if(disabled_1 == 1)
+	{
+		system("iwpriv ra0 set ACLClearAll=1");
+		system("iwpriv ra0 set AccessPolicy=1");
+		system("iwpriv ra0 set HideSSID=1");
+	}
 #if defined(CONFIG_HUAYI_BUTTON_WIFI_SUPPORT)
 	system("/etc/action.d/wifi_button_check");
 #endif

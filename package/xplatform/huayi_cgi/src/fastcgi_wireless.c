@@ -145,7 +145,7 @@ int get_wifi_basic_config(cJSON *request_root, cJSON *response_root,int *lock_ti
 		return FCGI_RESP_CODE_SERVER_FAILURE;
 	}
 
-	if(!huayi_uci_get_int(PKG_WIRELESS,vap_section,"disabled",&disabled))
+	if(!huayi_uci_get_int(PKG_WIRELESS,vap_section,"disabled_1",&disabled))
 	{
 		return FCGI_RESP_CODE_SERVER_FAILURE;
 	}
@@ -330,8 +330,8 @@ int set_wifi_basic_config(cJSON *request_root, cJSON *response_root,int *lock_ti
 
 	disabled = radio_enable?0:1;
 
-	huayi_uci_set_int(PKG_WIRELESS,radio_section,"disabled",disabled);
-	huayi_uci_set_int(PKG_WIRELESS,vap_section,"disabled",disabled);
+	//huayi_uci_set_int(PKG_WIRELESS,radio_section,"disabled",disabled);
+	huayi_uci_set_int(PKG_WIRELESS,vap_section,"disabled_1",disabled);
 	
 	huayi_uci_set_int(PKG_WIRELESS,radio_section,"channel",channel);
 

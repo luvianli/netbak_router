@@ -1,0 +1,24 @@
+config wisp-rep 'rep1'
+	option ssid ''
+	option wpapsk ''
+	option bssid ''
+
+config wisp-rep 'rep2'
+	option ssid ''
+	option wpapsk ''
+	option bssid ''
+
+config wisp-rep 'rep3'
+	option ssid ''
+	option wpapsk ''
+	option bssid ''
+
+config wisp-rep 'rep4'
+	option ssid ''
+	option wpapsk ''
+	option bssid ''
+
+config wisp-rep 'rep5'
+	option ssid ''
+	option wpapsk ''
+	option bssid ''

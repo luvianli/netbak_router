@@ -1062,8 +1062,8 @@ void do_power_led_off(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
 	char product_model[OPTION_STR_LEN] = {0};
-
-	/*add by rex, 针对这个型号的产品特殊处理，后续考虑删除*/
+	system("devmem 0x10000060 32 0x4110441");
+	/*add by rex, 锟斤拷锟斤拷锟斤拷锟酵号的诧拷品锟斤拷锟解处锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷删锟斤拷*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(!strcmp(product_model, "4G1200-H002-HY06"))
 	{
@@ -1229,7 +1229,7 @@ void do_internet_led_on(void)
 	char cmd[CMD_STR_LEN] = {0};
 	char product_model[OPTION_STR_LEN] = {0};
 
-	/*add by rex, 针对这个型号的产品特殊处理，后续考虑删除*/
+	/*add by rex, 锟斤拷锟斤拷锟斤拷锟酵号的诧拷品锟斤拷锟解处锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷删锟斤拷*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(!strcmp(product_model, "4G1200-H002-HY06"))
 	{
@@ -1258,7 +1258,7 @@ void do_internet_led_off(void)
 	char cmd[CMD_STR_LEN] = {0};
 	char product_model[OPTION_STR_LEN] = {0};
 
-	/*add by rex, 针对这个型号的产品特殊处理，后续考虑删除*/
+	/*add by rex, 锟斤拷锟斤拷锟斤拷锟酵号的诧拷品锟斤拷锟解处锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷删锟斤拷*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(!strcmp(product_model, "4G1200-H002-HY06"))
 	{
@@ -1288,7 +1288,7 @@ void do_internet_led_slowly(void)
 	char cmd[CMD_STR_LEN] = {0};
 	char product_model[OPTION_STR_LEN] = {0};
 
-	/*add by rex, 针对这个型号的产品特殊处理，后续考虑删除*/
+	/*add by rex, 锟斤拷锟斤拷锟斤拷锟酵号的诧拷品锟斤拷锟解处锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷删锟斤拷*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(!strcmp(product_model, "4G1200-H002-HY06"))
 	{

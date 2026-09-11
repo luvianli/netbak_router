@@ -332,6 +332,7 @@ int main(int argc,char *argv[])
 			continue;
 
 		char pmodel[16]={0};
+		huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
 		if(strncmp("EC25",pmodel, 4) == 0 || strncmp("EC20",pmodel, 4) == 0)
 		{
 			atcmd_get_cpin(&simReady);
