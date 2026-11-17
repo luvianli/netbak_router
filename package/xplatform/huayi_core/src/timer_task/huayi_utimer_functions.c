@@ -486,7 +486,14 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 #if defined(CONFIG_PACKAGE_HUAYI_DIAL4G)
 	int i_ready = 0; 
 #endif
-	
+
+	int disabled = 0;
+	huayi_uci_get_int(PKG_WIRELESS,"radio0_0","disabled",&disabled);
+	if(disabled == 0)
+		do_wifi_led_on();
+	else if(disabled == 1)
+		do_wifi_led_off();
+
 	if (internet_do_ping_detect(INTERNET_DOMAIN, NULL) == 1)
 	{
 		network_status = 1;	

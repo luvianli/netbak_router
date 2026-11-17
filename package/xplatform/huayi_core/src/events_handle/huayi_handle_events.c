@@ -1072,7 +1072,7 @@ void do_power_led_off(void)
 	char cmd[CMD_STR_LEN] = {0};
 	char product_model[OPTION_STR_LEN] = {0};
 
-	/*add by rex, Õë¶ÔÕâ¸öÐÍºÅµÄ²úÆ·ÌØÊâ´¦Àí£¬ºóÐø¿¼ÂÇÉ¾³ý*/
+	/*add by rex, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÍºÅµÄ²ï¿½Æ·ï¿½ï¿½ï¿½â´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¾ï¿½ï¿½*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(!strcmp(product_model, "4G1200-H002-HY06"))
 	{
@@ -1233,6 +1233,24 @@ void do_repeater_led_high_signal_or_on(void)
 }
 #endif
 
+void do_wifi_led_off(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	snprintf(cmd, CMD_STR_LEN, "gpio l 11 0 4000 0 0 4000");
+	system(cmd);
+
+	return;
+}
+
+void do_wifi_led_on(void)
+{
+	char cmd[CMD_STR_LEN] = {0};
+	snprintf(cmd, CMD_STR_LEN, "gpio l 11 4000 0 0 0 4000");
+	system(cmd);
+
+	return;
+}
+
 #if defined(CONFIG_HUAYI_INTERNET_LED_SUPPORT)
 void do_internet_led_on(void)
 {
@@ -1244,9 +1262,10 @@ void do_internet_led_on(void)
 		system(cmd);
 	}
 
-	snprintf(cmd, CMD_STR_LEN, "gpio l 4 0 4000 0 0 4000");//red off
-	system(cmd);
-	snprintf(cmd, CMD_STR_LEN, "gpio l 3 4000 0 0 0 4000");//green on
+	//snprintf(cmd, CMD_STR_LEN, "gpio l 4 0 4000 0 0 4000");//red off
+	//system(cmd);
+	//snprintf(cmd, CMD_STR_LEN, "gpio l 3 4000 0 0 0 4000");//green on
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 4000 0 0 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
 	system(cmd);
 	
 	return;
@@ -1262,9 +1281,10 @@ void do_internet_led_off(void)
 		system(cmd);
 	}
 
-	snprintf(cmd, CMD_STR_LEN, "gpio l 3 0 4000 0 0 4000");//green off
-	system(cmd);
-	snprintf(cmd, CMD_STR_LEN, "gpio l 4 4000 0 0 0 4000");//red on
+	//snprintf(cmd, CMD_STR_LEN, "gpio l 3 0 4000 0 0 4000");//green off
+	//system(cmd);
+	//snprintf(cmd, CMD_STR_LEN, "gpio l 4 4000 0 0 0 4000");//red on
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 0 4000 0 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
 	system(cmd);
 
 	return;
@@ -1280,9 +1300,10 @@ void do_internet_led_slowly(void)
 		system(cmd);
 	}
 
-	snprintf(cmd, CMD_STR_LEN, "gpio l 4 0 4000 0 0 4000");//red off
-	system(cmd);
-	snprintf(cmd, CMD_STR_LEN, "gpio l 3 8 8 4000 0 4000");//green blink
+	//snprintf(cmd, CMD_STR_LEN, "gpio l 4 0 4000 0 0 4000");//red off
+	//system(cmd);
+	//snprintf(cmd, CMD_STR_LEN, "gpio l 3 8 8 4000 0 4000");//green blink
+	snprintf(cmd, CMD_STR_LEN, "gpio l %d 8 8 4000 0 4000", CONFIG_HUAYI_INTERNET_LED_GPIO_NUM);
 	system(cmd);
 	
 	return;

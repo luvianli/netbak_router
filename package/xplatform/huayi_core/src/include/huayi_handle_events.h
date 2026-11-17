@@ -51,6 +51,7 @@ void do_internet_led_on(void);
 void do_internet_led_off(void);
 void do_internet_led_slowly(void);
 #endif
-
+void do_wifi_led_on(void);
+void do_wifi_led_off(void);
 
 #endif
