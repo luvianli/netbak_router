@@ -1256,7 +1256,7 @@ void do_internet_led_on(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
 
-	if(CONFIG_HUAYI_INTERNET_LED_GPIO_NUM == 3) {
+	if(CONFIG_HUAYI_INTERNET_LED_GPIO_NUM == 3 || CONFIG_HUAYI_INTERNET_LED_GPIO_NUM == 5) {
 		/*for 7628DA GPIO3*/
 		strcpy(cmd, "devmem 0x10000060 32 0x4110441");	
 		system(cmd);
@@ -1275,7 +1275,7 @@ void do_internet_led_off(void)
 {
 	char cmd[CMD_STR_LEN] = {0};
 
-	if(CONFIG_HUAYI_INTERNET_LED_GPIO_NUM == 3) {
+	if(CONFIG_HUAYI_INTERNET_LED_GPIO_NUM == 3 || CONFIG_HUAYI_INTERNET_LED_GPIO_NUM == 5) {
 		/*for 7628DA GPIO3*/
 		strcpy(cmd, "devmem 0x10000060 32 0x4110441");	
 		system(cmd);
