@@ -1,0 +1,12 @@
+--- a/drivers/usb/serial/option.c
++++ b/drivers/usb/serial/option.c
+@@ -673,6 +673,8 @@
+ 	{ USB_DEVICE(0x2C7C, 0x6120) }, /* Quectel UC200 */
+ 	{ USB_DEVICE(0x2C7C, 0x6000) }, /* Quectel EC200/UC200 */
+ 	{ USB_DEVICE(0x2C7C, 0x6005) }, /* Quectel EC200A */
+ 	{ USB_DEVICE(0x1286, 0x4e3c) }, /* LYNQ L509 */
++	{ USB_DEVICE(0x1c9e, 0x9b3c),	/* Longsung U9300C DGN */
++		.driver_info = (kernel_ulong_t)&net_intf4_blacklist }, /* reserve if4 for GobiNet data */
+ #endif
+ 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_COLT) },
+ 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_RICOLA) },

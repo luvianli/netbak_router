@@ -12,6 +12,8 @@
 
 #include     "dial4g.h"
 
+extern int quectel_gobinet_connect(void);
+
 int slm_init_set_modem_status(void)
 {
 	char lte_value[OPTION_STR_LEN] = {0};
@@ -132,11 +134,17 @@ int lynq_model_handler(struct SMSAgent *Agent)
 	int i_link = 0;
 	int signal_count=0;
 	char cmd[CMD_STR_LEN] = {0};
+	char pmodel[OPTION_STR_LEN] = {0};
+	int is_u9300c = 0;
+	int u9300c_dial_wait = 0;
 
 	while ( LTE_TRUE != atcmd_check() )
 	{
 		sleep(1);
 	}
+
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
+	is_u9300c = (strncmp("U9300C_DGN", pmodel, 10) == 0);
 
 	while ( 1 )
     {
@@ -167,6 +175,26 @@ int lynq_model_handler(struct SMSAgent *Agent)
 		
         i_link = net_usb_link(Agent);
 		signal_count=0;
+
+		if (is_u9300c && i_link <= 0)
+		{
+			if (u9300c_dial_wait == 0)
+			{
+				/* U9300C(MDM9x07) 用 QMI 拨号：quectel-CM 通过 /dev/qcqmiX
+				   建立数据通道，eth1 的 IP 由 netifd 的 DHCP 获取 */
+				if (system("pidof quectel-CM >/dev/null") != 0)
+				{
+					quectel_gobinet_connect();
+					sleep(3);
+				}
+				system("ifup wan4g");
+				u9300c_dial_wait = 6;
+			}
+			else
+			{
+				u9300c_dial_wait--;
+			}
+		}
         if ( i_link > 0 )
         {
         retry_signal:

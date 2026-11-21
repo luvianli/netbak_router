@@ -2018,6 +2018,7 @@ static const struct usb_device_id QuecGobiVIDPIDTable [] =
     GOBI_FIXED_INTF( 0x2c7c, 0x0512 ), // Quectel EG12/EP12/EM12/EG16/EG18,SDx20
     GOBI_FIXED_INTF( 0x2c7c, 0x0620 ), // Quectel EG20,SDx24
     GOBI_FIXED_INTF( 0x2c7c, 0x0800 ), // Quectel RG500Q,RM500Q,RM510Q,SDX55
+    GOBI_FIXED_INTF( 0x1c9e, 0x9b3c ), // Longsung U9300C (MDM9x07, NDIS interface 4)
    //Terminating entry
    { }
 };
@@ -2168,7 +2169,8 @@ static int GobiUSBNetProbe(
 //#endif
 
    // Register QMI
-   pGobiDev->mbMdm9x07 |= (pDev->udev->descriptor.idVendor == cpu_to_le16(0x2c7c));
+   pGobiDev->mbMdm9x07 |= (pDev->udev->descriptor.idVendor == cpu_to_le16(0x2c7c) ||
+                           pDev->udev->descriptor.idVendor == cpu_to_le16(0x1c9e));
    pGobiDev->mbMdm9x06 |= (pDev->udev->descriptor.idVendor == cpu_to_le16(0x2c7c) && pDev->udev->descriptor.idProduct == cpu_to_le16(0x0296));
    pGobiDev->mbRawIPMode = pGobiDev->mbMdm9x07;
    if ( pGobiDev->mbRawIPMode)

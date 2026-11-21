@@ -138,7 +138,7 @@ BOOL qmidevice_detect(char *qmichannel, char *usbnet_adapter, unsigned bufsize) 
         snprintf(pl->path, sizeof(pl->path), "%s/%s/idProduct", rootdir, ent->d_name);
         idProduct = file_get_value(pl->path);
 
-        if (idVendor != 0x05c6 && idVendor != 0x2c7c)
+        if (idVendor != 0x05c6 && idVendor != 0x2c7c && idVendor != 0x1c9e)
             continue;
         
         dbg_time("Find %s/%s idVendor=0x%x idProduct=0x%x", rootdir, ent->d_name, idVendor, idProduct);

@@ -19,6 +19,7 @@ quectel_E200T="2c7c:6026"
 quectel_E200A="2c7c:6005"
 neoway_N720V5_V1="2949:8700"
 lynq_L509="1286:4e3c"
+U9300C_DGN="1c9e:9b3c"
 
 quectel_model_1_support=`lsusb | grep $quectel_VID`
 quectel_model_2_support=`lsusb | grep $quectel_EC20`
@@ -26,6 +27,7 @@ quectel_model_3_support=`lsusb | grep $quectel_E200T`
 quectel_model_4_support=`lsusb | grep $quectel_E200A`
 neoway_model_1_support=`lsusb | grep $neoway_N720V5_V1`
 lynq_model_1_support=`lsusb | grep $lynq_L509`
+u9300_model_1_support=`lsusb | grep $U9300C_DGN`
 
 quectel_dev_name=`ifconfig -a | grep usb0`
 
@@ -81,6 +83,32 @@ start_service() {
 		DEV_ATC="/dev/ttyUSB1"
 		NET_IFACE="eth1"
 		huayi_cmd set modem modemModel 'LYNQ509'
+	elif [ -n "$u9300_model_1_support" ]; then
+		DEV_ATC="/dev/ttyUSB1"
+		NET_IFACE="eth1"
+		huayi_cmd set modem modemModel 'U9300C_DGN'
+		# U9300C 的 interface 4 是 NDIS 数据口，option 会误绑成 ttyUSB4，
+		# 加载 GobiNet 后把该接口交给 GobiNet 创建 eth1 数据网卡。
+		# 必须用默认的 QMI 模式加载（不能带 qcrmcall_mode=1），
+		# 由 quectel-CM 通过 /dev/qcqmiX 建立数据呼叫
+		insmod quectel_GobiNet.ko
+		i=0
+		while [ $i -lt 20 ]; do
+			[ -e /sys/bus/usb/devices/1-1:1.4 ] && break
+			sleep 1
+			i=$((i+1))
+		done
+		for usbintf in /sys/bus/usb/devices/*:1.4; do
+			[ -e "$usbintf" ] || continue
+			usbdev=$(basename $usbintf)
+			if [ -e "$usbintf/driver" ]; then
+				drv=$(basename $(readlink "$usbintf/driver"))
+				[ "$drv" = "option" ] && echo -n "$usbdev" > /sys/bus/usb/drivers/option/unbind 2>/dev/null
+			fi
+			[ -e "$usbintf/driver" ] || echo -n "$usbdev" > /sys/bus/usb/drivers/GobiNet/bind 2>/dev/null
+		done
+		uci set network.wan4g.ifname=eth1
+		uci commit network
 	else
 		echo "no detect modem"
 		huayi_cmd set modem registStatus noModem

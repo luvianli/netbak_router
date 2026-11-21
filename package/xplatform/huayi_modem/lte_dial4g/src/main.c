@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
 	{
 		neoway_RNDIS_handler(&Agent);
 	}
-	else if(strncmp("LYNQ509",pmodel, 7) == 0)
+	else if(strncmp("LYNQ509",pmodel, 7) == 0 || strncmp("U9300C_DGN",pmodel, 10) == 0)
 	{
 		lynq_model_handler(&Agent);
 	}

@@ -17,7 +17,7 @@ VTBool huayi_reload_network(void * arg,cJSON *input_root)
 #endif
 
 	system("huayi_cmd set network wan_up 0");
-	/*针对这个型号的产品特殊处理，硬件设计模块电路时，启动需要软件连通电路*/
+	/*锟斤拷锟斤拷锟斤拷锟酵号的诧拷品锟斤拷锟解处锟斤拷锟斤拷硬锟斤拷锟斤拷锟侥ｏ拷锟斤拷路时锟斤拷锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷锟斤拷通锟斤拷路*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(0 == strcmp(product_model, "4G1200-H002-HY06"))
 	{
@@ -181,7 +181,7 @@ VTBool huayi_reload_lte4g(void * arg,cJSON *input_root)
 	}
 	else
 	{
-		/*针对这个型号的产品特殊处理，硬件设计模块电路时，启动需要软件连通电路*/
+		/*锟斤拷锟斤拷锟斤拷锟酵号的诧拷品锟斤拷锟解处锟斤拷锟斤拷硬锟斤拷锟斤拷锟侥ｏ拷锟斤拷路时锟斤拷锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷锟斤拷通锟斤拷路*/
 		huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 		if(!strcmp(product_model, "4G1200-H002-HY06"))
 		{

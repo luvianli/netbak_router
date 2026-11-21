@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
 	(void) signal(SIGTERM, huayi_4g_init_exit);
 
 #if defined(CONFIG_HUAYI_SWITCH_SIM_SUPPORT)
-	return 0;  /*ÓÐÇÐ¿¨¹¦ÄÜÊ±£¬ÔÚÇÐ¿¨½ø³ÌÀïÊÕ¼¯Íê¿¨Æ¬ºó£¬ÔÙÆô¶¯4GÏà¹Ø½ø³Ì*/
+	return 0;  /*ï¿½ï¿½ï¿½Ð¿ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ð¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ê¿¨Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½4Gï¿½ï¿½Ø½ï¿½ï¿½ï¿½*/
 #endif
-	/*Õë¶ÔÕâ¸öÐÍºÅµÄ²úÆ·ÌØÊâ´¦Àí£¬Ó²¼þÉè¼ÆÄ£¿éµçÂ·Ê±£¬Æô¶¯ÐèÒªÈí¼þÁ¬Í¨µçÂ·*/
+	/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÍºÅµÄ²ï¿½Æ·ï¿½ï¿½ï¿½â´¦ï¿½ï¿½ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½Â·Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½Â·*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(!strcmp(product_model, "4G1200-H002-HY06"))
 	{
@@ -141,7 +141,8 @@ int main(int argc, char *argv[])
 			if((strstr(resultbuf,"2c7c:") != NULL) ||
 				(strstr(resultbuf,"05c6:") != NULL) ||
 				(strstr(resultbuf,"2949:") != NULL)||
-				(strstr(resultbuf,"1286:") != NULL))
+				(strstr(resultbuf,"1286:") != NULL)||
+				(strstr(resultbuf,"1c9e:") != NULL))
 			{
 				if(count == 3) {
 					system("/etc/init.d/huayi_dial4gcontrol restart");
