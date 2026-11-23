@@ -1680,9 +1680,19 @@ LTE_BOOL atcmd_get_EC20_imei(char *value)
 	int i = 0;
 	char *ptr = NULL;
 
-	if ( AtcmdSendDelay("AT+CGSN=1", strlen("AT+CGSN=1"), 0) == LTE_FALSE )
+	char pmodel[16]={0};
+	huayi_uci_get_str(PKG_STATUS_MODEM, "modem", "modemModel", pmodel);
+	if(strncmp("U9300C_DGN",pmodel, 10) == 0)
 	{
-		return LTE_FALSE;
+		if ( AtcmdSendDelay("AT+CGSN", strlen("AT+CGSN"), 0) == LTE_FALSE )
+		{
+			return LTE_FALSE;
+		}
+	}else{
+		if ( AtcmdSendDelay("AT+CGSN=1", strlen("AT+CGSN=1"), 0) == LTE_FALSE )
+		{
+			return LTE_FALSE;
+		}
 	}
 	
 	ptr = ATret;
@@ -1692,7 +1702,8 @@ LTE_BOOL atcmd_get_EC20_imei(char *value)
 		return LTE_FALSE;
 	}
 
-	ptr = strstr(ptr, "+CGSN:");
+	if(!strncmp("U9300C_DGN",pmodel, 10) == 0)
+		ptr = strstr(ptr, "+CGSN:");
 
 	for ( i=0; i < AT_CMD_MAX_LEN-16; i++ )
 	{

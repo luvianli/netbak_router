@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
     int i = 0;
 	(void) signal(SIGTERM, huayi_4g_init_exit);
 
-	/*针对这个型号的产品特殊处理，硬件设计模块电路时，启动需要软件连通电路*/
+	/*锟斤拷锟斤拷锟斤拷锟酵号的诧拷品锟斤拷锟解处锟斤拷锟斤拷硬锟斤拷锟斤拷锟侥ｏ拷锟斤拷路时锟斤拷锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷锟斤拷通锟斤拷路*/
 	huayi_uci_get_str(PKG_ABOUT,"about_system","product_model",product_model);
 	if(!strcmp(product_model, "4G1200-H002-HY06"))
 	{
@@ -164,7 +164,8 @@ int main(int argc, char *argv[])
 				(strstr(resultbuf,"2949:") != NULL) ||
 				(strstr(resultbuf,"2dee:") !=NULL)	||
 				(strstr(resultbuf,"2ecc:") !=NULL) ||
-				(strstr(resultbuf,"3563:") !=NULL))
+				(strstr(resultbuf,"3563:") !=NULL) ||
+				(strstr(resultbuf,"1c9e:") !=NULL))
 			{
 				if(count == 3) {
                     CON_LOG("/etc/init.d/huayi_dial4gcontrol restart");
