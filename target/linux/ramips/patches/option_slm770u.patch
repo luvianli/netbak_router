@@ -30,7 +30,7 @@
  	{ USB_DEVICE(0x05C6, 0x9090) }, /* Quectel UC15 */
  	{ USB_DEVICE(0x05C6, 0x9003) }, /* Quectel UC20 */
  	{ USB_DEVICE(0x05C6, 0x9215) }, /* Quectel EC20(MDM9215) */
-@@ -676,6 +688,18 @@
+@@ -676,6 +688,20 @@
      { USB_DEVICE_AND_INTERFACE_INFO(0x2c7c, 0x6005, 0xff, 0x00, 0x00) },//EC200A
      { USB_DEVICE_AND_INTERFACE_INFO(0x2c7c, 0x6005, 0x0a, 0x00, 0x00) },//EC200A
  #endif
@@ -44,6 +44,8 @@
 +/* add ML307R*/
 +	{ USB_DEVICE_AND_INTERFACE_INFO(ML307R_VENDOR_ID, ML307R_PRODUCT_ID, 0xff, 0x00, 0x00) },
 +/* add ML307R end*/
++	{ USB_DEVICE_AND_INTERFACE_INFO(0x19d1, 0x0001, 0x0a, 0x00, 0x00) ,/* ML307N */
++		.driver_info = (kernel_ulong_t)&net_intf4_blacklist },
 +	{ USB_DEVICE(0x1c9e, 0x9b3c),	/* Longsung U9300C DGN */
 +		.driver_info = (kernel_ulong_t)&net_intf4_blacklist }, /* reserve if4 for GobiNet data */
  	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_COLT) },

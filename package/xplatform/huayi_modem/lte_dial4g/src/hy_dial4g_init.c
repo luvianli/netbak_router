@@ -165,6 +165,7 @@ int main(int argc, char *argv[])
 				(strstr(resultbuf,"2dee:") !=NULL)	||
 				(strstr(resultbuf,"2ecc:") !=NULL) ||
 				(strstr(resultbuf,"3563:") !=NULL) ||
+				(strstr(resultbuf,"19d1:") !=NULL) ||
 				(strstr(resultbuf,"1c9e:") !=NULL))
 			{
 				if(count == 3) {

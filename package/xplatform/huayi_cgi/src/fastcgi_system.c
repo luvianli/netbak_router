@@ -860,7 +860,7 @@ int get_upgrade_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 	
 	size_tip = flash_size/1000000;
 	snprintf(tmp_str,SMALL_STR_LEN,"%dM",size_tip);
-	strcpy(product_model,"YTXC-C4");
+	strcpy(product_model,"YTXC-C1");
 	cJSON_AddStringToObject(result_root,"pro_model",product_model);
 	cJSON_AddStringToObject(result_root,"release_time",buildtime);
 	cJSON_AddStringToObject(result_root,"fw_version",fw_version);
@@ -1774,8 +1774,8 @@ int get_system_info(cJSON *request_root, cJSON *response_root,int *lock_time)
 		strcpy(wan_ip,"0.0.0.0");
 	}
 
-	strcpy(product_name,"YTXC-C4");
-	strcpy(product_model,"YTXC-C4");
+	strcpy(product_name,"YTXC-C1");
+	strcpy(product_model,"YTXC-C1");
 
 	cJSON_AddStringToObject(result_root,"product_name",product_name);
 
@@ -2139,7 +2139,7 @@ int get_all_system_info(cJSON *request_root, cJSON *response_root,int *lock_time
 	result_root = cJSON_CreateObject();
 	
 	//huayi_uci_get_str(PKG_ABOUT,"about_system","product_name",product_name);
-	strcpy(product_name,"YTXC-C4");
+	strcpy(product_name,"YTXC-C1");
 
 	cJSON_AddStringToObject(result_root,"pro_name",product_name);
 
