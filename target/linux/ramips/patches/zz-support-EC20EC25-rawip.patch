@@ -1,0 +1,66 @@
+--- a/drivers/net/usb/qmi_wwan.c
++++ b/drivers/net/usb/qmi_wwan.c
+@@ -59,9 +59,8 @@
+  /* This function will also fixup such packets.  */
+ struct sk_buff *qmi_wwan_tx_fixup(struct usbnet *dev, struct sk_buff *skb, gfp_t flags)
+ {
+ 	if (dev->udev->descriptor.idVendor != cpu_to_le16(0x2C7C)) 
+ 		return skb;
+-	if (dev->udev->descriptor.idVendor != cpu_to_le16(0x05C6)) 
+-		return skb;
++	
+ 	// Skip Ethernet header from message	
+ 	if (skb_pull(skb, ETH_HLEN)) {		
+@@ -100,7 +99,10 @@
+ static int qmi_wwan_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
+ {
+ 	__be16 proto;
+ 
++	if (dev->udev->descriptor.idVendor !=cpu_to_le16(0x2C7C))
++		return 1;
++	
+ 	/* This check is no longer done by usbnet */
+ 	if (skb->len < dev->net->hard_header_len)
+ 		return 0;
+@@ -355,9 +357,8 @@
+ 	dev->net->netdev_ops = &qmi_wwan_netdev_ops;
+ #if 1 
+ 	//Added by Quectel
+-	if (dev->udev->descriptor.idVendor == cpu_to_le16(0x2C7C) || 
+-		dev->udev->descriptor.idVendor == cpu_to_le16(0x05C6)) 
++	if (dev->udev->descriptor.idVendor == cpu_to_le16(0x2C7C)) 
+ 	{
+-		dev_info(&intf->dev, "Quectel EC25&EC21&EG91&EG95&EG06&EP06&EM06&BG96&AG35 work on RawIP mode\n");
++		dev_info(&intf->dev, "Quectel EC25&EC20 R2.0 work on RawIP mode\n");
+ 		dev->net->flags |= IFF_NOARP;
+ 		usb_control_msg(
+@@ -557,4 +558,5 @@
+ 	/* 3. Combined interface devices matching on interface number */
++	{QMI_FIXED_INTF(0x2C7C, 0x0125, 4) }, /* Quectel EC25 EC20 R2.0*/
+ 	{QMI_FIXED_INTF(0x0408, 0xea42, 4)},	/* Yota / Megafon M100-1 */
+ 	{QMI_FIXED_INTF(0x05c6, 0x7000, 0)},
+ 	{QMI_FIXED_INTF(0x05c6, 0x7001, 1)},
+@@ -855,5 +857,2 @@
+ 	{QMI_GOBI_DEVICE(0x1410, 0xa021)},	/* Foxconn Gobi 3000 Modem device (Novatel E396) */
+-	
+-	{QMI_FIXED_INTF(0x2C7C, 0x0125, 4) }, /* Quectel EC25 */
+-	
+ 	{ }					/* END */
+--- a/drivers/usb/serial/option.c
++++ b/drivers/usb/serial/option.c
+@@ -1985,8 +1985,15 @@
+ 	//Quectel UC20's interface 4 can be used as USB Network device
+ 	if (serial->dev->descriptor.idVendor == cpu_to_le16(0x05C6) && serial->dev->descriptor.idProduct == cpu_to_le16(0x9003)
+ 		&& serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4)
+ 		return -ENODEV;
+ 
++	//Added by Quectel
++	//Quectel modules's interface 4 can be used as USB network device
++	if (serial->dev->descriptor.idVendor == cpu_to_le16(0x2C7C) && (serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4)) 
++	{
++		return -ENODEV;
++	}
++
+ 	//Quectel EC20(MDM9215)'s interface 4 can be used as USB Network device
+ 	if (serial->dev->descriptor.idVendor == cpu_to_le16(0x05C6) && serial->dev->descriptor.idProduct == cpu_to_le16(0x9215)
+ 		&& serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4)
