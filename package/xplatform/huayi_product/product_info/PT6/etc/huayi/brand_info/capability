@@ -4,7 +4,7 @@ config cap 'cap'
 	option wan_lan_ifname 	'eth0.1 eth0.2'
 	option wan_port_num		'4'
 	option lan_start_port	'0'
-	option def_ssid_prefix	'ABCD-'
+	option def_ssid_prefix	'UC4-'
 
 config cap 11b
 	option max_txpower '21'

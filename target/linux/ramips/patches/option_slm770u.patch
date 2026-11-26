@@ -48,6 +48,8 @@
 +		.driver_info = (kernel_ulong_t)&net_intf4_blacklist },
 +	{ USB_DEVICE(0x1c9e, 0x9b3c),	/* Longsung U9300C DGN */
 +		.driver_info = (kernel_ulong_t)&net_intf4_blacklist }, /* reserve if4 for GobiNet data */
++	{ USB_DEVICE(0x1c9e, 0x9b05),	/* Longsung U9300C DGN */
++		.driver_info = (kernel_ulong_t)&net_intf4_blacklist }, /* reserve if4 for GobiNet data */
  	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_COLT) },
  	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_RICOLA) },
  	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_RICOLA_LIGHT) },

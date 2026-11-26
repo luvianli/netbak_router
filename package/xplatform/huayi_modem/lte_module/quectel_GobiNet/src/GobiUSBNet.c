@@ -2019,6 +2019,7 @@ static const struct usb_device_id QuecGobiVIDPIDTable [] =
     GOBI_FIXED_INTF( 0x2c7c, 0x0620 ), // Quectel EG20,SDx24
     GOBI_FIXED_INTF( 0x2c7c, 0x0800 ), // Quectel RG500Q,RM500Q,RM510Q,SDX55
     GOBI_FIXED_INTF( 0x1c9e, 0x9b3c ), // 龙尚 U9300C（MDM9x07，NDIS 数据接口 4）
+    GOBI_FIXED_INTF( 0x1c9e, 0x9b05 ), // 龙尚 U9300C（MDM9x07，NDIS 数据接口 4）
    //Terminating entry
    { }
 };

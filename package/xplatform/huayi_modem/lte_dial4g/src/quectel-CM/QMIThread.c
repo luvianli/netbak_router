@@ -336,7 +336,9 @@ static USHORT WdaSetDataFormat(PQMUX_MSG pMUXMsg, void *arg) {
         linkProto = (PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV)(pWdsAdminQosTlv + 1);
         linkProto->TLVType = 0x11;
         linkProto->TLVLength = cpu_to_le16(4);
-        linkProto->Value = cpu_to_le32(0x01);     /* Set Ethernet  mode */
+        linkProto->Value = cpu_to_le32(s_9x07 ? 0x02 : 0x01);
+        /* s_9x07=1 (MDM9x07 平台，GobiNet mbRawIPMode=1) → IP 模式 0x02
+         * s_9x07=0 (非 MDM9x07，或 quectel-CM qmap_mode=0 默认路径) → Ethernet 0x01 */
 
         dlTlp = (PQMIWDS_ADMIN_SET_DATA_FORMAT_TLV)(linkProto + 1);;
         dlTlp->TLVType = 0x13;
@@ -688,6 +690,15 @@ int requestSetEthMode(PROFILE_T *profile) {
         } else if (profile->qmap_mode > 1) {//QMAP MUX enabled, set data format in quectel-qmi-proxy
             goto skip_WdaSetDataFormat;
         }
+    } else if (qmidev_is_gobinet(profile->qmichannel)) {
+        /* GobiNet MDM9x07 平台（VID=0x1c9e/0x2c7c MDM9x07）
+         * GobiNet 驱动 bind 时 m_qmap_mode 默认为 0，qmi_sync_thread 里
+         * 的 SetDataFormat 仅在 qmap_mode!=0 时调用，驱动不会设格式。
+         * 必须由 quectel-CM 来设——但要和驱动 mbRawIPMode 对齐：
+         * 驱动 VID=0x1c9e/0x2c7c → mbMdm9x07=1 → mbRawIPMode=1
+         * → 驱动 tx 剥以太网头发裸 IP，模组必须设成 IP 模式 (0x02)。 */
+        profile->rawIP = 1;
+        s_9x07 = 1;
     }
 
     pRequest = ComposeQMUXMsg(QMUX_TYPE_WDS_ADMIN, QMIWDS_ADMIN_SET_DATA_FORMAT_REQ, WdaSetDataFormat, (void *)&qmap_settings);

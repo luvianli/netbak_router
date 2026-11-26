@@ -22,6 +22,7 @@ meige_SLM770U="2dee:4d42"
 ML307R="2ecc:3012"
 ML307N="19d1:0001"
 U9300C_DGN="1c9e:9b3c"
+U9300C_DGN_2="1c9e:9b05"
 
 quectel_model_1_support=`lsusb | grep $quectel_VID`
 quectel_model_2_support=`lsusb | grep $quectel_EC20`
@@ -32,6 +33,7 @@ ml307_model_1_support=`lsusb | grep $ML307R`
 ml307_model_2_support=`lsusb | grep $ML307N`
 neoway_model_1_support=`lsusb | grep $neoway_N720V5_V1`
 u9300_model_1_support=`lsusb | grep $U9300C_DGN`
+u9300_model_2_support=`lsusb | grep $U9300C_DGN_2`
 
 quectel_dev_name=`ifconfig -a | grep usb0`
 
@@ -98,7 +100,7 @@ start_service() {
 		DEV_ATC="/dev/ttyUSB0"
 		NET_IFACE="eth1"
 		huayi_cmd set modem modemModel 'ML307N'		
-	elif [ -n "$u9300_model_1_support" ]; then
+	elif [ -n "$u9300_model_1_support""$u9300_model_2_support" ]; then
 		DEV_ATC="/dev/ttyUSB1"
 		NET_IFACE="eth1"
 		huayi_cmd set modem modemModel 'U9300C_DGN'

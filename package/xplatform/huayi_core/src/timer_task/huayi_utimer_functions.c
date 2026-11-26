@@ -515,7 +515,8 @@ void huayi_core_start_internet_led(struct VcoreAgent *Agent)
 		ret = get_cmd_result("lsusb",resultbuf,sizeof(resultbuf));
 		if(ret == 1)
 		{
-			if(strstr(resultbuf,"2ecc:") != NULL)
+			if(strstr(resultbuf,"2ecc:") != NULL || strstr(resultbuf,"1c9e:") != NULL || 
+				strstr(resultbuf,"19d1:") != NULL)
 				do_internet_led_slowly();
 			else
 				do_internet_led_off();
